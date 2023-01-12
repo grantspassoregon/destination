@@ -1,0 +1,17 @@
+[package]
+name = "address"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+path = "src/main.rs"
+name = "address"
+
+[dependencies]
+csv = "1.1.6"
+serde = {version = "1.0.152", features = ["derive"] }
+tracing = "0.1.37"
+tracing-subscriber = "0.3.16"
