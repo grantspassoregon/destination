@@ -1,7 +1,7 @@
+use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
-use serde::de::{Deserializer};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum StreetNamePreDirectional {
     NORTHEAST,
     NORTHWEST,
@@ -13,7 +13,9 @@ pub enum StreetNamePreDirectional {
     WEST,
 }
 
-pub fn deserialize_abbreviated_pre_directional<'de, D: Deserializer<'de>>(de: D) -> Result<Option<StreetNamePreDirectional>, D::Error> {
+pub fn deserialize_abbreviated_pre_directional<'de, D: Deserializer<'de>>(
+    de: D,
+) -> Result<Option<StreetNamePreDirectional>, D::Error> {
     let intermediate = Deserialize::deserialize(de)?;
 
     match intermediate {

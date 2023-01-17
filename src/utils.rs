@@ -1,6 +1,8 @@
 use serde::de::{Deserialize, Deserializer};
 
-pub fn deserialize_arcgis_data<'de, D: Deserializer<'de>>(de: D) -> Result<Option<String>, D::Error> {
+pub fn deserialize_arcgis_data<'de, D: Deserializer<'de>>(
+    de: D,
+) -> Result<Option<String>, D::Error> {
     let intermediate = Deserialize::deserialize(de)?;
 
     match intermediate {

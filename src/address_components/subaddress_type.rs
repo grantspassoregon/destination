@@ -1,7 +1,7 @@
+use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
-use serde::de::{Deserializer};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum SubaddressType {
     Apartment,
     Basement,
@@ -31,7 +31,9 @@ pub enum SubaddressType {
     Laundry,
 }
 
-pub fn deserialize_abbreviated_subaddress_type<'de, D: Deserializer<'de>>(de: D) -> Result<Option<SubaddressType>, D::Error> {
+pub fn deserialize_abbreviated_subaddress_type<'de, D: Deserializer<'de>>(
+    de: D,
+) -> Result<Option<SubaddressType>, D::Error> {
     let intermediate = Deserialize::deserialize(de)?;
 
     match intermediate {

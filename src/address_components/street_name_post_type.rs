@@ -1,7 +1,7 @@
+use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
-use serde::de::{Deserializer};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum StreetNamePostType {
     ALLEY,
     ANEX,
@@ -210,7 +210,9 @@ pub enum StreetNamePostType {
     WELLS,
 }
 
-pub fn deserialize_abbreviated_post_type<'de, D: Deserializer<'de>>(de: D) -> Result<Option<StreetNamePostType>, D::Error> {
+pub fn deserialize_abbreviated_post_type<'de, D: Deserializer<'de>>(
+    de: D,
+) -> Result<Option<StreetNamePostType>, D::Error> {
     let intermediate = Deserialize::deserialize(de)?;
 
     match intermediate {
