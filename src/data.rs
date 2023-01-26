@@ -1,6 +1,9 @@
 use crate::address_components::*;
 use crate::utils::*;
+use indicatif::ProgressIterator;
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use tracing::info;
 
 #[derive(Debug, Clone)]
 pub struct Address {
@@ -21,7 +24,7 @@ pub struct Address {
 }
 
 impl Address {
-    pub fn coincident(self, other: &Address) -> AddressMatch {
+    pub fn coincident(&self, other: &Address) -> AddressMatch {
         let mut coincident = false;
         let mut mismatches = Vec::new();
         if self.address_number == other.address_number
@@ -45,7 +48,10 @@ impl Address {
                 mismatches.push(Mismatch::floor(self.floor, other.floor));
             }
             if self.building != other.building {
-                mismatches.push(Mismatch::building(self.building, other.building.clone()));
+                mismatches.push(Mismatch::building(
+                    self.building.clone(),
+                    other.building.clone(),
+                ));
             }
             if self.status != other.status {
                 mismatches.push(Mismatch::status(self.status, other.status));
@@ -100,6 +106,27 @@ impl From<CityAddress> for Address {
             zip_code: item.zip_code,
             postal_community: item.postal_community,
             state_name: item.state_name,
+            status: item.status,
+            object_id: item.object_id,
+        }
+    }
+}
+
+impl From<&CityAddress> for Address {
+    fn from(item: &CityAddress) -> Self {
+        Address {
+            address_number: item.address_number,
+            address_number_suffix: item.address_number_suffix.clone(),
+            street_name_pre_directional: item.street_name_pre_directional,
+            street_name: item.street_name.clone(),
+            street_name_post_type: item.street_name_post_type,
+            subaddress_type: item.subaddress_type,
+            subaddress_identifier: item.subaddress_identifier.clone(),
+            floor: item.floor,
+            building: item.building.clone(),
+            zip_code: item.zip_code,
+            postal_community: item.postal_community.clone(),
+            state_name: item.state_name.clone(),
             status: item.status,
             object_id: item.object_id,
         }
@@ -189,14 +216,14 @@ impl AddressMatch {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum MatchStatus {
     Matching,
     Divergent,
     Missing,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MatchRecord {
     pub match_status: MatchStatus,
     pub address_label: String,
@@ -208,6 +235,7 @@ pub struct MatchRecord {
     pub status: Option<String>,
 }
 
+#[derive(Clone)]
 pub struct MatchRecords {
     pub records: Vec<MatchRecord>,
 }
@@ -225,7 +253,7 @@ impl MatchRecords {
 
         for address in other_addresses {
             if let Ok(other) = address.clone().try_into() {
-                let address_match = self_address.clone().coincident(&other);
+                let address_match = self_address.coincident(&other);
                 if address_match.coincident {
                     let other_id = Some(other.clone().object_id);
                     let mut subaddress_type = None;
@@ -284,6 +312,117 @@ impl MatchRecords {
         MatchRecords {
             records: match_record,
         }
+    }
+
+    pub fn compare<A: Into<Address> + Clone, B: TryInto<Address> + Clone>(
+        self_addresses: Vec<A>,
+        other_addresses: Vec<B>,
+    ) -> Self {
+        let mut records = Vec::new();
+        let style = indicatif::ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
+        )
+        .unwrap();
+        self_addresses
+            .iter()
+            .map(|address| {
+                records.append(
+                    &mut MatchRecords::new(address.clone(), other_addresses.clone()).records,
+                )
+            })
+            .progress_with_style(style)
+            .for_each(drop);
+        // for address in self_addresses {
+        //     records.append(&mut MatchRecords::new(address, other_addresses.clone()).records);
+        // }
+        MatchRecords { records }
+    }
+
+    pub fn filter(self, filter: &str) -> Self {
+        let mut records = Vec::new();
+        match filter {
+            "missing" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| record.match_status == MatchStatus::Missing)
+                    .collect(),
+            ),
+            "divergent" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| record.match_status == MatchStatus::Divergent)
+                    .collect(),
+            ),
+            "subaddress" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| {
+                        record.match_status == MatchStatus::Divergent
+                            && record.subaddress_type.is_some()
+                    })
+                    .collect(),
+            ),
+            "floor" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| {
+                        record.match_status == MatchStatus::Divergent && record.floor.is_some()
+                    })
+                    .collect(),
+            ),
+            "building" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| {
+                        record.match_status == MatchStatus::Divergent && record.building.is_some()
+                    })
+                    .collect(),
+            ),
+            "status" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| {
+                        record.match_status == MatchStatus::Divergent && record.status.is_some()
+                    })
+                    .collect(),
+            ),
+            _ => info!("Invalid filter provided."),
+        }
+        MatchRecords { records }
+    }
+
+    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
+        let mut wtr = csv::Writer::from_path(title)?;
+        for i in self.records.clone() {
+            wtr.serialize(i)?;
+        }
+        wtr.flush()?;
+        Ok(())
+    }
+
+    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
+        let mut records = Vec::new();
+        let file = std::fs::File::open(path)?;
+        let mut rdr = csv::Reader::from_reader(file);
+
+        for result in rdr.deserialize() {
+            let record: MatchRecord = result?;
+            records.push(record);
+        }
+
+        Ok(MatchRecords { records })
     }
 }
 
@@ -368,7 +507,7 @@ pub struct CityAddress {
     unincorporated_community: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CityAddresses {
     pub records: Vec<CityAddress>,
 }
