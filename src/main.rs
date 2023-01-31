@@ -39,22 +39,22 @@ fn main() -> Result<(), std::io::Error> {
         None => {
             info!("Reading source records.");
             let city_addresses = CityAddresses::from_csv(cli.source)?;
+            let source_addresses = Addresses::from(city_addresses);
             info!(
                 "Source records read: {} entries.",
-                city_addresses.records.len()
+                source_addresses.records.len()
             );
             info!("Reading comparison records.");
             if let Some(target) = cli.target {
                 let county_addresses = CountyAddresses::from_csv(target)?;
+                let target_addresses = Addresses::from(county_addresses);
                 info!(
                     "Comparison records read: {} entries.",
-                    county_addresses.records.len()
+                    target_addresses.records.len()
                 );
                 info!("Comparing records.");
-                let mut match_records = MatchRecords::compare(
-                    city_addresses.records,
-                    county_addresses.records,
-                );
+                let mut match_records =
+                    MatchRecords::compare(&source_addresses.records, &target_addresses.records);
                 info!("{:?} records categorized.", match_records.records.len());
                 info!("Output file: {:?}", cli.output);
                 match_records.to_csv(cli.output)?;

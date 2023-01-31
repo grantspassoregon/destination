@@ -1,5 +1,6 @@
 use crate::address_components::*;
 use crate::utils::*;
+use indicatif::ParallelProgressIterator;
 use indicatif::ProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -21,6 +22,8 @@ pub struct Address {
     state_name: String,
     status: AddressStatus,
     object_id: i64,
+    address_latitude: f64,
+    address_longitude: f64,
 }
 
 impl Address {
@@ -108,6 +111,8 @@ impl From<CityAddress> for Address {
             state_name: item.state_name,
             status: item.status,
             object_id: item.object_id,
+            address_latitude: item.address_latitude,
+            address_longitude: item.address_longitude,
         }
     }
 }
@@ -129,6 +134,8 @@ impl From<&CityAddress> for Address {
             state_name: item.state_name.clone(),
             status: item.status,
             object_id: item.object_id,
+            address_latitude: item.address_latitude,
+            address_longitude: item.address_longitude,
         }
     }
 }
@@ -153,9 +160,67 @@ impl TryFrom<CountyAddress> for Address {
                 state_name: item.state_name,
                 status: item.status,
                 object_id: item.object_id,
+                address_latitude: item.address_latitude,
+                address_longitude: item.address_longitude,
             }),
             None => Err(()),
         }
+    }
+}
+
+impl TryFrom<&CountyAddress> for Address {
+    type Error = ();
+
+    fn try_from(item: &CountyAddress) -> Result<Self, Self::Error> {
+        match item.street_name_post_type {
+            Some(post_type) => Ok(Address {
+                address_number: item.address_number,
+                address_number_suffix: item.address_number_suffix.clone(),
+                street_name_pre_directional: item.street_name_pre_directional,
+                street_name: item.street_name.clone(),
+                street_name_post_type: post_type,
+                subaddress_type: item.subaddress_type,
+                subaddress_identifier: item.subaddress_identifier.clone(),
+                floor: item.floor,
+                building: None,
+                zip_code: item.zip_code,
+                postal_community: item.postal_community.clone(),
+                state_name: item.state_name.clone(),
+                status: item.status,
+                object_id: item.object_id,
+                address_latitude: item.address_latitude,
+                address_longitude: item.address_longitude,
+            }),
+            None => Err(()),
+        }
+    }
+}
+
+pub struct Addresses {
+    pub records: Vec<Address>,
+}
+
+impl From<CityAddresses> for Addresses {
+    fn from(item: CityAddresses) -> Self {
+        let mut records = Vec::new();
+        for address in item.records {
+            if let Ok(record) = Address::try_from(address) {
+                records.push(record);
+            }
+        }
+        Addresses { records }
+    }
+}
+
+impl From<CountyAddresses> for Addresses {
+    fn from(item: CountyAddresses) -> Self {
+        let mut records = Vec::new();
+        for address in item.records {
+            if let Ok(record) = Address::try_from(address) {
+                records.push(record);
+            }
+        }
+        Addresses { records }
     }
 }
 
@@ -233,6 +298,8 @@ pub struct MatchRecord {
     pub floor: Option<String>,
     pub building: Option<String>,
     pub status: Option<String>,
+    pub latitude: f64,
+    pub longitude: f64,
 }
 
 #[derive(Clone)]
@@ -241,28 +308,48 @@ pub struct MatchRecords {
 }
 
 impl MatchRecords {
-    pub fn new<A: Into<Address> + Clone, B: TryInto<Address> + Clone>(
-        self_address: A,
-        other_addresses: Vec<B>,
-    ) -> Self {
-        let self_address = self_address.into();
+    pub fn new(self_address: &Address, other_addresses: &[Address]) -> Self {
         let self_id = self_address.object_id;
         let address_label = self_address.label();
+        let latitude = self_address.address_latitude;
+        let longitude = self_address.address_longitude;
 
         let mut match_record = Vec::new();
 
         for address in other_addresses {
-            if let Ok(other) = address.clone().try_into() {
-                let address_match = self_address.coincident(&other);
-                if address_match.coincident {
-                    let other_id = Some(other.clone().object_id);
-                    let mut subaddress_type = None;
-                    let mut floor = None;
-                    let mut building = None;
-                    let mut status = None;
-                    match address_match.mismatches {
-                        None => match_record.push(MatchRecord {
-                            match_status: MatchStatus::Matching,
+            let address_match = self_address.coincident(address);
+            if address_match.coincident {
+                let other_id = Some(address.object_id);
+                let mut subaddress_type = None;
+                let mut floor = None;
+                let mut building = None;
+                let mut status = None;
+                match address_match.mismatches {
+                    None => match_record.push(MatchRecord {
+                        match_status: MatchStatus::Matching,
+                        address_label: address_label.clone(),
+                        self_id,
+                        other_id,
+                        subaddress_type,
+                        floor,
+                        building,
+                        status,
+                        latitude,
+                        longitude,
+                    }),
+                    Some(mismatches) => {
+                        for mismatch in mismatches.fields {
+                            match mismatch {
+                                Mismatch::SubaddressType(message) => {
+                                    subaddress_type = Some(message)
+                                }
+                                Mismatch::Floor(message) => floor = Some(message),
+                                Mismatch::Building(message) => building = Some(message),
+                                Mismatch::Status(message) => status = Some(message),
+                            }
+                        }
+                        match_record.push(MatchRecord {
+                            match_status: MatchStatus::Divergent,
                             address_label: address_label.clone(),
                             self_id,
                             other_id,
@@ -270,29 +357,9 @@ impl MatchRecords {
                             floor,
                             building,
                             status,
-                        }),
-                        Some(mismatches) => {
-                            for mismatch in mismatches.fields {
-                                match mismatch {
-                                    Mismatch::SubaddressType(message) => {
-                                        subaddress_type = Some(message)
-                                    }
-                                    Mismatch::Floor(message) => floor = Some(message),
-                                    Mismatch::Building(message) => building = Some(message),
-                                    Mismatch::Status(message) => status = Some(message),
-                                }
-                            }
-                            match_record.push(MatchRecord {
-                                match_status: MatchStatus::Divergent,
-                                address_label: address_label.clone(),
-                                self_id,
-                                other_id,
-                                subaddress_type,
-                                floor,
-                                building,
-                                status,
-                            })
-                        }
+                            latitude,
+                            longitude,
+                        })
                     }
                 }
             }
@@ -307,6 +374,8 @@ impl MatchRecords {
                 floor: None,
                 building: None,
                 status: None,
+                latitude,
+                longitude,
             })
         }
         MatchRecords {
@@ -314,27 +383,20 @@ impl MatchRecords {
         }
     }
 
-    pub fn compare<A: Into<Address> + Clone, B: TryInto<Address> + Clone>(
-        self_addresses: Vec<A>,
-        other_addresses: Vec<B>,
-    ) -> Self {
-        let mut records = Vec::new();
+    pub fn compare(self_addresses: &[Address], other_addresses: &[Address]) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )
         .unwrap();
-        self_addresses
-            .iter()
-            .map(|address| {
-                records.append(
-                    &mut MatchRecords::new(address.clone(), other_addresses.clone()).records,
-                )
-            })
+        let record = self_addresses
+            .par_iter()
+            .map(|address| MatchRecords::new(address, other_addresses))
             .progress_with_style(style)
-            .for_each(drop);
-        // for address in self_addresses {
-        //     records.append(&mut MatchRecords::new(address, other_addresses.clone()).records);
-        // }
+            .collect::<Vec<MatchRecords>>();
+        let mut records = Vec::new();
+        for mut item in record {
+            records.append(&mut item.records);
+        }
         MatchRecords { records }
     }
 
@@ -505,6 +567,10 @@ pub struct CityAddress {
         rename(deserialize = "Uninc_Comm")
     )]
     unincorporated_community: Option<String>,
+    #[serde(rename(deserialize = "AddressLatitude"))]
+    address_latitude: f64,
+    #[serde(rename(deserialize = "AddressLongitude"))]
+    address_longitude: f64,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -573,8 +639,14 @@ pub struct CountyAddress {
     #[serde(rename(deserialize = "state"))]
     state_name: String,
     status: AddressStatus,
-    point_y: Option<f64>,
-    point_x: Option<f64>,
+    // #[serde(rename(deserialize = "point_y"))]
+    // address_latitude: f64,
+    // #[serde(rename(deserialize = "point_x"))]
+    // address_longitude: f64,
+    #[serde(rename(deserialize = "latitude"))]
+    address_latitude: f64,
+    #[serde(rename(deserialize = "longitude"))]
+    address_longitude: f64,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

@@ -60,9 +60,13 @@ fn match_city_address() -> Result<(), std::io::Error> {
     let city_path = "p:/city_addresses.csv";
     let county_path = "p:/county_addresses.csv";
     let city_addresses = CityAddresses::from_csv(city_path)?;
+    let source_addresses = Addresses::from(city_addresses);
     let county_addresses = CountyAddresses::from_csv(county_path)?;
-    let match_records =
-        MatchRecords::new(city_addresses.records[0].clone(), county_addresses.records);
+    let target_addresses = Addresses::from(county_addresses);
+    let match_records = MatchRecords::new(
+        &source_addresses.records[0].clone(),
+        &target_addresses.records,
+    );
     info!("Record 0 is: {:?}", match_records.records[0]);
 
     Ok(())
@@ -81,10 +85,12 @@ fn match_city_addresses() -> Result<(), std::io::Error> {
     let city_path = "p:/city_addresses.csv";
     let county_path = "p:/county_addresses.csv";
     let city_addresses = CityAddresses::from_csv(city_path)?;
+    let source_addresses = Addresses::from(city_addresses);
     let county_addresses = CountyAddresses::from_csv(county_path)?;
+    let target_addresses = Addresses::from(county_addresses);
     let match_records = MatchRecords::compare(
-        city_addresses.records[(0..10)].to_vec(),
-        county_addresses.records,
+        &source_addresses.records[(0..10)].to_vec(),
+        &target_addresses.records,
     );
     info!("Records: {:?}", match_records.records);
 
@@ -104,10 +110,12 @@ fn filter_status() -> Result<(), std::io::Error> {
     let city_path = "p:/city_addresses.csv";
     let county_path = "p:/county_addresses.csv";
     let city_addresses = CityAddresses::from_csv(city_path)?;
+    let source_addresses = Addresses::from(city_addresses);
     let county_addresses = CountyAddresses::from_csv(county_path)?;
+    let target_addresses = Addresses::from(county_addresses);
     let match_records = MatchRecords::compare(
-        city_addresses.records[(0..10)].to_vec(),
-        county_addresses.records,
+        &source_addresses.records[(0..10)].to_vec(),
+        &target_addresses.records,
     );
     let filtered = match_records.filter("status");
     info!("Records: {:?}", filtered.records);
@@ -128,10 +136,12 @@ fn filter_missing() -> Result<(), std::io::Error> {
     let city_path = "p:/city_addresses.csv";
     let county_path = "p:/county_addresses.csv";
     let city_addresses = CityAddresses::from_csv(city_path)?;
+    let source_addresses = Addresses::from(city_addresses);
     let county_addresses = CountyAddresses::from_csv(county_path)?;
+    let target_addresses = Addresses::from(county_addresses);
     let match_records = MatchRecords::compare(
-        city_addresses.records[(0..100)].to_vec(),
-        county_addresses.records,
+        &source_addresses.records[(0..100)].to_vec(),
+        &target_addresses.records,
     );
     let filtered = match_records.filter("missing");
     info!("Records: {:?}", filtered.records);
