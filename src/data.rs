@@ -1,12 +1,14 @@
 use crate::address_components::*;
+use crate::business::*;
 use crate::utils::*;
-use indicatif::ParallelProgressIterator;
-use indicatif::ProgressIterator;
+use indicatif::{ParallelProgressIterator, ProgressBar};
+// use indicatif::ProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use std::collections::HashSet;
+use tracing::{error, info};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct Address {
     address_number: i64,
     address_number_suffix: Option<String>,
@@ -63,7 +65,7 @@ impl Address {
         AddressMatch::new(coincident, mismatches)
     }
 
-    fn label(&self) -> String {
+    pub fn label(&self) -> String {
         let complete_address_number = match &self.address_number_suffix {
             Some(suffix) => format!("{} {}", self.address_number, suffix),
             None => self.address_number.to_string(),
@@ -91,6 +93,58 @@ impl Address {
             ),
             None => format!("{} {}", complete_address_number, complete_street_name),
         }
+    }
+
+    pub fn address_number(&self) -> i64 {
+        self.address_number
+    }
+
+    pub fn street_name(&self) -> String {
+        self.street_name.to_owned()
+    }
+
+    pub fn pre_directional(&self) -> Option<StreetNamePreDirectional> {
+        self.street_name_pre_directional
+    }
+
+    pub fn post_type(&self) -> StreetNamePostType {
+        self.street_name_post_type
+    }
+
+    pub fn subaddress_identifier(&self) -> Option<String> {
+        self.subaddress_identifier.to_owned()
+    }
+
+    pub fn floor(&self) -> Option<i64> {
+        self.floor
+    }
+
+    pub fn zip_code(&self) -> i64 {
+        self.zip_code
+    }
+
+    pub fn status(&self) -> AddressStatus {
+        self.status
+    }
+
+    pub fn state_name(&self) -> String {
+        self.state_name.to_owned()
+    }
+
+    pub fn postal_community(&self) -> String {
+        self.postal_community.to_owned()
+    }
+
+    pub fn object_id(&self) -> i64 {
+        self.object_id
+    }
+
+    pub fn address_latitude(&self) -> f64 {
+        self.address_latitude
+    }
+
+    pub fn address_longitude(&self) -> f64 {
+        self.address_longitude
     }
 }
 
@@ -147,17 +201,17 @@ impl TryFrom<CountyAddress> for Address {
         match item.street_name_post_type {
             Some(post_type) => Ok(Address {
                 address_number: item.address_number,
-                address_number_suffix: item.address_number_suffix,
+                address_number_suffix: item.address_number_suffix.clone(),
                 street_name_pre_directional: item.street_name_pre_directional,
-                street_name: item.street_name,
+                street_name: item.street_name.clone(),
                 street_name_post_type: post_type,
                 subaddress_type: item.subaddress_type,
-                subaddress_identifier: item.subaddress_identifier,
+                subaddress_identifier: item.subaddress_identifier.clone(),
                 floor: item.floor,
                 building: None,
                 zip_code: item.zip_code,
-                postal_community: item.postal_community,
-                state_name: item.state_name,
+                postal_community: item.postal_community.clone(),
+                state_name: item.state_name.clone(),
                 status: item.status,
                 object_id: item.object_id,
                 address_latitude: item.address_latitude,
@@ -196,8 +250,120 @@ impl TryFrom<&CountyAddress> for Address {
     }
 }
 
+impl TryFrom<GrantsPass2022Address> for Address {
+    type Error = ();
+
+    fn try_from(item: GrantsPass2022Address) -> Result<Self, Self::Error> {
+        match item.post_type() {
+            Some(post_type) => Ok(Address {
+                address_number: item.address_number(),
+                address_number_suffix: None,
+                street_name_pre_directional: item.pre_directional(),
+                street_name: item.street_name(),
+                street_name_post_type: post_type,
+                subaddress_type: None,
+                subaddress_identifier: item.subaddress_identifier(),
+                floor: item.floor(),
+                building: None,
+                zip_code: item.zip_code(),
+                postal_community: item.postal_community(),
+                state_name: item.state_name(),
+                status: item.status(),
+                object_id: item.object_id(),
+                address_latitude: item.address_latitude(),
+                address_longitude: item.address_longitude(),
+            }),
+            None => Err(()),
+        }
+    }
+}
+
+impl TryFrom<&GrantsPass2022Address> for Address {
+    type Error = ();
+
+    fn try_from(item: &GrantsPass2022Address) -> Result<Self, Self::Error> {
+        match item.post_type() {
+            Some(post_type) => Ok(Address {
+                address_number: item.address_number(),
+                address_number_suffix: None,
+                street_name_pre_directional: item.pre_directional(),
+                street_name: item.street_name(),
+                street_name_post_type: post_type,
+                subaddress_type: None,
+                subaddress_identifier: item.subaddress_identifier(),
+                floor: item.floor(),
+                building: None,
+                zip_code: item.zip_code(),
+                postal_community: item.postal_community(),
+                state_name: item.state_name(),
+                status: item.status(),
+                object_id: item.object_id(),
+                address_latitude: item.address_latitude(),
+                address_longitude: item.address_longitude(),
+            }),
+            None => Err(()),
+        }
+    }
+}
+
+#[derive(Default, Serialize, Clone)]
 pub struct Addresses {
     pub records: Vec<Address>,
+}
+
+impl Addresses {
+    pub fn filter(&self, filter: &str) -> Self {
+        let mut records = Vec::new();
+        match filter {
+            "duplicate" => {
+                let style = indicatif::ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Checking for duplicate addresses.'}",
+        )
+        .unwrap();
+                let mut seen = HashSet::new();
+                let bar = ProgressBar::new(self.records.len() as u64);
+                bar.set_style(style);
+                for address in &self.records {
+                    let label = address.label();
+                    if !seen.contains(&label) {
+                        seen.insert(label.clone());
+                        let mut same = self.filter_field("label", &label);
+                        if same.records.len() > 1 {
+                            records.append(&mut same.records);
+                        }
+                    }
+                    bar.inc(1);
+                }
+            }
+            _ => error!("Invalid filter provided."),
+        }
+        Addresses { records }
+    }
+
+    fn filter_field(&self, filter: &str, field: &str) -> Self {
+        let mut records = Vec::new();
+        match filter {
+            "label" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| field == record.label())
+                    .collect(),
+            ),
+            _ => info!("Invalid filter provided."),
+        }
+        Addresses { records }
+    }
+
+    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
+        let mut wtr = csv::Writer::from_path(title)?;
+        for i in self.records.clone() {
+            wtr.serialize(i)?;
+        }
+        wtr.flush()?;
+        Ok(())
+    }
 }
 
 impl From<CityAddresses> for Addresses {
@@ -214,6 +380,18 @@ impl From<CityAddresses> for Addresses {
 
 impl From<CountyAddresses> for Addresses {
     fn from(item: CountyAddresses) -> Self {
+        let mut records = Vec::new();
+        for address in item.records {
+            if let Ok(record) = Address::try_from(address) {
+                records.push(record);
+            }
+        }
+        Addresses { records }
+    }
+}
+
+impl From<GrantsPass2022Addresses> for Addresses {
+    fn from(item: GrantsPass2022Addresses) -> Self {
         let mut records = Vec::new();
         for address in item.records {
             if let Ok(record) = Address::try_from(address) {
@@ -298,8 +476,8 @@ pub struct MatchRecord {
     pub floor: Option<String>,
     pub building: Option<String>,
     pub status: Option<String>,
-    pub latitude: f64,
     pub longitude: f64,
+    pub latitude: f64,
 }
 
 #[derive(Clone)]
@@ -334,8 +512,8 @@ impl MatchRecords {
                         floor,
                         building,
                         status,
-                        latitude,
                         longitude,
+                        latitude,
                     }),
                     Some(mismatches) => {
                         for mismatch in mismatches.fields {
@@ -357,8 +535,8 @@ impl MatchRecords {
                             floor,
                             building,
                             status,
-                            latitude,
                             longitude,
+                            latitude,
                         })
                     }
                 }
@@ -374,8 +552,8 @@ impl MatchRecords {
                 floor: None,
                 building: None,
                 status: None,
-                latitude,
                 longitude,
+                latitude,
             })
         }
         MatchRecords {
@@ -552,6 +730,7 @@ pub struct CityAddress {
     #[serde(deserialize_with = "deserialize_arcgis_data")]
     complete_subaddress: Option<String>,
     complete_street_address: String,
+    #[serde(rename(deserialize = "FULLADDRESS"))]
     street_address_label: String,
     place_state_zip: String,
     #[serde(rename(deserialize = "Post_Comm"))]
@@ -567,9 +746,13 @@ pub struct CityAddress {
         rename(deserialize = "Uninc_Comm")
     )]
     unincorporated_community: Option<String>,
-    #[serde(rename(deserialize = "AddressLatitude"))]
+    // #[serde(rename(deserialize = "AddressLatitude"))]
+    // address_latitude: f64,
+    // #[serde(rename(deserialize = "AddressLongitude"))]
+    // address_longitude: f64,
+    #[serde(rename(deserialize = "AddressYCoordinate"))]
     address_latitude: f64,
-    #[serde(rename(deserialize = "AddressLongitude"))]
+    #[serde(rename(deserialize = "AddressXCoordinate"))]
     address_longitude: f64,
 }
 
