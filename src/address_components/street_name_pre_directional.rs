@@ -13,23 +13,40 @@ pub enum StreetNamePreDirectional {
     WEST,
 }
 
+pub fn match_abbreviated_pre_directional(input: &str) -> Option<StreetNamePreDirectional> {
+    match input {
+        "NE" => Some(StreetNamePreDirectional::NORTHEAST),
+        "NW" => Some(StreetNamePreDirectional::NORTHWEST),
+        "SE" => Some(StreetNamePreDirectional::SOUTHEAST),
+        "SW" => Some(StreetNamePreDirectional::SOUTHWEST),
+        "N" => Some(StreetNamePreDirectional::NORTH),
+        "S" => Some(StreetNamePreDirectional::SOUTH),
+        "E" => Some(StreetNamePreDirectional::EAST),
+        "W" => Some(StreetNamePreDirectional::WEST),
+        _ => None,
+    }
+}
+
 pub fn deserialize_abbreviated_pre_directional<'de, D: Deserializer<'de>>(
     de: D,
 ) -> Result<Option<StreetNamePreDirectional>, D::Error> {
     let intermediate = Deserialize::deserialize(de)?;
-
-    match intermediate {
-        "NE" => Ok(Some(StreetNamePreDirectional::NORTHEAST)),
-        "NW" => Ok(Some(StreetNamePreDirectional::NORTHWEST)),
-        "SE" => Ok(Some(StreetNamePreDirectional::SOUTHEAST)),
-        "SW" => Ok(Some(StreetNamePreDirectional::SOUTHWEST)),
-        "N" => Ok(Some(StreetNamePreDirectional::NORTH)),
-        "S" => Ok(Some(StreetNamePreDirectional::SOUTH)),
-        "E" => Ok(Some(StreetNamePreDirectional::EAST)),
-        "W" => Ok(Some(StreetNamePreDirectional::WEST)),
-        _ => Ok(None),
-    }
+    let result = match_abbreviated_pre_directional(intermediate);
+    Ok(result)
 }
+
+//     match intermediate {
+//         "NE" => Ok(Some(StreetNamePreDirectional::NORTHEAST)),
+//         "NW" => Ok(Some(StreetNamePreDirectional::NORTHWEST)),
+//         "SE" => Ok(Some(StreetNamePreDirectional::SOUTHEAST)),
+//         "SW" => Ok(Some(StreetNamePreDirectional::SOUTHWEST)),
+//         "N" => Ok(Some(StreetNamePreDirectional::NORTH)),
+//         "S" => Ok(Some(StreetNamePreDirectional::SOUTH)),
+//         "E" => Ok(Some(StreetNamePreDirectional::EAST)),
+//         "W" => Ok(Some(StreetNamePreDirectional::WEST)),
+//         _ => Ok(None),
+//     }
+// }
 
 pub fn deserialize_mixed_pre_directional<'de, D: Deserializer<'de>>(
     de: D,

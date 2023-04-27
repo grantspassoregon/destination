@@ -1,6 +1,8 @@
 use address::address_components::*;
 use address::business::*;
 use address::data::*;
+use address::parser::*;
+use std::error;
 use tracing::info;
 
 #[test]
@@ -255,4 +257,52 @@ fn filter_missing() -> Result<(), std::io::Error> {
     info!("Records: {:?}", filtered.records);
 
     Ok(())
+}
+
+#[test]
+fn address_number_parser() {
+    let a1 = "1 FIRE MOUNTAIN WAY, Grants Pass";
+    let a2 = "100 CENTURYLINK DR";
+    let a3 = "100 LEWIS AVE, Grants Pass";
+    assert_eq!(parse_address_number(&a1), Ok((" FIRE MOUNTAIN WAY, Grants Pass", 1)));
+    assert_eq!(parse_address_number(&a2), Ok((" CENTURYLINK DR", 100)));
+    assert_eq!(parse_address_number(&a3), Ok((" LEWIS AVE, Grants Pass", 100)));
+}
+
+#[test]
+fn pre_directional_parser() {
+    let a1 = "NW 6TH ST";
+    let a2 = "LEWIS AVE";
+    let a3 = " NW 6TH ST";
+    assert_eq!(parse_pre_directional(a1), Ok((" 6TH ST", Some(StreetNamePreDirectional::NORTHWEST))));
+    assert_eq!(parse_pre_directional(a2), Ok((" AVE", None)));
+    assert_eq!(parse_pre_directional(a3), Ok((" 6TH ST", Some(StreetNamePreDirectional::NORTHWEST))));
+}
+
+#[test]
+fn street_name_parser() {
+    let a1 = "LEWIS AVE, Grants Pass";
+    let a2 = "NW 6TH ST, Grants Pass";
+    let a3 = " CENTURYLINK DR";
+    assert_eq!(parse_street_name(a1), Ok((" AVE, Grants Pass", (None, "LEWIS"))));
+    assert_eq!(parse_street_name(a2), Ok((" ST, Grants Pass", (Some(StreetNamePreDirectional::NORTHWEST), "6TH"))));
+    assert_eq!(parse_street_name(a3), Ok((" DR", (None, "CENTURYLINK"))));
+}
+
+#[test]
+fn street_type_parser() {
+    let a1 = " WAY, Grants Pass";
+    let a2 = "DR";
+    let a3 = " AVE, Grants Pass";
+    assert_eq!(parse_post_type(&a1), Ok((", Grants Pass", Some(StreetNamePostType::WAY))));
+    assert_eq!(parse_post_type(&a2), Ok(("", Some(StreetNamePostType::DRIVE))));
+    assert_eq!(parse_post_type(&a3), Ok((", Grants Pass", Some(StreetNamePostType::AVENUE))));
+}
+
+#[test]
+fn complete_street_name_parser() {
+    let a1 = " CENTURYLINK DR";
+    let a2 = " LEWIS AVE, Grants Pass";
+    assert_eq!(parse_complete_street_name(&a1), Ok(("", (None, "CENTURYLINK", Some(StreetNamePostType::DRIVE)))));
+    assert_eq!(parse_complete_street_name(&a2), Ok((", Grants Pass", (None, "LEWIS", Some(StreetNamePostType::AVENUE)))));
 }
