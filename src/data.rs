@@ -402,6 +402,53 @@ impl From<GrantsPass2022Addresses> for Addresses {
     }
 }
 
+#[derive(Debug, Clone, Default, Serialize, PartialEq)]
+pub struct PartialAddress {
+    address_number: Option<i64>,
+    address_number_suffix: Option<String>,
+    street_name_pre_directional: Option<StreetNamePreDirectional>,
+    street_name: Option<String>,
+    street_name_post_type: Option<StreetNamePostType>,
+    subaddress_type: Option<SubaddressType>,
+    subaddress_identifier: Option<String>,
+    floor: Option<i64>,
+    building: Option<String>,
+    zip_code: Option<i64>,
+    postal_community: Option<String>,
+    state_name: Option<String>,
+    status: Option<AddressStatus>,
+}
+
+impl PartialAddress {
+    pub fn new() -> Self {
+        PartialAddress::default()
+    }
+
+    pub fn address_number(&mut self, value: i64) {
+        self.address_number = Some(value);
+    }
+
+    pub fn pre_directional(&mut self, value: &StreetNamePreDirectional) {
+        self.street_name_pre_directional = Some(value.to_owned());
+    }
+
+    pub fn street_name(&mut self, value: &str) {
+        self.street_name = Some(value.to_owned());
+    }
+
+    pub fn post_type(&mut self, value: &StreetNamePostType) {
+        self.street_name_post_type = Some(value.to_owned());
+    }
+
+    pub fn subaddress_type(&mut self, value: &SubaddressType) {
+        self.subaddress_type = Some(value.to_owned());
+    }
+
+    pub fn subaddress_identifier(&mut self, value: &str) {
+        self.subaddress_identifier = Some(value.to_owned());
+    }
+}
+
 pub enum Mismatch {
     SubaddressType(String),
     Floor(String),
