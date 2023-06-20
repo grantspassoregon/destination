@@ -183,10 +183,10 @@ pub fn parse_subaddress(input: &str) -> IResult<&str, Option<Vec<&str>>> {
 pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
     let mut address = PartialAddress::new();
     let (rem, address_number) = parse_address_number(input)?;
-    address.address_number(address_number);
+    address.set_address_number(address_number);
     let (rem, (predir, name, post_type)) = parse_complete_street_name(rem)?;
     if let Some(value) = predir {
-        address.pre_directional(&value)
+        address.set_pre_directional(&value)
     }
     let mut street_name = name[0].to_owned();
     if name.len() > 1 {
@@ -199,8 +199,8 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
             inc += 1;
         }
     }
-    address.street_name(&street_name);
-    address.post_type(&post_type);
+    address.set_street_name(&street_name);
+    address.set_post_type(&post_type);
     let (rem, elements) = parse_subaddress(rem)?;
     if let Some(value) = elements {
         let mut subaddress_identifier = value[0].to_owned();
@@ -214,7 +214,7 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
                 inc += 1;
             }
         }
-        address.subaddress_identifier(&subaddress_identifier);
+        address.set_subaddress_identifier(&subaddress_identifier);
     }
     Ok((rem, address))
 }

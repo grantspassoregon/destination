@@ -271,3 +271,128 @@ impl MatchRecords {
 }
 
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MatchPartialRecord {
+    match_status: MatchStatus,
+    address_label: String,
+    other_label: Option<String>,
+    other_id: Option<i64>,
+    longitude: Option<f64>,
+    latitude: Option<f64>,
+}
+
+impl MatchPartialRecord {
+    pub fn coincident(partial: &PartialAddress, address: &Address) -> Option<MatchPartialRecord> {
+        let mut match_status = MatchStatus::Missing;
+
+        if let Some(value) = partial.address_number() {
+            if value == address.address_number() {
+                match_status = MatchStatus::Matching;
+            }
+        }
+
+        if partial.street_name_pre_directional() != address.pre_directional() && match_status == MatchStatus::Matching {
+            match_status = MatchStatus::Missing;
+        }
+
+        if let Some(value) = partial.street_name() {
+            if value != address.street_name() && match_status == MatchStatus::Matching {
+                match_status = MatchStatus::Missing;
+            }
+        }
+
+        if let Some(value) = partial.street_name_post_type() {
+            if value !=address.post_type() && match_status == MatchStatus::Matching {
+                match_status = MatchStatus::Missing;
+            }
+        }
+
+        if partial.subaddress_identifier() != address.subaddress_identifier() && match_status == MatchStatus::Matching {
+        match_status = MatchStatus::Divergent;
+        }
+
+        if match_status != MatchStatus::Missing {
+            Some(MatchPartialRecord {
+                match_status,
+                address_label: partial.label(),
+                other_label: Some(address.label()),
+                other_id: Some(address.object_id()),
+                longitude: Some(address.address_longitude()),
+                latitude: Some(address.address_latitude()),
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn compare(partial: &PartialAddress, addresses: &Addresses) -> MatchPartialRecords {
+        let mut records = Vec::new();
+        for address in addresses.records.clone() {
+            let coincident = MatchPartialRecord::coincident(partial, &address);
+            if let Some(record) = coincident {
+                records.push(record);
+            }
+        }
+        if records.is_empty() {
+            records.push(MatchPartialRecord {
+                match_status: MatchStatus::Missing,
+                address_label: partial.label(),
+                other_label: None,
+                other_id: None,
+                longitude: None,
+                latitude: None,
+            })
+        }
+        MatchPartialRecords { records }
+    }
+
+    pub fn address_label(&self) -> String {
+        self.address_label.to_owned()
+    }
+
+    pub fn other_label(&self) -> Option<String> {
+        self.other_label.clone()
+    }
+
+    pub fn other_id(&self) -> Option<i64> {
+        self.other_id.clone()
+    }
+
+    pub fn longitude(&self) -> Option<f64> {
+        self.longitude.clone()
+    }
+
+    pub fn latitude(&self) -> Option<f64> {
+        self.latitude.clone()
+    }
+}
+
+#[derive(Clone)]
+pub struct MatchPartialRecords {
+    records: Vec<MatchPartialRecord>,
+}
+
+impl MatchPartialRecords {
+
+    pub fn compare_partial(self_addresses: &PartialAddresses, other_addresses: &Addresses) -> Self {
+        let style = indicatif::ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
+        )
+        .unwrap();
+        let record = self_addresses.records()
+            .par_iter()
+            .map(|address| MatchPartialRecord::compare(address, other_addresses))
+            .progress_with_style(style)
+            .collect::<Vec<MatchPartialRecords>>();
+        let mut records = Vec::new();
+        for mut item in record {
+            records.append(&mut item.records);
+        }
+        MatchPartialRecords { records }
+    }
+
+    pub fn records(&self) -> Vec<MatchPartialRecord> {
+        self.records.clone()
+    }
+}
+

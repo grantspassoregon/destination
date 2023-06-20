@@ -454,39 +454,39 @@ fn address_parser() {
     let a5 = "932 SW MOUNTAIN VIEW AVE Food Trailer, Grants Pass";
 
     let mut a1_comp = PartialAddress::new();
-    a1_comp.address_number(1002);
-    a1_comp.street_name("RAMSEY");
-    a1_comp.post_type(&StreetNamePostType::AVENUE);
+    a1_comp.set_address_number(1002);
+    a1_comp.set_street_name("RAMSEY");
+    a1_comp.set_post_type(&StreetNamePostType::AVENUE);
     let (_, a1_parsed) = parse_address(a1).unwrap();
 
     let mut a2_comp = PartialAddress::new();
-    a2_comp.address_number(1012);
-    a2_comp.pre_directional(&StreetNamePreDirectional::NORTHWEST);
-    a2_comp.street_name("6TH");
-    a2_comp.post_type(&StreetNamePostType::STREET);
+    a2_comp.set_address_number(1012);
+    a2_comp.set_pre_directional(&StreetNamePreDirectional::NORTHWEST);
+    a2_comp.set_street_name("6TH");
+    a2_comp.set_post_type(&StreetNamePostType::STREET);
     let (_, a2_parsed) = parse_address(a2).unwrap();
 
     let mut a3_comp = PartialAddress::new();
-    a3_comp.address_number(1035);
-    a3_comp.pre_directional(&StreetNamePreDirectional::NORTHEAST);
-    a3_comp.street_name("6TH");
-    a3_comp.post_type(&StreetNamePostType::STREET);
-    a3_comp.subaddress_identifier("B");
+    a3_comp.set_address_number(1035);
+    a3_comp.set_pre_directional(&StreetNamePreDirectional::NORTHEAST);
+    a3_comp.set_street_name("6TH");
+    a3_comp.set_post_type(&StreetNamePostType::STREET);
+    a3_comp.set_subaddress_identifier("B");
     let (_, a3_parsed) = parse_address(a3).unwrap();
 
     let mut a4_comp = PartialAddress::new();
-    a4_comp.address_number(1072);
-    a4_comp.street_name("ROGUE RIVER");
-    a4_comp.post_type(&StreetNamePostType::HIGHWAY);
-    a4_comp.subaddress_identifier("A B");
+    a4_comp.set_address_number(1072);
+    a4_comp.set_street_name("ROGUE RIVER");
+    a4_comp.set_post_type(&StreetNamePostType::HIGHWAY);
+    a4_comp.set_subaddress_identifier("A B");
     let (_, a4_parsed) = parse_address(a4).unwrap();
 
     let mut a5_comp = PartialAddress::new();
-    a5_comp.address_number(932);
-    a5_comp.pre_directional(&StreetNamePreDirectional::SOUTHWEST);
-    a5_comp.street_name("MOUNTAIN VIEW");
-    a5_comp.post_type(&StreetNamePostType::AVENUE);
-    a5_comp.subaddress_identifier("Food Trailer");
+    a5_comp.set_address_number(932);
+    a5_comp.set_pre_directional(&StreetNamePreDirectional::SOUTHWEST);
+    a5_comp.set_street_name("MOUNTAIN VIEW");
+    a5_comp.set_post_type(&StreetNamePostType::AVENUE);
+    a5_comp.set_subaddress_identifier("Food Trailer");
     let (_, a5_parsed) = parse_address(a5).unwrap();
 
     assert_eq!(a1_parsed, a1_comp);
@@ -504,8 +504,26 @@ fn load_fire_inspections() -> Result<(), AddressError> {
     {};
     let file_path = "p:/fire_inspection.csv";
     let fire = FireInspections::from_csv(file_path)?;
-    info!("First address: {:?}", fire.records[0]);
+    info!("First address: {:?}", fire.records()[0]);
+    Ok(())
+}
 
+#[test]
+fn compare_fire_inspections() -> Result<(), AddressError> {
+    if let Ok(()) = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+    {};
+    let file_path = "p:/fire_inspection.csv";
+    let fire = FireInspections::from_csv(file_path)?;
+    let fire = PartialAddresses::from(&fire);
+
+    let file_path = "c:/users/erose/documents/addresses_20230411.csv";
+    let addresses = CityAddresses::from_csv(file_path)?;
+    let addresses = Addresses::from(addresses);
+    let match_records = MatchPartialRecords::compare_partial(&fire, &addresses);
+    info!("First match is: {:?}", match_records.records()[0]);
+    info!("Match 100 is: {:?}", match_records.records()[99]);
 
     Ok(())
 }

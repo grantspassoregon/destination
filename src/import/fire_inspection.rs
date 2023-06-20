@@ -40,6 +40,24 @@ pub struct FireInspection {
     subclass: Option<String>,
 }
 
+impl FireInspection {
+    pub fn name(&self) -> String {
+        self.name.to_owned()
+    }
+
+    pub fn address(&self) -> PartialAddress {
+        self.address.clone()
+    }
+
+    pub fn class(&self) -> Option<String> {
+        self.class.clone()
+    }
+
+    pub fn subclass(&self) -> Option<String> {
+        self.subclass.clone()
+    }
+}
+
 impl TryFrom<FireInspectionRaw> for FireInspection {
     type Error = AddressError;
 
@@ -59,7 +77,7 @@ impl TryFrom<FireInspectionRaw> for FireInspection {
 
 #[derive(Debug, Clone)]
 pub struct FireInspections {
-    pub records: Vec<FireInspection>,
+    records: Vec<FireInspection>,
 }
 
 impl FireInspections {
@@ -70,6 +88,10 @@ impl FireInspections {
             records.push(FireInspection::try_from(record)?);
         }
         Ok(FireInspections { records })
+    }
+
+    pub fn records(&self) -> Vec<FireInspection> {
+        self.records.clone()
     }
 }
 

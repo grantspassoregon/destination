@@ -73,3 +73,20 @@ pub fn deserialize_mixed_pre_directional<'de, D: Deserializer<'de>>(
         _ => Ok(None),
     }
 }
+
+impl std::fmt::Display for StreetNamePreDirectional {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let mut out = "".to_owned();
+        match self {
+            StreetNamePreDirectional::NORTH => out.push_str("N"),
+            StreetNamePreDirectional::SOUTH => out.push_str("S"),
+            StreetNamePreDirectional::EAST => out.push_str("E"),
+            StreetNamePreDirectional::WEST => out.push_str("W"),
+            StreetNamePreDirectional::NORTHEAST => out.push_str("NE"),
+            StreetNamePreDirectional::NORTHWEST => out.push_str("NW"),
+            StreetNamePreDirectional::SOUTHEAST => out.push_str("SE"),
+            StreetNamePreDirectional::SOUTHWEST => out.push_str("SW"),
+        }
+        write!(f, "{}", out)
+    }
+}

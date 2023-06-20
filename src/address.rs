@@ -425,27 +425,109 @@ impl PartialAddress {
         PartialAddress::default()
     }
 
-    pub fn address_number(&mut self, value: i64) {
+    pub fn address_number(&self) -> Option<i64> {
+        self.address_number
+    }
+    
+    pub fn address_number_suffix(&self) -> Option<String> {
+        self.address_number_suffix.clone()
+    }
+    
+    pub fn street_name_pre_directional(&self) -> Option<StreetNamePreDirectional> {
+        self.street_name_pre_directional
+    }
+    
+    pub fn street_name(&self) -> Option<String> {
+        self.street_name.clone()
+    }
+    
+    pub fn street_name_post_type(&self) -> Option<StreetNamePostType> {
+        self.street_name_post_type
+    }
+    
+    pub fn subaddress_type(&self) -> Option<SubaddressType> {
+        self.subaddress_type
+    }
+    
+    pub fn subaddress_identifier(&self) -> Option<String> {
+        self.subaddress_identifier.clone()
+    }
+
+    pub fn set_address_number(&mut self, value: i64) {
         self.address_number = Some(value);
     }
 
-    pub fn pre_directional(&mut self, value: &StreetNamePreDirectional) {
+    pub fn set_pre_directional(&mut self, value: &StreetNamePreDirectional) {
         self.street_name_pre_directional = Some(value.to_owned());
     }
 
-    pub fn street_name(&mut self, value: &str) {
+    pub fn set_street_name(&mut self, value: &str) {
         self.street_name = Some(value.to_owned());
     }
 
-    pub fn post_type(&mut self, value: &StreetNamePostType) {
+    pub fn set_post_type(&mut self, value: &StreetNamePostType) {
         self.street_name_post_type = Some(value.to_owned());
     }
 
-    pub fn subaddress_type(&mut self, value: &SubaddressType) {
+    pub fn set_subaddress_type(&mut self, value: &SubaddressType) {
         self.subaddress_type = Some(value.to_owned());
     }
 
-    pub fn subaddress_identifier(&mut self, value: &str) {
+    pub fn set_subaddress_identifier(&mut self, value: &str) {
         self.subaddress_identifier = Some(value.to_owned());
     }
+
+    pub fn label(&self) -> String {
+        let complete_address_number = match &self.address_number_suffix {
+            Some(suffix) => format!("{:?} {}", self.address_number, suffix),
+            None => format!("{:?}", self.address_number),
+        };
+        let complete_street_name = match self.street_name_pre_directional {
+            Some(pre_directional) => format!(
+                "{:?} {:?} {:?}",
+                pre_directional, self.street_name, self.street_name_post_type
+            ),
+            None => format!("{:?} {:?}", self.street_name, self.street_name_post_type),
+        };
+        let complete_subaddress = match &self.subaddress_identifier {
+            Some(identifier) => match self.subaddress_type {
+                Some(subaddress_type) => Some(format!("{:?} {}", subaddress_type, identifier)),
+                None => Some(format!("#{}", identifier)),
+            },
+            None => self
+                .subaddress_type
+                .map(|subaddress_type| format!("{:?}", subaddress_type)),
+        };
+        match complete_subaddress {
+            Some(subaddress) => format!(
+                "{} {} {}",
+                complete_address_number, complete_street_name, subaddress
+            ),
+            None => format!("{} {}", complete_address_number, complete_street_name),
+        }
+    }
+
 }
+
+pub struct PartialAddresses {
+    records: Vec<PartialAddress>
+}
+
+impl PartialAddresses {
+    pub fn records(&self) -> Vec<PartialAddress> {
+        self.records.clone()
+    }
+}
+
+impl From<Vec<PartialAddress>> for PartialAddresses {
+    fn from(records: Vec<PartialAddress>) -> Self {
+        PartialAddresses { records }
+    }
+}
+
+impl From<&FireInspections> for PartialAddresses {
+    fn from(fire_inspections: &FireInspections) -> Self {
+        PartialAddresses::from(fire_inspections.records().iter().map(|r| r.address()).collect::<Vec<PartialAddress>>())
+    }
+}
+
