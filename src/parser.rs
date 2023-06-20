@@ -1,12 +1,10 @@
+use crate::address::*;
 use crate::address_components::*;
-use crate::data::*;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_until};
 use nom::character::complete::{alpha1, alphanumeric1, digit1, space0};
 use nom::combinator::{map_res, opt};
 use nom::IResult;
-// use serde::de::Deserializer;
-// use serde::{Deserialize};
 
 pub fn parse_address_number(input: &str) -> IResult<&str, i64> {
     map_res(digit1, str::parse)(input)

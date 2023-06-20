@@ -1,8 +1,10 @@
+use address::address::*;
 use address::address_components::*;
 use address::business::*;
-use address::data::*;
+use address::compare::*;
+use address::error::AddressError;
+use address::import::*;
 use address::parser::*;
-use std::error;
 use tracing::info;
 
 #[test]
@@ -492,4 +494,18 @@ fn address_parser() {
     assert_eq!(a3_parsed, a3_comp);
     assert_eq!(a4_parsed, a4_comp);
     assert_eq!(a5_parsed, a5_comp);
+}
+
+#[test]
+fn load_fire_inspections() -> Result<(), AddressError> {
+    if let Ok(()) = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+    {};
+    let file_path = "p:/fire_inspection.csv";
+    let fire = FireInspections::from_csv(file_path)?;
+    info!("First address: {:?}", fire.records[0]);
+
+
+    Ok(())
 }
