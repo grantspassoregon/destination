@@ -527,3 +527,16 @@ fn compare_fire_inspections() -> Result<(), AddressError> {
 
     Ok(())
 }
+
+#[test]
+fn load_businesses() -> Result<(), AddressError> {
+    if let Ok(()) = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+    {};
+    let file_path = "p:/business_points.csv";
+    let data = BusinessesRaw::from_csv(file_path)?;
+    info!("First address: {:?}", data.records()[0]);
+    let parsed = Business::try_from(data.records[0])?;
+    Ok(())
+}
