@@ -29,10 +29,9 @@ impl FireInspectionsRaw {
 
         Ok(FireInspectionsRaw { records: data })
     }
-
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct FireInspection {
     name: String,
     address: PartialAddress,
@@ -64,12 +63,17 @@ impl TryFrom<FireInspectionRaw> for FireInspection {
     fn try_from(raw: FireInspectionRaw) -> Result<Self, Self::Error> {
         match parse_address(&raw.address) {
             Ok((_, address)) => {
-                Ok(FireInspection { 
-                    name: raw.name, 
-                    address, 
-                    class: raw.class, 
-                    subclass: raw.subclass, 
-                })},
+                let mut upper_address = address.clone();
+                if let Some(identifier) = address.subaddress_identifier() {
+                    upper_address.set_subaddress_identifier(&identifier.to_uppercase())
+                };
+                Ok(FireInspection {
+                    name: raw.name,
+                    address: upper_address,
+                    class: raw.class,
+                    subclass: raw.subclass,
+                })
+            }
             Err(_) => Err(AddressError::ParseError),
         }
     }
@@ -94,4 +98,3 @@ impl FireInspections {
         self.records.clone()
     }
 }
-

@@ -3,11 +3,28 @@ use crate::address_components::*;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_until};
 use nom::character::complete::{alpha1, alphanumeric1, digit1, space0};
+use nom::character::is_alphanumeric;
 use nom::combinator::{map_res, opt};
 use nom::IResult;
 
 pub fn parse_address_number(input: &str) -> IResult<&str, i64> {
     map_res(digit1, str::parse)(input)
+}
+
+pub fn parse_address_number_suffix(input: &str) -> IResult<&str, Option<&str>> {
+    let (remaining, _) = space0(input)?;
+    let (rem, suffix) = take_until(" ")(remaining)?;
+    if suffix.len() > 1 {
+        match !is_alphanumeric(suffix.as_bytes()[1]) {
+            true => Ok((rem, Some(suffix))),
+            false => Ok((remaining, None)),
+        }
+    } else {
+        Ok((remaining, None))
+    }
+    // let (rem, num) = digit1(rem)?;
+    // let (rem, div) = tag("/")(rem)?;
+    // let (rem, den) = digit1(rem)?;
 }
 
 pub fn parse_pre_directional(input: &str) -> IResult<&str, Option<StreetNamePreDirectional>> {
@@ -86,7 +103,7 @@ pub fn recursive_post_type(input: &str) -> IResult<&str, Vec<StreetNamePostType>
                     Some(val_type) => {
                         post_type.push(val_type);
                         remaining = rem;
-                    },
+                    }
                     None => cond = false,
                 }
             }
@@ -125,6 +142,19 @@ pub fn parse_complete_street_name(
     Ok((rem, (predir, name, post)))
 }
 
+pub fn parse_subaddress_type(input: &str) -> IResult<&str, Option<SubaddressType>> {
+    let (rem, next) = opt(single_word)(input)?;
+    let subtype = if let Some(word) = next {
+        match_mixed_subaddress_type(word)
+    } else {
+        None
+    };
+    match subtype {
+        Some(_) => Ok((rem, subtype)),
+        None => Ok((input, subtype)),
+    }
+}
+
 pub fn parse_subaddress_element(input: &str) -> IResult<&str, Option<&str>> {
     let (next, _) = space0(input)?;
     let mut element = next;
@@ -137,7 +167,7 @@ pub fn parse_subaddress_element(input: &str) -> IResult<&str, Option<&str>> {
     let (element, _) = opt(alt((tag("#"), tag("&"))))(element)?;
     match element {
         "" => Ok((remaining, None)),
-        value => Ok((remaining, Some(value)))
+        value => Ok((remaining, Some(value))),
     }
 }
 
@@ -158,7 +188,7 @@ pub fn parse_subaddress_elements(input: &str) -> IResult<&str, Vec<&str>> {
     Ok((remaining, elements))
 }
 
-pub fn parse_subaddress(input: &str) -> IResult<&str, Option<Vec<&str>>> {
+pub fn parse_subaddress_identifiers(input: &str) -> IResult<&str, Option<Vec<&str>>> {
     let mut subaddress = None;
     let (rem, next) = opt(take_until(","))(input)?;
     let mut remaining = rem;
@@ -168,7 +198,7 @@ pub fn parse_subaddress(input: &str) -> IResult<&str, Option<Vec<&str>>> {
             if !elements.is_empty() {
                 subaddress = Some(elements);
             }
-        },
+        }
         None => {
             let (rem, elements) = parse_subaddress_elements(remaining)?;
             if !elements.is_empty() {
@@ -184,6 +214,8 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
     let mut address = PartialAddress::new();
     let (rem, address_number) = parse_address_number(input)?;
     address.set_address_number(address_number);
+    let (rem, suffix) = parse_address_number_suffix(rem)?;
+    address.set_address_number_suffix(suffix);
     let (rem, (predir, name, post_type)) = parse_complete_street_name(rem)?;
     if let Some(value) = predir {
         address.set_pre_directional(&value)
@@ -201,7 +233,11 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
     }
     address.set_street_name(&street_name);
     address.set_post_type(&post_type);
-    let (rem, elements) = parse_subaddress(rem)?;
+    let (rem, subtype) = parse_subaddress_type(rem)?;
+    if let Some(value) = subtype {
+        address.set_subaddress_type(&value);
+    }
+    let (rem, elements) = parse_subaddress_identifiers(rem)?;
     if let Some(value) = elements {
         let mut subaddress_identifier = value[0].to_owned();
         if value.len() > 1 {

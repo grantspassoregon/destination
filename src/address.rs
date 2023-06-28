@@ -1,7 +1,7 @@
 use crate::address_components::*;
 use crate::business::*;
-use crate::import::*;
 use crate::compare::*;
+use crate::import::*;
 use indicatif::ProgressBar;
 // use indicatif::ProgressIterator;
 use rayon::prelude::*;
@@ -78,6 +78,14 @@ impl Address {
             ),
             None => format!("{} {:?}", self.street_name, self.street_name_post_type),
         };
+
+        let accessory = match self.building() {
+            Some(value) => Some(format!("BLDG {}", value)),
+            None => None // match self.floor() {
+                // Some(value) => Some(format!("FLR {}", value)),
+                // None => None,
+            // },
+        };
         let complete_subaddress = match &self.subaddress_identifier {
             Some(identifier) => match self.subaddress_type {
                 Some(subaddress_type) => Some(format!("{:?} {}", subaddress_type, identifier)),
@@ -92,7 +100,13 @@ impl Address {
                 "{} {} {}",
                 complete_address_number, complete_street_name, subaddress
             ),
-            None => format!("{} {}", complete_address_number, complete_street_name),
+            None => match accessory {
+                Some(value) => format!(
+                    "{} {} {}",
+                    complete_address_number, complete_street_name, value
+                ),
+                None => format!("{} {}", complete_address_number, complete_street_name),
+            },
         }
     }
 
@@ -118,6 +132,10 @@ impl Address {
 
     pub fn floor(&self) -> Option<i64> {
         self.floor
+    }
+
+    pub fn building(&self) -> Option<String> {
+        self.building.to_owned()
     }
 
     pub fn zip_code(&self) -> i64 {
@@ -365,6 +383,10 @@ impl Addresses {
         wtr.flush()?;
         Ok(())
     }
+
+    pub fn records(&self) -> Vec<Address> {
+        self.records.to_owned()
+    }
 }
 
 impl From<CityAddresses> for Addresses {
@@ -428,33 +450,49 @@ impl PartialAddress {
     pub fn address_number(&self) -> Option<i64> {
         self.address_number
     }
-    
+
     pub fn address_number_suffix(&self) -> Option<String> {
         self.address_number_suffix.clone()
     }
-    
+
     pub fn street_name_pre_directional(&self) -> Option<StreetNamePreDirectional> {
         self.street_name_pre_directional
     }
-    
+
     pub fn street_name(&self) -> Option<String> {
         self.street_name.clone()
     }
-    
+
     pub fn street_name_post_type(&self) -> Option<StreetNamePostType> {
         self.street_name_post_type
     }
-    
+
     pub fn subaddress_type(&self) -> Option<SubaddressType> {
         self.subaddress_type
     }
-    
+
     pub fn subaddress_identifier(&self) -> Option<String> {
         self.subaddress_identifier.clone()
     }
 
+    pub fn building(&self) -> Option<String> {
+        self.building.clone()
+    }
+
+    pub fn floor(&self) -> Option<i64> {
+        self.floor.clone()
+    }
+
     pub fn set_address_number(&mut self, value: i64) {
         self.address_number = Some(value);
+    }
+
+    pub fn set_address_number_suffix(&mut self, value: Option<&str>) {
+        if let Some(suffix) = value {
+            self.address_number_suffix = Some(suffix.to_owned());
+        } else {
+            self.address_number_suffix = None;
+        }
     }
 
     pub fn set_pre_directional(&mut self, value: &StreetNamePreDirectional) {
@@ -478,39 +516,40 @@ impl PartialAddress {
     }
 
     pub fn label(&self) -> String {
-        let complete_address_number = match &self.address_number_suffix {
-            Some(suffix) => format!("{:?} {}", self.address_number, suffix),
-            None => format!("{:?}", self.address_number),
-        };
-        let complete_street_name = match self.street_name_pre_directional {
-            Some(pre_directional) => format!(
-                "{:?} {:?} {:?}",
-                pre_directional, self.street_name, self.street_name_post_type
-            ),
-            None => format!("{:?} {:?}", self.street_name, self.street_name_post_type),
-        };
-        let complete_subaddress = match &self.subaddress_identifier {
-            Some(identifier) => match self.subaddress_type {
-                Some(subaddress_type) => Some(format!("{:?} {}", subaddress_type, identifier)),
-                None => Some(format!("#{}", identifier)),
-            },
-            None => self
-                .subaddress_type
-                .map(|subaddress_type| format!("{:?}", subaddress_type)),
-        };
-        match complete_subaddress {
-            Some(subaddress) => format!(
-                "{} {} {}",
-                complete_address_number, complete_street_name, subaddress
-            ),
-            None => format!("{} {}", complete_address_number, complete_street_name),
+        let mut address = "".to_owned();
+        if let Some(address_number) = self.address_number() {
+            address.push_str(&format!("{}", address_number));
         }
+        if let Some(address_number_suffix) = self.address_number_suffix() {
+            address.push_str(" ");
+            address.push_str(&address_number_suffix);
+        }
+        if let Some(pre_directional) = self.street_name_pre_directional() {
+            address.push_str(" ");
+            address.push_str(&format!("{:?}", pre_directional));
+        }
+        if let Some(street_name) = self.street_name() {
+            address.push_str(" ");
+            address.push_str(&street_name);
+        }
+        if let Some(post_type) = self.street_name_post_type() {
+            address.push_str(" ");
+            address.push_str(&format!("{:?}", post_type));
+        }
+        if let Some(subtype) = self.subaddress_type() {
+            address.push_str(" ");
+            address.push_str(&format!("{:?}", subtype));
+        }
+        if let Some(subaddress_identifier) = self.subaddress_identifier() {
+            address.push_str(" ");
+            address.push_str(&subaddress_identifier);
+        }
+        address
     }
-
 }
 
 pub struct PartialAddresses {
-    records: Vec<PartialAddress>
+    records: Vec<PartialAddress>,
 }
 
 impl PartialAddresses {
@@ -527,7 +566,12 @@ impl From<Vec<PartialAddress>> for PartialAddresses {
 
 impl From<&FireInspections> for PartialAddresses {
     fn from(fire_inspections: &FireInspections) -> Self {
-        PartialAddresses::from(fire_inspections.records().iter().map(|r| r.address()).collect::<Vec<PartialAddress>>())
+        PartialAddresses::from(
+            fire_inspections
+                .records()
+                .iter()
+                .map(|r| r.address())
+                .collect::<Vec<PartialAddress>>(),
+        )
     }
 }
-

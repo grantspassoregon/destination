@@ -1,7 +1,5 @@
-use crate::{address::PartialAddress, parser::parse_address};
-use crate::address_components::*;
 use crate::error::AddressError;
-use crate::utils::*;
+use crate::{address::PartialAddress, parser::parse_address};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -121,23 +119,21 @@ impl TryFrom<BusinessRaw> for Business {
 
     fn try_from(raw: BusinessRaw) -> Result<Self, Self::Error> {
         match parse_address(&raw.street_address_label) {
-            Ok((_, address)) => {
-                Ok(Business {
-                    company_name: raw.company_name,
-                    contact_name: raw.contact_name,
-                    dba: raw.dba,
-                    address,
-                    license: raw.license,
-                    industry_code: raw.industry_code,
-                    industry_name: raw.industry_name,
-                    sector_code: raw.sector_code,
-                    sector_name: raw.sector_name,
-                    subsector_code: raw.subsector_code,
-                    subsector_name: raw.subsector_name,
-                    tourism: raw.tourism,
-                    district: raw.district,
-                })
-            },
+            Ok((_, address)) => Ok(Business {
+                company_name: raw.company_name,
+                contact_name: raw.contact_name,
+                dba: raw.dba,
+                address,
+                license: raw.license,
+                industry_code: raw.industry_code,
+                industry_name: raw.industry_name,
+                sector_code: raw.sector_code,
+                sector_name: raw.sector_name,
+                subsector_code: raw.subsector_code,
+                subsector_name: raw.subsector_name,
+                tourism: raw.tourism,
+                district: raw.district,
+            }),
             Err(_) => Err(AddressError::ParseError),
         }
     }
@@ -162,4 +158,3 @@ impl Businesses {
         self.records.clone()
     }
 }
-

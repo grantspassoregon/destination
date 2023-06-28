@@ -201,7 +201,7 @@ fn match_city_addresses() -> Result<(), std::io::Error> {
     let county_addresses = CountyAddresses::from_csv(county_path)?;
     let target_addresses = Addresses::from(county_addresses);
     let match_records = MatchRecords::compare(
-        &source_addresses.records[(0..10)].to_vec(),
+        &source_addresses.records[0..10].to_vec(),
         &target_addresses.records,
     );
     info!("Records: {:?}", match_records.records);
@@ -226,7 +226,7 @@ fn filter_status() -> Result<(), std::io::Error> {
     let county_addresses = CountyAddresses::from_csv(county_path)?;
     let target_addresses = Addresses::from(county_addresses);
     let match_records = MatchRecords::compare(
-        &source_addresses.records[(0..10)].to_vec(),
+        &source_addresses.records[0..10].to_vec(),
         &target_addresses.records,
     );
     let filtered = match_records.filter("status");
@@ -252,7 +252,7 @@ fn filter_missing() -> Result<(), std::io::Error> {
     let county_addresses = CountyAddresses::from_csv(county_path)?;
     let target_addresses = Addresses::from(county_addresses);
     let match_records = MatchRecords::compare(
-        &source_addresses.records[(0..100)].to_vec(),
+        &source_addresses.records[0..100].to_vec(),
         &target_addresses.records,
     );
     let filtered = match_records.filter("missing");
@@ -275,6 +275,27 @@ fn address_number_parser() {
         parse_address_number(&a3),
         Ok((" LEWIS AVE, Grants Pass", 100))
     );
+}
+
+#[test]
+fn address_number_suffix_parser() {
+    let a1 = "1/2 LEWIS AVE";
+    let a2 = " 1/2 LEWIS AVE";
+    let a3 = " 3/4 LEWIS AVE";
+    let a4 = " LEWIS AVE";
+    assert_eq!(
+        parse_address_number_suffix(a1),
+        Ok((" LEWIS AVE", Some("1/2")))
+    );
+    assert_eq!(
+        parse_address_number_suffix(a2),
+        Ok((" LEWIS AVE", Some("1/2")))
+    );
+    assert_eq!(
+        parse_address_number_suffix(a3),
+        Ok((" LEWIS AVE", Some("3/4")))
+    );
+    assert_eq!(parse_address_number_suffix(a4), Ok(("LEWIS AVE", None)));
 }
 
 #[test]
@@ -389,7 +410,14 @@ fn complete_street_name_parser() {
     );
     assert_eq!(
         parse_complete_street_name(a2),
-        Ok(("", (Some(StreetNamePreDirectional::NORTHWEST), vec!["CENTURYLINK"], StreetNamePostType::DRIVE)))
+        Ok((
+            "",
+            (
+                Some(StreetNamePreDirectional::NORTHWEST),
+                vec!["CENTURYLINK"],
+                StreetNamePostType::DRIVE
+            )
+        ))
     );
     assert_eq!(
         parse_complete_street_name(a3),
@@ -405,6 +433,28 @@ fn complete_street_name_parser() {
             (None, vec!["MOUNTAIN", "VIEW"], StreetNamePostType::AVENUE)
         ))
     );
+}
+
+#[test]
+fn subaddress_type_parser() {
+    let a1 = " STE A";
+    let a2 = " SUITE B";
+    let a3 = "UNIT 1";
+    let a4 = " #A";
+
+    assert_eq!(
+        parse_subaddress_type(a1),
+        Ok((" A", Some(SubaddressType::Suite)))
+    );
+    assert_eq!(
+        parse_subaddress_type(a2),
+        Ok((" B", Some(SubaddressType::Suite)))
+    );
+    assert_eq!(
+        parse_subaddress_type(a3),
+        Ok((" 1", Some(SubaddressType::Unit)))
+    );
+    assert_eq!(parse_subaddress_type(a4), Ok((" #A", None)));
 }
 
 #[test]
@@ -425,24 +475,39 @@ fn subaddress_elements_parser() {
     let a2 = " Food Trailer";
     let a3 = "";
     assert_eq!(parse_subaddress_elements(a1), Ok(("", vec!["A", "B"])));
-    assert_eq!(parse_subaddress_elements(a2), Ok(("", vec!["Food", "Trailer"])));
+    assert_eq!(
+        parse_subaddress_elements(a2),
+        Ok(("", vec!["Food", "Trailer"]))
+    );
     assert_eq!(parse_subaddress_elements(a3), Ok(("", Vec::new())));
 }
 
 #[test]
-fn subaddress_parser() {
+fn subaddress_identifiers_parser() {
     let a1 = " A";
     let a2 = " #B, Grants Pass";
     let a3 = "";
     let a4 = " #A & B";
     let a5 = " Mac's";
     let a6 = " Food Trailer, Grants Pass";
-    assert_eq!(parse_subaddress(a3), Ok(("", None)));
-    assert_eq!(parse_subaddress(a1), Ok(("", Some(vec!["A"]))));
-    assert_eq!(parse_subaddress(a2), Ok((", Grants Pass", Some(vec!["B"]))));
-    assert_eq!(parse_subaddress(a4), Ok(("", Some(vec!["A", "B"]))));
-    assert_eq!(parse_subaddress(a5), Ok(("", Some(vec!["Mac's"]))));
-    assert_eq!(parse_subaddress(a6), Ok((", Grants Pass", Some(vec!["Food", "Trailer"]))));
+    assert_eq!(parse_subaddress_identifiers(a3), Ok(("", None)));
+    assert_eq!(parse_subaddress_identifiers(a1), Ok(("", Some(vec!["A"]))));
+    assert_eq!(
+        parse_subaddress_identifiers(a2),
+        Ok((", Grants Pass", Some(vec!["B"])))
+    );
+    assert_eq!(
+        parse_subaddress_identifiers(a4),
+        Ok(("", Some(vec!["A", "B"])))
+    );
+    assert_eq!(
+        parse_subaddress_identifiers(a5),
+        Ok(("", Some(vec!["Mac's"])))
+    );
+    assert_eq!(
+        parse_subaddress_identifiers(a6),
+        Ok((", Grants Pass", Some(vec!["Food", "Trailer"])))
+    );
 }
 
 #[test]
@@ -452,6 +517,8 @@ fn address_parser() {
     let a3 = "1035 NE 6TH ST #B, GRANTS PASS";
     let a4 = "1072 ROGUE RIVER HWY #A & B, Grants Pass";
     let a5 = "932 SW MOUNTAIN VIEW AVE Food Trailer, Grants Pass";
+    let a6 = "1650 1/2 NE TERRACE DR";
+    let a7 = "212 NE SAVAGE ST STE A";
 
     let mut a1_comp = PartialAddress::new();
     a1_comp.set_address_number(1002);
@@ -489,11 +556,30 @@ fn address_parser() {
     a5_comp.set_subaddress_identifier("Food Trailer");
     let (_, a5_parsed) = parse_address(a5).unwrap();
 
+    let mut a6_comp = PartialAddress::new();
+    a6_comp.set_address_number(1650);
+    a6_comp.set_address_number_suffix(Some("1/2"));
+    a6_comp.set_pre_directional(&StreetNamePreDirectional::NORTHEAST);
+    a6_comp.set_street_name("TERRACE");
+    a6_comp.set_post_type(&StreetNamePostType::DRIVE);
+    let (_, a6_parsed) = parse_address(a6).unwrap();
+
+    let mut a7_comp = PartialAddress::new();
+    a7_comp.set_address_number(212);
+    a7_comp.set_pre_directional(&StreetNamePreDirectional::NORTHEAST);
+    a7_comp.set_street_name("SAVAGE");
+    a7_comp.set_post_type(&StreetNamePostType::STREET);
+    a7_comp.set_subaddress_type(&SubaddressType::Suite);
+    a7_comp.set_subaddress_identifier("A");
+    let (_, a7_parsed) = parse_address(a7).unwrap();
+
     assert_eq!(a1_parsed, a1_comp);
     assert_eq!(a2_parsed, a2_comp);
     assert_eq!(a3_parsed, a3_comp);
     assert_eq!(a4_parsed, a4_comp);
     assert_eq!(a5_parsed, a5_comp);
+    assert_eq!(a6_parsed, a6_comp);
+    assert_eq!(a7_parsed, a7_comp);
 }
 
 #[test]
@@ -516,15 +602,28 @@ fn compare_fire_inspections() -> Result<(), AddressError> {
     {};
     let file_path = "p:/fire_inspection.csv";
     let fire = FireInspections::from_csv(file_path)?;
-    let fire = PartialAddresses::from(&fire);
-
-    let file_path = "c:/users/erose/documents/addresses_20230411.csv";
+    let path = std::env::current_dir()?;
+    let file_path = path.join("tests/test_data/city_addresses_20230626.csv");
     let addresses = CityAddresses::from_csv(file_path)?;
     let addresses = Addresses::from(addresses);
-    let match_records = MatchPartialRecords::compare_partial(&fire, &addresses);
-    info!("First match is: {:?}", match_records.records()[0]);
-    info!("Match 100 is: {:?}", match_records.records()[99]);
+    let mut compared =
+        FireInspectionMatchRecords::from(&FireInspectionMatches::compare(&fire, &addresses));
+    compared.to_csv("p:/fire_inspections_matched.csv".into())?;
+    info!("Total records: {}.", compared.records().len());
 
+    Ok(())
+}
+
+#[test]
+fn sort_fire_inspections() -> Result<(), AddressError> {
+    let file_path = "p:/fire_inspections_matched.csv";
+    let compared = FireInspectionMatchRecords::from_csv(file_path)?;
+    let mut matching = compared.filter("matching");
+    let mut divergent = compared.filter("divergent");
+    let mut missing = compared.filter("missing");
+    matching.to_csv("p:/fire_inspections_matching.csv".into())?;
+    divergent.to_csv("p:/fire_inspections_divergent.csv".into())?;
+    missing.to_csv("p:/fire_inspections_missing.csv".into())?;
     Ok(())
 }
 
@@ -534,9 +633,23 @@ fn load_businesses() -> Result<(), AddressError> {
         .with_max_level(tracing::Level::TRACE)
         .try_init()
     {};
-    let file_path = "p:/business_points.csv";
-    let data = BusinessesRaw::from_csv(file_path)?;
-    info!("First address: {:?}", data.records()[0]);
-    let parsed = Business::try_from(data.records[0])?;
+    let path = std::env::current_dir()?;
+    let file_path = path.join("tests/test_data/business_points.csv");
+    let data = Businesses::from_csv(file_path)?;
+    assert_eq!(
+        Some("C".to_owned()),
+        data.records()[18].address().subaddress_identifier()
+    );
+    info!("Parses subaddress identifier with #.");
+    assert_eq!(
+        Some("1/2".to_owned()),
+        data.records()[167].address().address_number_suffix()
+    );
+    info!("Parses address number suffix 1/2.");
+    assert_eq!(
+        Some(SubaddressType::Suite),
+        data.records()[216].address().subaddress_type()
+    );
+    info!("Parses subaddress type STE.");
     Ok(())
 }
