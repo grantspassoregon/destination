@@ -3,11 +3,13 @@ use address::business::*;
 use address::compare::*;
 use address::import::*;
 use clap::Parser;
-use tracing::{error, info};
+use tracing::{error, info, trace};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
+    #[arg(short = 'c', long, help = "Command to execute.")]
+    command: String,
     #[arg(short = 's', long, help = "Path to source addresses.")]
     source: std::path::PathBuf,
     #[arg(short = 'k', long, help = "Address format for source.")]
@@ -26,7 +28,13 @@ struct Cli {
         default_missing_value = "true"
     )]
     duplicates: bool,
-    #[arg(short = 'o', long, help = "Path for output records.")]
+    #[arg(
+        short = 'o',
+        default_value = "output.csv",
+        default_missing_value = "output.csv",
+        long,
+        help = "Path for output records."
+    )]
     output: std::path::PathBuf,
     #[arg(
         short = 'b',
@@ -51,10 +59,57 @@ fn main() -> Result<(), std::io::Error> {
     {};
     info!("Subscriber initialized.");
 
+    match cli.command.as_str() {
+        "drift" => {
+            info!("Calculating spatial drift between datasets.");
+            trace!("Reading source addresses.");
+            let mut source_addresses = Addresses::default();
+            if let Some(source_type) = &cli.source_type {
+                match source_type.as_str() {
+                    "grants_pass" => {
+                        source_addresses = Addresses::from(CityAddresses::from_csv(&cli.source)?)
+                    }
+                    "grants_pass_2022" => {
+                        source_addresses =
+                            Addresses::from(GrantsPass2022Addresses::from_csv(&cli.source)?)
+                    }
+                    _ => error!("Invalid source data type."),
+                }
+            } else {
+                error!("No source data type provided.");
+            }
+
+            trace!("Reading target addresses.");
+            let mut target_addresses = Addresses::default();
+            if let Some(target) = &cli.target {
+                if let Some(target_type) = &cli.target_type {
+                    match target_type.as_str() {
+                        "grants_pass" => {
+                            target_addresses = Addresses::from(CityAddresses::from_csv(target)?)
+                        }
+                        "grants_pass_2022" => {
+                            target_addresses =
+                                Addresses::from(GrantsPass2022Addresses::from_csv(target)?)
+                        }
+                        _ => error!("Invalid target data type."),
+                    }
+                } else {
+                    error!("No target data type provided.");
+                }
+            } else {
+                error!("No target data specified.");
+            }
+
+            let mut deltas = source_addresses.deltas(&target_addresses, 99.0);
+            deltas.to_csv(cli.output.clone())?;
+        }
+        _ => {}
+    }
+
     if let Some(filter) = cli.filter {
         info!("Filtering records.");
         if cli.business {
-            let match_records = BusinessMatchRecords::from_csv(cli.source)?;
+            let match_records = BusinessMatchRecords::from_csv(cli.source.clone())?;
             info!(
                 "Source records read: {} entries.",
                 match_records.records.len()
@@ -63,7 +118,7 @@ fn main() -> Result<(), std::io::Error> {
             info!("Records remaining: {} entries.", filtered.records.len());
             filtered.to_csv(cli.output)?;
         } else {
-            let match_records = MatchRecords::from_csv(cli.source)?;
+            let match_records = MatchRecords::from_csv(cli.source.clone())?;
             info!(
                 "Source records read: {} entries.",
                 match_records.records.len()
@@ -75,7 +130,7 @@ fn main() -> Result<(), std::io::Error> {
     } else if cli.business {
         info!("Matching business addresses.");
         info!("Reading source records.");
-        let source_addresses = BusinessLicenses::from_csv(cli.source)?;
+        let source_addresses = BusinessLicenses::from_csv(cli.source.clone())?;
         info!(
             "Source records read: {} entries.",
             source_addresses.records.len()
@@ -87,8 +142,8 @@ fn main() -> Result<(), std::io::Error> {
         );
         info!("Reading comparison records.");
         let mut target_addresses = Addresses::default();
-        if let Some(target) = cli.target {
-            if let Some(target_type) = cli.target_type {
+        if let Some(target) = &cli.target {
+            if let Some(target_type) = &cli.target_type {
                 match target_type.as_str() {
                     "grants_pass" => {
                         target_addresses = Addresses::from(CityAddresses::from_csv(target)?)
@@ -108,7 +163,7 @@ fn main() -> Result<(), std::io::Error> {
         if let Some(alternate) = cli.alternate {
             info!("Comparing multiple targets.");
             let mut alt_target = Addresses::default();
-            if let Some(target_type) = cli.alternate_type {
+            if let Some(target_type) = &cli.alternate_type {
                 match target_type.as_str() {
                     "grants_pass" => {
                         alt_target = Addresses::from(CityAddresses::from_csv(alternate)?)
@@ -143,7 +198,7 @@ fn main() -> Result<(), std::io::Error> {
         info!("Matching addresses.");
         info!("Reading source records.");
         let mut source_addresses = Addresses::default();
-        if let Some(source_type) = cli.source_type {
+        if let Some(source_type) = &cli.source_type {
             match source_type.as_str() {
                 "grants_pass" => {
                     source_addresses = Addresses::from(CityAddresses::from_csv(cli.source)?)

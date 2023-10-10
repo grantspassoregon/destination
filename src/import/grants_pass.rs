@@ -177,3 +177,219 @@ impl CityAddresses {
         Ok(CityAddresses { records: data })
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct OldCityAddress {
+    #[serde(rename(deserialize = "OID_"))]
+    object_id: i64,
+    #[serde(rename(deserialize = "ADDRNUM"))]
+    address_number: i64,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "APARTMENT")
+    )]
+    subaddress_identifier: Option<String>,
+    #[serde(deserialize_with = "csv::invalid_option")]
+    floor: Option<i64>,
+    #[serde(
+        deserialize_with = "csv::invalid_option",
+        rename(deserialize = "ROADPREDIR")
+    )]
+    street_name_pre_directional: Option<StreetNamePreDirectional>,
+    #[serde(rename(deserialize = "ROADNAME"))]
+    street_name: String,
+    #[serde(rename(deserialize = "ROADTYPE"))]
+    street_name_post_type: StreetNamePostType,
+    #[serde(rename(deserialize = "GlobalID"))]
+    global_id: String,
+    #[serde(rename(deserialize = "AddressYCoordinate"))]
+    address_latitude: f64,
+    #[serde(rename(deserialize = "AddressXCoordinate"))]
+    address_longitude: f64,
+}
+
+impl OldCityAddress {
+    pub fn address_number(&self) -> i64 {
+        self.address_number
+    }
+
+    pub fn street_name(&self) -> String {
+        self.street_name.to_owned()
+    }
+
+    pub fn street_name_pre_directional(&self) -> Option<StreetNamePreDirectional> {
+        self.street_name_pre_directional
+    }
+
+    pub fn street_name_post_type(&self) -> StreetNamePostType {
+        self.street_name_post_type
+    }
+
+    pub fn subaddress_identifier(&self) -> Option<String> {
+        self.subaddress_identifier.to_owned()
+    }
+
+    pub fn floor(&self) -> Option<i64> {
+        self.floor
+    }
+
+    pub fn object_id(&self) -> i64 {
+        self.object_id
+    }
+
+    pub fn global_id(&self) -> String {
+        self.global_id.clone()
+    }
+
+    pub fn global_id_ref(&self) -> &String {
+        &self.global_id
+    }
+
+    pub fn address_latitude(&self) -> f64 {
+        self.address_latitude
+    }
+
+    pub fn address_longitude(&self) -> f64 {
+        self.address_longitude
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct OldCityAddresses {
+    pub records: Vec<OldCityAddress>,
+}
+
+impl OldCityAddresses {
+    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
+        let mut data = Vec::new();
+        let file = std::fs::File::open(path)?;
+        let mut rdr = csv::Reader::from_reader(file);
+
+        for result in rdr.deserialize() {
+            let record: OldCityAddress = result?;
+            data.push(record);
+        }
+
+        Ok(OldCityAddresses { records: data })
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct GrantsPass2022Address {
+    #[serde(rename(deserialize = "OID_"))]
+    object_id: i64,
+    #[serde(rename(deserialize = "ADDRNUM"))]
+    address_number: i64,
+    #[serde(
+        deserialize_with = "csv::invalid_option",
+        rename(deserialize = "ROADPREDIR")
+    )]
+    street_name_pre_directional: Option<StreetNamePreDirectional>,
+    #[serde(rename(deserialize = "ROADNAME"))]
+    street_name: String,
+    #[serde(
+        rename(deserialize = "ROADTYPE"),
+        deserialize_with = "deserialize_mixed_post_type"
+    )]
+    street_name_post_type: Option<StreetNamePostType>,
+    #[serde(
+        rename(deserialize = "APARTMENT"),
+        deserialize_with = "deserialize_arcgis_data"
+    )]
+    subaddress_identifier: Option<String>,
+    #[serde(
+        rename(deserialize = "FLOOR"),
+        deserialize_with = "csv::invalid_option"
+    )]
+    floor: Option<i64>,
+    #[serde(rename(deserialize = "ZIP"))]
+    zip_code: i64,
+    #[serde(rename(deserialize = "STATUS"))]
+    status: AddressStatus,
+    #[serde(rename(deserialize = "CITY"))]
+    postal_community: String,
+    #[serde(rename(deserialize = "STATE"))]
+    state_name: String,
+    #[serde(rename(deserialize = "AddressXCoordinate"))]
+    address_latitude: f64,
+    #[serde(rename(deserialize = "AddressYCoordinate"))]
+    address_longitude: f64,
+    // #[serde(rename(deserialize = "latitude"))]
+    // address_latitude: f64,
+    // #[serde(rename(deserialize = "longitude"))]
+    // address_longitude: f64,
+}
+
+impl GrantsPass2022Address {
+    pub fn address_number(&self) -> i64 {
+        self.address_number
+    }
+
+    pub fn street_name(&self) -> String {
+        self.street_name.to_owned()
+    }
+
+    pub fn pre_directional(&self) -> Option<StreetNamePreDirectional> {
+        self.street_name_pre_directional
+    }
+
+    pub fn post_type(&self) -> Option<StreetNamePostType> {
+        self.street_name_post_type
+    }
+
+    pub fn subaddress_identifier(&self) -> Option<String> {
+        self.subaddress_identifier.to_owned()
+    }
+
+    pub fn floor(&self) -> Option<i64> {
+        self.floor
+    }
+
+    pub fn zip_code(&self) -> i64 {
+        self.zip_code
+    }
+
+    pub fn status(&self) -> AddressStatus {
+        self.status
+    }
+
+    pub fn state_name(&self) -> String {
+        self.state_name.to_owned()
+    }
+
+    pub fn postal_community(&self) -> String {
+        self.postal_community.to_owned()
+    }
+
+    pub fn object_id(&self) -> i64 {
+        self.object_id
+    }
+
+    pub fn address_latitude(&self) -> f64 {
+        self.address_latitude
+    }
+
+    pub fn address_longitude(&self) -> f64 {
+        self.address_longitude
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GrantsPass2022Addresses {
+    pub records: Vec<GrantsPass2022Address>,
+}
+
+impl GrantsPass2022Addresses {
+    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
+        let mut data = Vec::new();
+        let file = std::fs::File::open(path)?;
+        let mut rdr = csv::Reader::from_reader(file);
+
+        for result in rdr.deserialize() {
+            let record: GrantsPass2022Address = result?;
+            data.push(record);
+        }
+
+        Ok(GrantsPass2022Addresses { records: data })
+    }
+}

@@ -2,8 +2,9 @@ use crate::address_components::*;
 use crate::business::*;
 use crate::compare::*;
 use crate::import::*;
+use crate::utils;
+use indicatif::ParallelProgressIterator;
 use indicatif::ProgressBar;
-// use indicatif::ProgressIterator;
 use rayon::prelude::*;
 use serde::Serialize;
 use std::collections::HashSet;
@@ -108,6 +109,27 @@ impl Address {
                 None => format!("{} {}", complete_address_number, complete_street_name),
             },
         }
+    }
+
+    /// Distance between address and other addresses with matching label.
+    /// Iterates through records of `others`, calculates the distance from self
+    /// to matching addresses in others, collects the results into a vector and
+    /// returns the results in the records field of a new AddressDeltas struct.
+    pub fn deltas(&self, others: &Addresses, min: f64) -> AddressDeltas {
+        let records = others
+            .records_ref()
+            .par_iter()
+            .filter(|v| v.label() == self.label())
+            .map(|v| AddressDelta::new(v, v.distance(self)))
+            .filter(|d| d.delta > min)
+            .collect::<Vec<AddressDelta>>();
+        AddressDeltas { records }
+    }
+
+    pub fn distance(&self, other: &Address) -> f64 {
+        ((self.address_latitude() - other.address_latitude()).powi(2)
+            + (self.address_longitude() - other.address_longitude()).powi(2))
+        .sqrt()
     }
 
     pub fn address_number(&self) -> i64 {
@@ -376,16 +398,35 @@ impl Addresses {
     }
 
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        let mut wtr = csv::Writer::from_path(title)?;
-        for i in self.records.clone() {
-            wtr.serialize(i)?;
-        }
-        wtr.flush()?;
+        utils::to_csv(&mut self.records(), title)?;
         Ok(())
+    }
+
+    pub fn deltas(&self, other: &Addresses, min: f64) -> AddressDeltas {
+        let style = indicatif::ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Calculating deltas...'}",
+        )
+        .unwrap();
+        let records_raw = self
+            .records_ref()
+            .par_iter()
+            .progress_with_style(style)
+            .map(|v| v.deltas(other, min))
+            .collect::<Vec<AddressDeltas>>();
+        let mut records = Vec::new();
+        records_raw
+            .iter()
+            .map(|v| records.append(&mut v.records()))
+            .for_each(drop);
+        AddressDeltas { records }
     }
 
     pub fn records(&self) -> Vec<Address> {
         self.records.to_owned()
+    }
+
+    pub fn records_ref(&self) -> &Vec<Address> {
+        &self.records
     }
 }
 
@@ -573,5 +614,54 @@ impl From<&FireInspections> for PartialAddresses {
                 .map(|r| r.address())
                 .collect::<Vec<PartialAddress>>(),
         )
+    }
+}
+
+/// Deltas - Measuring the distance between points based upon matching values.
+/// The label field of AddressDelta holds the matching value and the delta
+/// field holds the distance between matching points.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct AddressDelta {
+    /// Addresses match by address label.
+    label: String,
+    /// Distance between points representing the same address.
+    delta: f64,
+    latitude: f64,
+    longitude: f64,
+}
+
+impl AddressDelta {
+    /// Initiates a new AddressDelta struct from the provided input values.
+    pub fn new(address: &Address, delta: f64) -> Self {
+        AddressDelta {
+            label: address.label(),
+            delta,
+            latitude: address.address_latitude(),
+            longitude: address.address_longitude(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct AddressDeltas {
+    records: Vec<AddressDelta>,
+}
+
+impl AddressDeltas {
+    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
+        utils::to_csv(&mut self.records(), title)?;
+        Ok(())
+    }
+
+    pub fn records(&self) -> Vec<AddressDelta> {
+        self.records.clone()
+    }
+
+    pub fn records_ref(&self) -> &Vec<AddressDelta> {
+        &self.records
+    }
+
+    pub fn records_mut(&mut self) -> &mut Vec<AddressDelta> {
+        &mut self.records
     }
 }
