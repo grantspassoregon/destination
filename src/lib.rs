@@ -1,4 +1,4 @@
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
 #![doc(
     html_logo_url = "https://www.grantspassoregon.gov/DocumentCenter/View/31368/GPLogo_450W-PNG"
 )]
@@ -7,6 +7,7 @@ pub mod address;
 pub mod address_components;
 pub mod business;
 pub mod compare;
+pub mod geo;
 pub mod import;
 pub mod lexisnexis;
 pub mod parser;
@@ -23,9 +24,10 @@ pub mod prelude {
         FireInspectionMatchRecords, FireInspectionMatches, MatchPartialRecord, MatchPartialRecords,
         MatchRecords, MatchStatus,
     };
+    pub use crate::geo::{GeoAddress, GeoAddresses};
     pub use crate::import::{
-        Businesses, CityAddresses, CountyAddresses, FireInspections, GrantsPass2022Address,
-        GrantsPass2022Addresses,
+        Businesses, CityAddress, CityAddresses, CountyAddresses, FireInspections,
+        GrantsPass2022Address, GrantsPass2022Addresses,
     };
     pub use crate::lexisnexis::LexisNexis;
     pub use crate::parser::{

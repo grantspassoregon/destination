@@ -5,8 +5,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CountyAddress {
-    #[serde(rename(deserialize = "OID_"))]
-    object_id: i64,
     #[serde(deserialize_with = "deserialize_arcgis_data")]
     taxlot: Option<String>,
     #[serde(rename(deserialize = "stnum"))]
@@ -49,14 +47,14 @@ pub struct CountyAddress {
     #[serde(rename(deserialize = "state"))]
     state_name: String,
     status: AddressStatus,
-    // #[serde(rename(deserialize = "point_y"))]
-    // address_latitude: f64,
-    // #[serde(rename(deserialize = "point_x"))]
-    // address_longitude: f64,
-    #[serde(rename(deserialize = "latitude"))]
+    #[serde(rename(deserialize = "point_y"))]
     address_latitude: f64,
-    #[serde(rename(deserialize = "longitude"))]
+    #[serde(rename(deserialize = "point_x"))]
     address_longitude: f64,
+    // #[serde(rename(deserialize = "latitude"))]
+    // address_latitude: f64,
+    // #[serde(rename(deserialize = "longitude"))]
+    // address_longitude: f64,
 }
 
 impl CountyAddress {
@@ -106,10 +104,6 @@ impl CountyAddress {
 
     pub fn postal_community(&self) -> String {
         self.postal_community.to_owned()
-    }
-
-    pub fn object_id(&self) -> i64 {
-        self.object_id
     }
 
     pub fn address_latitude(&self) -> f64 {

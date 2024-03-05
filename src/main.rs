@@ -2,6 +2,7 @@ use address::prelude::*;
 use aid::prelude::*;
 use clap::Parser;
 use tracing::{error, info, trace, warn};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -52,9 +53,14 @@ struct Cli {
 fn main() -> Clean<()> {
     let cli = Cli::parse();
 
-    if let Ok(()) = tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+    if tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "address=info".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
         .try_init()
+        .is_ok()
     {};
     info!("Subscriber initialized.");
 

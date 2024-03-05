@@ -94,7 +94,6 @@ pub struct FireInspectionMatchRecord {
     name: String,
     address_label: String,
     other_label: Option<String>,
-    other_id: Option<i64>,
     longitude: Option<f64>,
     latitude: Option<f64>,
 }
@@ -173,7 +172,6 @@ impl From<&FireInspectionMatch> for FireInspectionMatchRecords {
                 name: name.to_owned(),
                 address_label: address_label.to_owned(),
                 other_label: record.other_label(),
-                other_id: record.other_id(),
                 longitude: record.longitude(),
                 latitude: record.latitude(),
             });

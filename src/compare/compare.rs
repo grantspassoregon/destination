@@ -83,8 +83,6 @@ pub enum MatchStatus {
 pub struct MatchRecord {
     pub match_status: MatchStatus,
     pub address_label: String,
-    pub self_id: i64,
-    pub other_id: Option<i64>,
     pub subaddress_type: Option<String>,
     pub floor: Option<String>,
     pub building: Option<String>,
@@ -100,7 +98,6 @@ pub struct MatchRecords {
 
 impl MatchRecords {
     pub fn new(self_address: &Address, other_addresses: &[Address]) -> Self {
-        let self_id = self_address.object_id();
         let address_label = self_address.label();
         let latitude = self_address.address_latitude();
         let longitude = self_address.address_longitude();
@@ -110,7 +107,6 @@ impl MatchRecords {
         for address in other_addresses {
             let address_match = self_address.coincident(address);
             if address_match.coincident {
-                let other_id = Some(address.object_id());
                 let mut subaddress_type = None;
                 let mut floor = None;
                 let mut building = None;
@@ -119,8 +115,6 @@ impl MatchRecords {
                     None => match_record.push(MatchRecord {
                         match_status: MatchStatus::Matching,
                         address_label: address_label.clone(),
-                        self_id,
-                        other_id,
                         subaddress_type,
                         floor,
                         building,
@@ -142,8 +136,6 @@ impl MatchRecords {
                         match_record.push(MatchRecord {
                             match_status: MatchStatus::Divergent,
                             address_label: address_label.clone(),
-                            self_id,
-                            other_id,
                             subaddress_type,
                             floor,
                             building,
@@ -159,8 +151,6 @@ impl MatchRecords {
             match_record.push(MatchRecord {
                 match_status: MatchStatus::Missing,
                 address_label,
-                self_id,
-                other_id: None,
                 subaddress_type: None,
                 floor: None,
                 building: None,
@@ -280,7 +270,6 @@ pub struct MatchPartialRecord {
     match_status: MatchStatus,
     address_label: String,
     other_label: Option<String>,
-    other_id: Option<i64>,
     longitude: Option<f64>,
     latitude: Option<f64>,
 }
@@ -339,7 +328,6 @@ impl MatchPartialRecord {
                 match_status,
                 address_label: partial.label(),
                 other_label: Some(address.label()),
-                other_id: Some(address.object_id()),
                 longitude: Some(address.address_longitude()),
                 latitude: Some(address.address_latitude()),
             })
@@ -361,7 +349,6 @@ impl MatchPartialRecord {
                 match_status: MatchStatus::Missing,
                 address_label: partial.label(),
                 other_label: None,
-                other_id: None,
                 longitude: None,
                 latitude: None,
             })
@@ -385,10 +372,6 @@ impl MatchPartialRecord {
 
     pub fn other_label(&self) -> Option<String> {
         self.other_label.clone()
-    }
-
-    pub fn other_id(&self) -> Option<i64> {
-        self.other_id.clone()
     }
 
     pub fn longitude(&self) -> Option<f64> {

@@ -27,7 +27,6 @@ pub struct Address {
     postal_community: String,
     state_name: String,
     status: AddressStatus,
-    object_id: i64,
     address_latitude: f64,
     address_longitude: f64,
 }
@@ -246,12 +245,6 @@ impl Address {
         self.postal_community.to_owned()
     }
 
-    /// The `object_id` field represents the object id of the spatial asset in GIS.  This function
-    /// returns the value of the field.
-    pub fn object_id(&self) -> i64 {
-        self.object_id
-    }
-
     /// The `address_latitude` field represents the latitude of the address location.  The spatial
     /// representation of the values depend upon how the data was exported from GIS.  This function
     /// returns the value of the field.
@@ -283,7 +276,6 @@ impl From<CityAddress> for Address {
             postal_community: item.postal_community(),
             state_name: item.state_name(),
             status: item.status(),
-            object_id: item.object_id(),
             address_latitude: item.address_latitude(),
             address_longitude: item.address_longitude(),
         }
@@ -306,7 +298,6 @@ impl From<&CityAddress> for Address {
             postal_community: item.postal_community(),
             state_name: item.state_name(),
             status: item.status(),
-            object_id: item.object_id(),
             address_latitude: item.address_latitude(),
             address_longitude: item.address_longitude(),
         }
@@ -332,7 +323,6 @@ impl TryFrom<CountyAddress> for Address {
                 postal_community: item.postal_community(),
                 state_name: item.state_name(),
                 status: item.status(),
-                object_id: item.object_id(),
                 address_latitude: item.address_latitude(),
                 address_longitude: item.address_longitude(),
             }),
@@ -360,7 +350,6 @@ impl TryFrom<&CountyAddress> for Address {
                 postal_community: item.postal_community(),
                 state_name: item.state_name(),
                 status: item.status(),
-                object_id: item.object_id(),
                 address_latitude: item.address_latitude(),
                 address_longitude: item.address_longitude(),
             }),
@@ -388,7 +377,6 @@ impl TryFrom<GrantsPass2022Address> for Address {
                 postal_community: item.postal_community(),
                 state_name: item.state_name(),
                 status: item.status(),
-                object_id: item.object_id(),
                 address_latitude: item.address_latitude(),
                 address_longitude: item.address_longitude(),
             }),
@@ -416,7 +404,6 @@ impl TryFrom<&GrantsPass2022Address> for Address {
                 postal_community: item.postal_community(),
                 state_name: item.state_name(),
                 status: item.status(),
-                object_id: item.object_id(),
                 address_latitude: item.address_latitude(),
                 address_longitude: item.address_longitude(),
             }),

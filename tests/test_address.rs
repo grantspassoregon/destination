@@ -4,16 +4,14 @@ use tracing::info;
 
 #[test]
 fn load_city_addresses() -> Result<(), std::io::Error> {
-    match tracing_subscriber::fmt()
+    if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
-    {
-        Ok(()) => {}
-        Err(_) => {}
-    };
+        .is_ok()
+    {};
     info!("Subscriber initialized.");
 
-    let file = "c:/users/erose/documents/addresses_20230411.csv";
+    let file = "tests/test_data/city_addresses_20240226.csv";
     let addresses = CityAddresses::from_csv(file)?;
     info!(
         "City addresses loaded: {} entries.",
@@ -24,19 +22,17 @@ fn load_city_addresses() -> Result<(), std::io::Error> {
 
 #[test]
 fn load_county_addresses() -> Result<(), std::io::Error> {
-    match tracing_subscriber::fmt()
+    if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
-    {
-        Ok(()) => {}
-        Err(_) => {}
-    };
+        .is_ok()
+    {};
     info!("Subscriber initialized.");
 
-    let file = "p:/county_addresses.csv";
+    let file = "tests/test_data/county_addresses_20240226.csv";
     let addresses = CountyAddresses::from_csv(file)?;
     info!(
-        "City addresses loaded: {} entries.",
+        "County addresses loaded: {} entries.",
         addresses.records.len()
     );
     info!("Record 1059:");
@@ -49,10 +45,30 @@ fn load_county_addresses() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn read_gp2022_addresses() -> Result<(), std::io::Error> {
-    if let Ok(()) = tracing_subscriber::fmt()
+fn load_geo_addresses() -> Result<(), std::io::Error> {
+    if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+
+    let file = "tests/test_data/city_addresses_20240226.csv";
+    let addresses = CityAddresses::from_csv(file)?;
+    let geo_addresses = GeoAddresses::from(&addresses);
+    info!(
+        "Geo addresses loaded: {} entries.",
+        geo_addresses.records.len()
+    );
+    Ok(())
+}
+
+#[test]
+fn read_gp2022_addresses() -> Result<(), std::io::Error> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+        .is_ok()
     {};
     info!("Subscriber initialized.");
 
@@ -72,9 +88,10 @@ fn read_gp2022_addresses() -> Result<(), std::io::Error> {
 
 #[test]
 fn read_business_licenses() -> Result<(), std::io::Error> {
-    if let Ok(()) = tracing_subscriber::fmt()
+    if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
+        .is_ok()
     {};
     info!("Subscriber initialized.");
 
@@ -117,16 +134,14 @@ fn read_business_licenses() -> Result<(), std::io::Error> {
 
 #[test]
 fn match_city_address() -> Result<(), std::io::Error> {
-    match tracing_subscriber::fmt()
+    if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
-    {
-        Ok(()) => {}
-        Err(_) => {}
-    };
+        .is_ok()
+    {};
     info!("Subscriber initialized.");
-    let city_path = "p:/city_addresses.csv";
-    let county_path = "p:/county_addresses.csv";
+    let city_path = "tests/test_data/city_addresses_20240226.csv";
+    let county_path = "tests/test_data/county_addresses_20240226.csv";
     let city_addresses = CityAddresses::from_csv(city_path)?;
     let source_addresses = Addresses::from(city_addresses);
     let county_addresses = CountyAddresses::from_csv(county_path)?;
@@ -136,15 +151,15 @@ fn match_city_address() -> Result<(), std::io::Error> {
         &target_addresses.records_ref(),
     );
     info!("Record 0 is: {:?}", match_records.records[0]);
-
     Ok(())
 }
 
 #[test]
 fn match_business_addresses() -> Result<(), std::io::Error> {
-    if let Ok(()) = tracing_subscriber::fmt()
+    if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
+        .is_ok()
     {};
     info!("Subscriber initialized.");
     let business_path = "c:/users/erose/documents/active_business_licenses.csv";
@@ -160,9 +175,10 @@ fn match_business_addresses() -> Result<(), std::io::Error> {
 
 #[test]
 fn match_business_address_chain() -> Result<(), std::io::Error> {
-    if let Ok(()) = tracing_subscriber::fmt()
+    if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
+        .is_ok()
     {};
     info!("Subscriber initialized.");
     let business_path = "c:/users/erose/documents/active_business_licenses.csv";
@@ -184,16 +200,14 @@ fn match_business_address_chain() -> Result<(), std::io::Error> {
 
 #[test]
 fn match_city_addresses() -> Result<(), std::io::Error> {
-    match tracing_subscriber::fmt()
+    if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
-    {
-        Ok(()) => {}
-        Err(_) => {}
-    };
+        .is_ok()
+    {};
     info!("Subscriber initialized.");
-    let city_path = "p:/city_addresses.csv";
-    let county_path = "p:/county_addresses.csv";
+    let city_path = "tests/test_data/city_addresses_20240226.csv";
+    let county_path = "tests/test_data/county_addresses_20240226.csv";
     let city_addresses = CityAddresses::from_csv(city_path)?;
     let source_addresses = Addresses::from(city_addresses);
     let county_addresses = CountyAddresses::from_csv(county_path)?;
@@ -209,16 +223,14 @@ fn match_city_addresses() -> Result<(), std::io::Error> {
 
 #[test]
 fn filter_status() -> Result<(), std::io::Error> {
-    match tracing_subscriber::fmt()
+    if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
-    {
-        Ok(()) => {}
-        Err(_) => {}
-    };
+        .is_ok()
+    {};
     info!("Subscriber initialized.");
-    let city_path = "p:/city_addresses.csv";
-    let county_path = "p:/county_addresses.csv";
+    let city_path = "tests/test_data/city_addresses_20240226.csv";
+    let county_path = "tests/test_data/county_addresses_20240226.csv";
     let city_addresses = CityAddresses::from_csv(city_path)?;
     let source_addresses = Addresses::from(city_addresses);
     let county_addresses = CountyAddresses::from_csv(county_path)?;
@@ -235,16 +247,14 @@ fn filter_status() -> Result<(), std::io::Error> {
 
 #[test]
 fn filter_missing() -> Result<(), std::io::Error> {
-    match tracing_subscriber::fmt()
+    if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
-    {
-        Ok(()) => {}
-        Err(_) => {}
-    };
+        .is_ok()
+    {};
     info!("Subscriber initialized.");
-    let city_path = "p:/city_addresses.csv";
-    let county_path = "p:/county_addresses.csv";
+    let city_path = "tests/test_data/city_addresses_20240226.csv";
+    let county_path = "tests/test_data/county_addresses_20240226.csv";
     let city_addresses = CityAddresses::from_csv(city_path)?;
     let source_addresses = Addresses::from(city_addresses);
     let county_addresses = CountyAddresses::from_csv(county_path)?;

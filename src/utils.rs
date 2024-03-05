@@ -40,10 +40,14 @@ pub fn from_csv<T: DeserializeOwned + Clone, P: AsRef<std::path::Path>>(
     let file = std::fs::File::open(path)?;
     let mut rdr = csv::Reader::from_reader(file);
 
+    let mut dropped = 0;
     for result in rdr.deserialize() {
-        let record: T = result?;
-        records.push(record);
+        match result {
+            Ok(record) => records.push(record),
+            Err(_) => dropped += 1,
+        }
     }
+    tracing::info!("{} records dropped.", dropped);
 
     Ok(records)
 }
