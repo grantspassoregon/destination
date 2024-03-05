@@ -30,7 +30,7 @@ pub fn parse_address_number_suffix(input: &str) -> IResult<&str, Option<&str>> {
 pub fn parse_pre_directional(input: &str) -> IResult<&str, Option<StreetNamePreDirectional>> {
     let (rem, _) = space0(input)?;
     let (rem, result) = alpha1(rem)?;
-    let predir = match_abbreviated_pre_directional(result);
+    let predir = match_mixed_pre_directional(result);
     match predir {
         Some(_) => Ok((rem, predir)),
         None => Ok((input, predir)),
@@ -40,6 +40,7 @@ pub fn parse_pre_directional(input: &str) -> IResult<&str, Option<StreetNamePreD
 pub fn parse_post_type(input: &str) -> IResult<&str, Option<StreetNamePostType>> {
     let (rem, _) = space0(input)?;
     let (rem, result) = alpha1(rem)?;
+    tracing::trace!("Post type check on {:#?}", &result);
     let post_type = match_mixed_post_type(result);
     Ok((rem, post_type))
 }
@@ -66,7 +67,9 @@ pub fn single_word(input: &str) -> IResult<&str, &str> {
 }
 
 pub fn is_post_type(input: &str) -> IResult<&str, bool> {
+    tracing::trace!("Calling is_post_type");
     let (rem, post) = parse_post_type(input)?;
+    tracing::trace!("Post type is {:#?}", &post);
     let test = match post {
         Some(_) => true,
         None => false,
@@ -78,8 +81,11 @@ pub fn multi_word(input: &str) -> IResult<&str, Vec<&str>> {
     let (rem, start) = single_word(input)?;
     let (_, test) = is_post_type(rem)?;
     let mut name = vec![start];
+    tracing::trace!("Name is {:#?}", &name);
     let mut remaining = rem;
+    tracing::trace!("Remaining is {:#?}", &rem);
     let mut cond = test;
+    tracing::trace!("Starting condition is {:#?}", &test);
     while !cond {
         let (rem, next) = single_word(rem)?;
         name.push(next);
@@ -124,11 +130,15 @@ pub fn parse_complete_street_name(
     ),
 > {
     let (rem, predir) = parse_pre_directional(input)?;
+    tracing::trace!("Predir is {:#?}", &predir);
     let (name_rem, name) = multi_word(rem)?;
     let mut name = name;
+    tracing::trace!("Name is {:#?}", &name);
+    tracing::trace!("Remaining: {:#?}", &name_rem);
     let (rem, post_type) = recursive_post_type(name_rem)?;
     let post_len = post_type.len();
     let post = post_type[post_len - 1];
+    tracing::trace!("Post type is {:#?}", &post);
     let mut post_type = post_type;
     if post_len > 1 {
         post_type = post_type[0..post_len - 1].to_vec();
@@ -139,6 +149,7 @@ pub fn parse_complete_street_name(
             name.push(next);
         }
     }
+    tracing::trace!("Name is {:#?}", &name);
     Ok((rem, (predir, name, post)))
 }
 
@@ -211,10 +222,12 @@ pub fn parse_subaddress_identifiers(input: &str) -> IResult<&str, Option<Vec<&st
 }
 
 pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
-    let mut address = PartialAddress::new();
+    let mut address = PartialAddress::default();
     let (rem, address_number) = parse_address_number(input)?;
+    tracing::trace!("Address number: {}", &address_number);
     address.set_address_number(address_number);
     let (rem, suffix) = parse_address_number_suffix(rem)?;
+    tracing::trace!("Address number suffix: {:#?}", &suffix);
     address.set_address_number_suffix(suffix);
     let (rem, (predir, name, post_type)) = parse_complete_street_name(rem)?;
     if let Some(value) = predir {
@@ -231,10 +244,13 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
             inc += 1;
         }
     }
+    tracing::trace!("Street name: {:#?}", &street_name);
     address.set_street_name(&street_name);
+    tracing::trace!("Street post type: {:#?}", &post_type);
     address.set_post_type(&post_type);
     let (rem, subtype) = parse_subaddress_type(rem)?;
     if let Some(value) = subtype {
+        tracing::trace!("Subaddress type: {:#?}", &value);
         address.set_subaddress_type(&value);
     }
     let (rem, elements) = parse_subaddress_identifiers(rem)?;
@@ -250,6 +266,7 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
                 inc += 1;
             }
         }
+        tracing::trace!("Subaddress identifier: {:#?}", &subaddress_identifier);
         address.set_subaddress_identifier(&subaddress_identifier);
     }
     Ok((rem, address))

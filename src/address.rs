@@ -1,16 +1,18 @@
+//! The `address` module defines the library data standard for a valid address, and provides
+//! implementation blocks to convert data from import types to the valid address format.
 use crate::address_components::*;
-use crate::business::*;
 use crate::compare::*;
 use crate::import::*;
 use crate::utils;
 use indicatif::ParallelProgressIterator;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use tracing::{error, info};
+use tracing::{error, info, trace};
 
-#[derive(Debug, Clone, Default, Serialize)]
+/// The `Address` struct defines the fields of a valid address.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Address {
     address_number: i64,
     address_number_suffix: Option<String>,
@@ -31,6 +33,10 @@ pub struct Address {
 }
 
 impl Address {
+    /// An address is coincident when the `other` address refers to the same assignment or
+    /// location.  If the addresses are coincident, but details (such as the floor number or
+    /// address status) differ, then the differences are recorded as a vector of type [`Mismatch`].
+    /// The results are converted to type [`AddressMatch`].
     pub fn coincident(&self, other: &Address) -> AddressMatch {
         let mut coincident = false;
         let mut mismatches = Vec::new();
@@ -67,11 +73,14 @@ impl Address {
         AddressMatch::new(coincident, mismatches)
     }
 
+    /// Returns a String representing the address label, consisting of the complete address number,
+    /// complete street name and complete subaddress, used to produce map or mailing labels.
     pub fn label(&self) -> String {
         let complete_address_number = match &self.address_number_suffix {
             Some(suffix) => format!("{} {}", self.address_number, suffix),
             None => self.address_number.to_string(),
         };
+
         let complete_street_name = match self.street_name_pre_directional {
             Some(pre_directional) => format!(
                 "{:?} {} {:?}",
@@ -82,11 +91,9 @@ impl Address {
 
         let accessory = match self.building() {
             Some(value) => Some(format!("BLDG {}", value)),
-            None => None // match self.floor() {
-                // Some(value) => Some(format!("FLR {}", value)),
-                // None => None,
-            // },
+            None => None,
         };
+
         let complete_subaddress = match &self.subaddress_identifier {
             Some(identifier) => match self.subaddress_type {
                 Some(subaddress_type) => Some(format!("{:?} {}", subaddress_type, identifier)),
@@ -96,6 +103,7 @@ impl Address {
                 .subaddress_type
                 .map(|subaddress_type| format!("{:?}", subaddress_type)),
         };
+
         match complete_subaddress {
             Some(subaddress) => format!(
                 "{} {} {}",
@@ -111,10 +119,21 @@ impl Address {
         }
     }
 
+    /// The `complete_street_name` method returns the complete street name of the address.
+    pub fn complete_street_name(&self) -> String {
+        match self.street_name_pre_directional {
+            Some(pre_directional) => format!(
+                "{:?} {} {:?}",
+                pre_directional, self.street_name, self.street_name_post_type
+            ),
+            None => format!("{} {:?}", self.street_name, self.street_name_post_type),
+        }
+    }
+
     /// Distance between address and other addresses with matching label.
     /// Iterates through records of `others`, calculates the distance from self
     /// to matching addresses in others, collects the results into a vector and
-    /// returns the results in the records field of a new AddressDeltas struct.
+    /// returns the results in the records field of a new `AddressDeltas` struct.
     pub fn deltas(&self, others: &Addresses, min: f64) -> AddressDeltas {
         let records = others
             .records_ref()
@@ -126,64 +145,123 @@ impl Address {
         AddressDeltas { records }
     }
 
+    /// The `distance` function returns the distance between a point `self` and another point
+    /// `other` in the same unit as `self`.
     pub fn distance(&self, other: &Address) -> f64 {
         ((self.address_latitude() - other.address_latitude()).powi(2)
             + (self.address_longitude() - other.address_longitude()).powi(2))
         .sqrt()
     }
 
+    /// The `address_number` field represents the address number component of the complete address
+    /// number.  This function returns the value of the field.
     pub fn address_number(&self) -> i64 {
         self.address_number
     }
 
+    /// The `street_name` field represents the street name component of the complete street name.
+    /// This function returns the cloned value of the field.
     pub fn street_name(&self) -> String {
         self.street_name.to_owned()
     }
 
+    /// The `set_street_name` field sets the street name component of the complete street name.
+    pub fn set_street_name(&mut self, name: &str) {
+        self.street_name = name.to_owned();
+    }
+
+    /// The `pre_directional` field represents the street name predirectional component of the
+    /// complete street name.  This function returns the cloned value of the field.
     pub fn pre_directional(&self) -> Option<StreetNamePreDirectional> {
         self.street_name_pre_directional
     }
 
+    /// The `pre_directional` field represents the street name predirectional component of the
+    /// complete street name.  This function returns the cloned value of the field.
+    pub fn pre_directional_abbreviated(&self) -> Option<String> {
+        match self.street_name_pre_directional {
+            Some(StreetNamePreDirectional::NORTH) => Some("N".to_string()),
+            Some(StreetNamePreDirectional::EAST) => Some("E".to_string()),
+            Some(StreetNamePreDirectional::SOUTH) => Some("S".to_string()),
+            Some(StreetNamePreDirectional::WEST) => Some("W".to_string()),
+            Some(StreetNamePreDirectional::NORTHEAST) => Some("NE".to_string()),
+            Some(StreetNamePreDirectional::NORTHWEST) => Some("NW".to_string()),
+            Some(StreetNamePreDirectional::SOUTHEAST) => Some("SE".to_string()),
+            Some(StreetNamePreDirectional::SOUTHWEST) => Some("SW".to_string()),
+            None => None,
+        }
+    }
+
+    /// The `post_type` field represents the street name posttype component of the complete street
+    /// name.  This function returns the cloned value of the field.
     pub fn post_type(&self) -> StreetNamePostType {
         self.street_name_post_type
     }
 
+    /// The `set post_type` field sets the street name posttype component of the complete street
+    /// name.
+    pub fn set_post_type(&mut self, value: &StreetNamePostType) {
+        self.street_name_post_type = value.to_owned();
+    }
+
+    /// The `subaddress_identifier` field represents the subaddress identifier component of the complete
+    /// subaddress.  This function returns the cloned value of the field.
     pub fn subaddress_identifier(&self) -> Option<String> {
         self.subaddress_identifier.to_owned()
     }
 
+    /// The `floor` field represents the floor of the building on which the address point is located.  This function returns the value of the field.
     pub fn floor(&self) -> Option<i64> {
         self.floor
     }
 
+    /// The `building` field represents the unique identifier for a building.  This function
+    /// returns the cloned value of the field.
     pub fn building(&self) -> Option<String> {
         self.building.to_owned()
     }
 
+    /// The `zip_code` field represents the zip code.  This function returns the value of the
+    /// field.
     pub fn zip_code(&self) -> i64 {
         self.zip_code
     }
 
+    /// The `status` field represents the status of an address.  This function returns the cloned
+    /// value of the field.
     pub fn status(&self) -> AddressStatus {
         self.status
     }
 
+    /// The `state_name` field contains the postal code for the State in an address.  This
+    /// function returns the cloned value of the field.
     pub fn state_name(&self) -> String {
         self.state_name.to_owned()
     }
 
+    /// The `postal_community` field represents the incorporated municipality or unincorporated
+    /// community that serves as the postal community (the "City" field in an address).  This
+    /// function returns the cloned value of the field.
     pub fn postal_community(&self) -> String {
         self.postal_community.to_owned()
     }
 
+    /// The `object_id` field represents the object id of the spatial asset in GIS.  This function
+    /// returns the value of the field.
     pub fn object_id(&self) -> i64 {
         self.object_id
     }
 
+    /// The `address_latitude` field represents the latitude of the address location.  The spatial
+    /// representation of the values depend upon how the data was exported from GIS.  This function
+    /// returns the value of the field.
     pub fn address_latitude(&self) -> f64 {
         self.address_latitude
     }
 
+    /// The `address_longitude` field represents the longitude of the address location.  The spatial
+    /// representation of the values depend upon how the data was exported from GIS.  This function
+    /// returns the value of the field.
     pub fn address_longitude(&self) -> f64 {
         self.address_longitude
     }
@@ -347,12 +425,17 @@ impl TryFrom<&GrantsPass2022Address> for Address {
     }
 }
 
-#[derive(Default, Serialize, Clone)]
+/// The `Addresses` struct holds a vector of type [`Address`].
+#[derive(Default, Serialize, Deserialize, Clone)]
 pub struct Addresses {
-    pub records: Vec<Address>,
+    records: Vec<Address>,
 }
 
 impl Addresses {
+    /// Filter elements of the `records` vector according to the argument specified in `filter`.
+    /// Currently only the value "duplicate" is supported as an argument to `filter`, which only
+    /// retains duplicate addresses in the vector.  Duplicate addresses are defined as having
+    /// identical address labels using the [`Address::label()`] method.
     pub fn filter(&self, filter: &str) -> Self {
         let mut records = Vec::new();
         match filter {
@@ -381,7 +464,9 @@ impl Addresses {
         Addresses { records }
     }
 
-    fn filter_field(&self, filter: &str, field: &str) -> Self {
+    /// The `filter_field` method returns the subset of addresses where the field `filter` is equal
+    /// to the value in `field`.
+    pub fn filter_field(&self, filter: &str, field: &str) -> Self {
         let mut records = Vec::new();
         match filter {
             "label" => records.append(
@@ -392,16 +477,48 @@ impl Addresses {
                     .filter(|record| field == record.label())
                     .collect(),
             ),
+            "street_name" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| field == record.street_name())
+                    .collect(),
+            ),
+            "pre_directional" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| field == format!("{:?}", record.pre_directional()))
+                    .collect(),
+            ),
+            "post_type" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| field == format!("{:?}", record.post_type()))
+                    .collect(),
+            ),
+
             _ => info!("Invalid filter provided."),
         }
         Addresses { records }
     }
 
+    /// Writes the contents of `Addresses` to a CSV file output to path `title`.  Each element
+    /// of the vector in `records` writes to a row on the CSV file.
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
         utils::to_csv(&mut self.records(), title)?;
         Ok(())
     }
 
+    /// Distance between addresses and other addresses with matching label.
+    /// Iterates through records of `others`, calculates the distance from self
+    /// to matching addresses in others, collects the results into a vector and
+    /// returns the results in the records field of a new `AddressDeltas` struct. Calls
+    /// [`Address::deltas()`].
     pub fn deltas(&self, other: &Addresses, min: f64) -> AddressDeltas {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Calculating deltas...'}",
@@ -421,10 +538,95 @@ impl Addresses {
         AddressDeltas { records }
     }
 
+    /// Compares the complete street name of an address to the value in `street`, returning true if
+    /// equal.
+    pub fn contains_street(&self, street: &String) -> bool {
+        let mut contains = false;
+        for address in self.records_ref() {
+            let comp_street = address.complete_street_name();
+            if &comp_street == street {
+                contains = true;
+            }
+        }
+        contains
+    }
+
+    /// The `orphan_streets` method returns the list of complete street names that are contained in
+    /// self but are not present in `other`.
+    pub fn orphan_streets(&self, other: &Addresses) -> Vec<String> {
+        let mut seen = HashSet::new();
+        let mut orphans = Vec::new();
+        for address in self.records_ref() {
+            let street = address.complete_street_name();
+            if !seen.contains(&street) {
+                seen.insert(street.clone());
+                if !other.contains_street(&street) {
+                    orphans.push(street);
+                }
+            }
+        }
+        orphans
+    }
+
+    /// The `citify` method takes county address naming conventions and converts them to city
+    /// naming conventions.
+    pub fn citify(&self) -> Self {
+        trace!("Running Citify");
+        let mut records = Vec::new();
+        for mut address in self.records() {
+            let comp_street = address.complete_street_name();
+            if comp_street == "NE BEAVILLA VIEW" {
+                trace!("Fixing Beavilla View");
+                address.set_street_name("BEAVILLA");
+                address.set_post_type(&StreetNamePostType::VIEW);
+            }
+            if comp_street == "COLUMBIA CREST" {
+                trace!("Fixing Beavilla View");
+                address.set_street_name("COLUMBIA");
+                address.set_post_type(&StreetNamePostType::CREST);
+            }
+            if comp_street == "SE FORMOSA GARDENS" {
+                trace!("Fixing Formosa Gardens");
+                address.set_street_name("FORMOSA");
+                address.set_post_type(&StreetNamePostType::GARDENS);
+            }
+            if comp_street == "SE HILLTOP VIEW" {
+                trace!("Fixing Hilltop View");
+                address.set_street_name("HILLTOP");
+                address.set_post_type(&StreetNamePostType::VIEW);
+            }
+            if comp_street == "MARILEE ROW" {
+                trace!("Fixing Marilee Row");
+                address.set_street_name("MARILEE");
+                address.set_post_type(&StreetNamePostType::ROW);
+            }
+            if comp_street == "MEADOW GLEN" {
+                trace!("Fixing Meadow Glen");
+                address.set_street_name("MEADOW");
+                address.set_post_type(&StreetNamePostType::GLEN);
+            }
+            if comp_street == "ROBERTSON CREST" {
+                trace!("Fixing Robertson Crest");
+                address.set_street_name("ROBERTSON");
+                address.set_post_type(&StreetNamePostType::CREST);
+            }
+            if comp_street == "NE QUAIL CROSSING" {
+                trace!("Fixing Quail Crossing");
+                address.set_street_name("QUAIL");
+                address.set_post_type(&StreetNamePostType::CROSSING);
+            }
+            records.push(address)
+        }
+        Addresses { records }
+    }
+
+    /// The `records` field hold a vector of type [`Address`].  This function returns the cloned
+    /// value of the field.
     pub fn records(&self) -> Vec<Address> {
         self.records.to_owned()
     }
 
+    /// This function returns a reference to the vector in the `records` field.
     pub fn records_ref(&self) -> &Vec<Address> {
         &self.records
     }
@@ -466,7 +668,10 @@ impl From<GrantsPass2022Addresses> for Addresses {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, PartialEq)]
+/// The `PartialAddress` struct contains optional fields so that incomplete or missing data can be
+/// compared against [`Addresses`] or [`PartialAddresses`] for potential matches.  Used to help
+/// match address information that does not parse into a full valid address.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct PartialAddress {
     address_number: Option<i64>,
     address_number_suffix: Option<String>,
@@ -484,50 +689,70 @@ pub struct PartialAddress {
 }
 
 impl PartialAddress {
+    /// Creates an empty new `PartialAddress` with all fields set to None.
     pub fn new() -> Self {
         PartialAddress::default()
     }
 
+    /// The `address_number` field represents the address number component of the complete address
+    /// number.  This function returns the value of the field.
     pub fn address_number(&self) -> Option<i64> {
         self.address_number
     }
 
+    /// The `address_number_suffix` field represents the address number suffix component of the
+    /// complete address number.  This function returns the cloned value of the field.
     pub fn address_number_suffix(&self) -> Option<String> {
         self.address_number_suffix.clone()
     }
 
+    /// The `street_name_pre_directional` field represents the street name predirectional component of the
+    /// complete street name.  This function returns the cloned value of the field.
     pub fn street_name_pre_directional(&self) -> Option<StreetNamePreDirectional> {
         self.street_name_pre_directional
     }
 
+    /// The `street_name` field represents the street name component of the complete street name.
+    /// This function returns the cloned value of the field.
     pub fn street_name(&self) -> Option<String> {
         self.street_name.clone()
     }
 
+    /// The `street_name_post_type` field represents the street name posttype component of the complete street
+    /// name.  This function returns the cloned value of the field.
     pub fn street_name_post_type(&self) -> Option<StreetNamePostType> {
         self.street_name_post_type
     }
 
+    /// The `subaddress_type` field represents the subaddress type component of the complete
+    /// subaddress.  This function returns the cloned value of the field.
     pub fn subaddress_type(&self) -> Option<SubaddressType> {
         self.subaddress_type
     }
 
+    /// The `subaddress_identifier` field represents the subaddress identifier component of the complete
+    /// subaddress.  This function returns the cloned value of the field.
     pub fn subaddress_identifier(&self) -> Option<String> {
         self.subaddress_identifier.clone()
     }
 
+    /// The `building` field represents the unique identifier for a building.  This function
+    /// returns the cloned value of the field.
     pub fn building(&self) -> Option<String> {
         self.building.clone()
     }
 
+    /// The `floor` field represents the floor of the building on which the address point is located.  This function returns the value of the field.
     pub fn floor(&self) -> Option<i64> {
         self.floor.clone()
     }
 
+    /// Sets the value of the `address_number` field to Some(`value`).
     pub fn set_address_number(&mut self, value: i64) {
         self.address_number = Some(value);
     }
 
+    /// Sets the value of the `address_number_suffix` field to Some(`value`).
     pub fn set_address_number_suffix(&mut self, value: Option<&str>) {
         if let Some(suffix) = value {
             self.address_number_suffix = Some(suffix.to_owned());
@@ -536,26 +761,33 @@ impl PartialAddress {
         }
     }
 
+    /// Sets the value of the `street_name_pre_directional` field to Some(`value`).
     pub fn set_pre_directional(&mut self, value: &StreetNamePreDirectional) {
         self.street_name_pre_directional = Some(value.to_owned());
     }
 
+    /// Sets the value of the `street_name` field to Some(`value`).
     pub fn set_street_name(&mut self, value: &str) {
         self.street_name = Some(value.to_owned());
     }
 
+    /// Sets the value of the `street_name_post_type` field to Some(`value`).
     pub fn set_post_type(&mut self, value: &StreetNamePostType) {
         self.street_name_post_type = Some(value.to_owned());
     }
 
+    /// Sets the value of the `subaddress_type` field to Some(`value`).
     pub fn set_subaddress_type(&mut self, value: &SubaddressType) {
         self.subaddress_type = Some(value.to_owned());
     }
 
+    /// Sets the value of the `subaddress_identifier` field to Some(`value`).
     pub fn set_subaddress_identifier(&mut self, value: &str) {
         self.subaddress_identifier = Some(value.to_owned());
     }
 
+    /// Returns a String representing the address label, consisting of the complete address number,
+    /// complete street name and complete subaddress, used to produce map or mailing labels.
     pub fn label(&self) -> String {
         let mut address = "".to_owned();
         if let Some(address_number) = self.address_number() {
@@ -589,11 +821,20 @@ impl PartialAddress {
     }
 }
 
+/// The `PartialAddresses` struct holds a `records` field that contains a vector of type
+/// [`PartialAddress`].
 pub struct PartialAddresses {
     records: Vec<PartialAddress>,
 }
 
 impl PartialAddresses {
+    /// Creates a new `PartialAddresses` struct from the provided `records`, a vector of
+    /// [`PartialAddress`] objects.
+    pub fn new(records: Vec<PartialAddress>) -> Self {
+        Self { records }
+    }
+    /// The `records` field holds a vector of type [`PartialAddress`].  This function returns the
+    /// cloned value of the field.
     pub fn records(&self) -> Vec<PartialAddress> {
         self.records.clone()
     }
@@ -618,7 +859,7 @@ impl From<&FireInspections> for PartialAddresses {
 }
 
 /// Deltas - Measuring the distance between points based upon matching values.
-/// The label field of AddressDelta holds the matching value and the delta
+/// The `label` field of `AddressDelta` holds the matching value and the `delta`
 /// field holds the distance between matching points.
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct AddressDelta {
@@ -631,7 +872,7 @@ pub struct AddressDelta {
 }
 
 impl AddressDelta {
-    /// Initiates a new AddressDelta struct from the provided input values.
+    /// Initiates a new `AddressDelta` struct from the provided input values.
     pub fn new(address: &Address, delta: f64) -> Self {
         AddressDelta {
             label: address.label(),
@@ -642,25 +883,33 @@ impl AddressDelta {
     }
 }
 
+/// The `AddressDeltas` struct holds a `records` field that contains a vector of type
+/// [`AddressDelta`].
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct AddressDeltas {
     records: Vec<AddressDelta>,
 }
 
 impl AddressDeltas {
+    /// Writes the contents of `AddressDeltas` to a CSV file output to path `title`.  Each element
+    /// of the vector in `records` writes to a row on the CSV file.
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
         utils::to_csv(&mut self.records(), title)?;
         Ok(())
     }
 
+    /// The `records` field hold a vector of type [`AddressDelta`].  This function returns the cloned
+    /// value of the field.
     pub fn records(&self) -> Vec<AddressDelta> {
         self.records.clone()
     }
 
+    /// This functions returns a reference to the vector contained in the `records` field.
     pub fn records_ref(&self) -> &Vec<AddressDelta> {
         &self.records
     }
 
+    /// This functions returns a mutable reference to the vector contained in the `records` field.
     pub fn records_mut(&mut self) -> &mut Vec<AddressDelta> {
         &mut self.records
     }

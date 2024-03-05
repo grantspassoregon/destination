@@ -1,6 +1,10 @@
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
+/// The `SubaddressType` enum represents the subaddress type of an address.  Valid type
+/// designations include the list of secondary unit designators in Appendix C2 of the United States
+/// Postal Service (USPS) Publication 28 - Postal Addressing Standards.
+#[allow(missing_docs)]
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum SubaddressType {
     Apartment,
@@ -27,10 +31,15 @@ pub enum SubaddressType {
     Trailer,
     Unit,
     Upper,
+    /// Recreation room.  A shared space common to apartment complexes.
     Rec,
+    /// Laundry room.  A shared space common to apartment complexes.
     Laundry,
 }
 
+/// Deserialization function for subaddress types.  This works if all the subaddress types in the
+/// data observe the official postal contraction.  For subaddress types with a mix of abbreviations and
+/// alternative spellings, [`match_mixed_subaddress_type()`] will work better.
 pub fn deserialize_abbreviated_subaddress_type<'de, D: Deserializer<'de>>(
     de: D,
 ) -> Result<Option<SubaddressType>, D::Error> {
@@ -67,6 +76,8 @@ pub fn deserialize_abbreviated_subaddress_type<'de, D: Deserializer<'de>>(
     }
 }
 
+/// Matches the target data against novel spellings of valid subaddress types.  Add any missing spelling
+/// variants to the match statement.  Called by [`crate::parser::parse_subaddress_type()`].
 pub fn match_mixed_subaddress_type(input: &str) -> Option<SubaddressType> {
     match input {
         "APT" => Some(SubaddressType::Apartment),

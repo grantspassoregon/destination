@@ -1,5 +1,5 @@
-use crate::error::AddressError;
-use crate::{address::PartialAddress, parser::parse_address};
+use crate::prelude::*;
+use aid::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -18,16 +18,8 @@ pub struct FireInspectionsRaw {
 
 impl FireInspectionsRaw {
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let mut data = Vec::new();
-        let file = std::fs::File::open(path)?;
-        let mut rdr = csv::Reader::from_reader(file);
-
-        for result in rdr.deserialize() {
-            let record: FireInspectionRaw = result?;
-            data.push(record);
-        }
-
-        Ok(FireInspectionsRaw { records: data })
+        let records = from_csv(path)?;
+        Ok(FireInspectionsRaw { records })
     }
 }
 
@@ -58,7 +50,7 @@ impl FireInspection {
 }
 
 impl TryFrom<FireInspectionRaw> for FireInspection {
-    type Error = AddressError;
+    type Error = Bandage;
 
     fn try_from(raw: FireInspectionRaw) -> Result<Self, Self::Error> {
         match parse_address(&raw.address) {
@@ -74,7 +66,7 @@ impl TryFrom<FireInspectionRaw> for FireInspection {
                     subclass: raw.subclass,
                 })
             }
-            Err(_) => Err(AddressError::ParseError),
+            Err(_) => Err(Bandage::Parse),
         }
     }
 }
@@ -85,7 +77,7 @@ pub struct FireInspections {
 }
 
 impl FireInspections {
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
+    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Clean<Self> {
         let raw = FireInspectionsRaw::from_csv(path)?;
         let mut records = Vec::new();
         for record in raw.records {

@@ -115,21 +115,17 @@ impl FireInspectionMatchRecords {
         self.records.to_owned()
     }
 
+    pub fn records_mut(&mut self) -> &mut Vec<FireInspectionMatchRecord> {
+        &mut self.records
+    }
+
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        utils::to_csv(&mut self.records(), title)?;
+        utils::to_csv(self.records_mut(), title)?;
         Ok(())
     }
 
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let mut records = Vec::new();
-        let file = std::fs::File::open(path)?;
-        let mut rdr = csv::Reader::from_reader(file);
-
-        for result in rdr.deserialize() {
-            let record: FireInspectionMatchRecord = result?;
-            records.push(record);
-        }
-
+        let records = utils::from_csv(path)?;
         Ok(FireInspectionMatchRecords { records })
     }
 

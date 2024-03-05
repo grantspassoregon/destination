@@ -1,10 +1,5 @@
-use address::address::*;
-use address::address_components::*;
-use address::business::*;
-use address::compare::*;
-use address::error::AddressError;
-use address::import::*;
-use address::parser::*;
+use address::prelude::*;
+use aid::prelude::*;
 use tracing::info;
 
 #[test]
@@ -68,7 +63,10 @@ fn read_gp2022_addresses() -> Result<(), std::io::Error> {
         addresses.records.len()
     );
     let addresses = Addresses::from(addresses);
-    info!("Addresses converted: {} entries.", addresses.records.len());
+    info!(
+        "Addresses converted: {} entries.",
+        addresses.records_ref().len()
+    );
     Ok(())
 }
 
@@ -134,8 +132,8 @@ fn match_city_address() -> Result<(), std::io::Error> {
     let county_addresses = CountyAddresses::from_csv(county_path)?;
     let target_addresses = Addresses::from(county_addresses);
     let match_records = MatchRecords::new(
-        &source_addresses.records[0].clone(),
-        &target_addresses.records,
+        &source_addresses.records_ref()[0].clone(),
+        &target_addresses.records_ref(),
     );
     info!("Record 0 is: {:?}", match_records.records[0]);
 
@@ -201,8 +199,8 @@ fn match_city_addresses() -> Result<(), std::io::Error> {
     let county_addresses = CountyAddresses::from_csv(county_path)?;
     let target_addresses = Addresses::from(county_addresses);
     let match_records = MatchRecords::compare(
-        &source_addresses.records[0..10].to_vec(),
-        &target_addresses.records,
+        &source_addresses.records_ref()[0..10].to_vec(),
+        &target_addresses.records_ref(),
     );
     info!("Records: {:?}", match_records.records);
 
@@ -226,8 +224,8 @@ fn filter_status() -> Result<(), std::io::Error> {
     let county_addresses = CountyAddresses::from_csv(county_path)?;
     let target_addresses = Addresses::from(county_addresses);
     let match_records = MatchRecords::compare(
-        &source_addresses.records[0..10].to_vec(),
-        &target_addresses.records,
+        &source_addresses.records_ref()[0..10].to_vec(),
+        &target_addresses.records_ref(),
     );
     let filtered = match_records.filter("status");
     info!("Records: {:?}", filtered.records);
@@ -252,8 +250,8 @@ fn filter_missing() -> Result<(), std::io::Error> {
     let county_addresses = CountyAddresses::from_csv(county_path)?;
     let target_addresses = Addresses::from(county_addresses);
     let match_records = MatchRecords::compare(
-        &source_addresses.records[0..100].to_vec(),
-        &target_addresses.records,
+        &source_addresses.records_ref()[0..100].to_vec(),
+        &target_addresses.records_ref(),
     );
     let filtered = match_records.filter("missing");
     info!("Records: {:?}", filtered.records);
@@ -520,20 +518,20 @@ fn address_parser() {
     let a6 = "1650 1/2 NE TERRACE DR";
     let a7 = "212 NE SAVAGE ST STE A";
 
-    let mut a1_comp = PartialAddress::new();
+    let mut a1_comp = PartialAddress::default();
     a1_comp.set_address_number(1002);
     a1_comp.set_street_name("RAMSEY");
     a1_comp.set_post_type(&StreetNamePostType::AVENUE);
     let (_, a1_parsed) = parse_address(a1).unwrap();
 
-    let mut a2_comp = PartialAddress::new();
+    let mut a2_comp = PartialAddress::default();
     a2_comp.set_address_number(1012);
     a2_comp.set_pre_directional(&StreetNamePreDirectional::NORTHWEST);
     a2_comp.set_street_name("6TH");
     a2_comp.set_post_type(&StreetNamePostType::STREET);
     let (_, a2_parsed) = parse_address(a2).unwrap();
 
-    let mut a3_comp = PartialAddress::new();
+    let mut a3_comp = PartialAddress::default();
     a3_comp.set_address_number(1035);
     a3_comp.set_pre_directional(&StreetNamePreDirectional::NORTHEAST);
     a3_comp.set_street_name("6TH");
@@ -541,14 +539,14 @@ fn address_parser() {
     a3_comp.set_subaddress_identifier("B");
     let (_, a3_parsed) = parse_address(a3).unwrap();
 
-    let mut a4_comp = PartialAddress::new();
+    let mut a4_comp = PartialAddress::default();
     a4_comp.set_address_number(1072);
     a4_comp.set_street_name("ROGUE RIVER");
     a4_comp.set_post_type(&StreetNamePostType::HIGHWAY);
     a4_comp.set_subaddress_identifier("A B");
     let (_, a4_parsed) = parse_address(a4).unwrap();
 
-    let mut a5_comp = PartialAddress::new();
+    let mut a5_comp = PartialAddress::default();
     a5_comp.set_address_number(932);
     a5_comp.set_pre_directional(&StreetNamePreDirectional::SOUTHWEST);
     a5_comp.set_street_name("MOUNTAIN VIEW");
@@ -556,7 +554,7 @@ fn address_parser() {
     a5_comp.set_subaddress_identifier("Food Trailer");
     let (_, a5_parsed) = parse_address(a5).unwrap();
 
-    let mut a6_comp = PartialAddress::new();
+    let mut a6_comp = PartialAddress::default();
     a6_comp.set_address_number(1650);
     a6_comp.set_address_number_suffix(Some("1/2"));
     a6_comp.set_pre_directional(&StreetNamePreDirectional::NORTHEAST);
@@ -564,7 +562,7 @@ fn address_parser() {
     a6_comp.set_post_type(&StreetNamePostType::DRIVE);
     let (_, a6_parsed) = parse_address(a6).unwrap();
 
-    let mut a7_comp = PartialAddress::new();
+    let mut a7_comp = PartialAddress::default();
     a7_comp.set_address_number(212);
     a7_comp.set_pre_directional(&StreetNamePreDirectional::NORTHEAST);
     a7_comp.set_street_name("SAVAGE");
@@ -583,7 +581,7 @@ fn address_parser() {
 }
 
 #[test]
-fn load_fire_inspections() -> Result<(), AddressError> {
+fn load_fire_inspections() -> Clean<()> {
     if let Ok(()) = tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
@@ -595,7 +593,7 @@ fn load_fire_inspections() -> Result<(), AddressError> {
 }
 
 #[test]
-fn compare_fire_inspections() -> Result<(), AddressError> {
+fn compare_fire_inspections() -> Clean<()> {
     if let Ok(()) = tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
@@ -615,7 +613,7 @@ fn compare_fire_inspections() -> Result<(), AddressError> {
 }
 
 #[test]
-fn sort_fire_inspections() -> Result<(), AddressError> {
+fn sort_fire_inspections() -> Clean<()> {
     let file_path = "p:/fire_inspections_matched.csv";
     let compared = FireInspectionMatchRecords::from_csv(file_path)?;
     let mut matching = compared.filter("matching");
@@ -628,7 +626,7 @@ fn sort_fire_inspections() -> Result<(), AddressError> {
 }
 
 #[test]
-fn load_businesses() -> Result<(), AddressError> {
+fn load_businesses() -> Clean<()> {
     if let Ok(()) = tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()

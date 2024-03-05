@@ -1,13 +1,13 @@
-use crate::address::*;
-use crate::address_components::*;
-use crate::compare::*;
-use crate::utils::*;
+//! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
+//! matching, divergent and missing addresses.
+use crate::prelude::*;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tracing::info;
 
+/// The `BusinessMatchRecord` struct holds match data for a licensed business.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BusinessMatchRecord {
     match_status: MatchStatus,
@@ -25,23 +25,26 @@ pub struct BusinessMatchRecord {
 }
 
 impl BusinessMatchRecord {
+    /// The `company_name` field represents the registered business name associated with the
+    /// active business license.
     pub fn company_name(&self) -> Option<String> {
-        match &self.company_name {
-            Some(name) => Some(name.clone()),
-            None => None.to_owned(),
-        }
+        self.company_name.clone()
     }
 }
 
+/// The `BusinessMatchRecords` struct holds a vector of [`BusinessMatchRecord`] objects.
 #[derive(Clone)]
 pub struct BusinessMatchRecords {
+    /// The `records` field holds a vector of [`BusinessMatchRecord`] objects.
     pub records: Vec<BusinessMatchRecord>,
 }
 
 impl BusinessMatchRecords {
-    fn new(business: &BusinessLicense, addresses: &Addresses) -> Self {
+    /// Matches the provided address associated with a business license against the addresses in
+    /// `addresses`, creating a new `BusinessMatchRecords` struct containing the results.
+    pub fn new(business: &BusinessLicense, addresses: &Addresses) -> Self {
         let mut records = Vec::new();
-        for address in &addresses.records {
+        for address in addresses.records_ref() {
             let business_match = business.coincident(address);
             if let Some(record) = business_match {
                 records.push(record);
@@ -78,7 +81,12 @@ impl BusinessMatchRecords {
         }
     }
 
-    fn chain(business: &BusinessLicense, address_list: &[&Addresses]) -> Self {
+    /// This method compares the address of `business` against the addresses in `address_list`,
+    /// returning a `BusinessMatchRecords` struct containing an exact match if found, otherwise a
+    /// list of partial (divergent) matches if found, otherwise a missing record.  Since divergent
+    /// addresses are unnecessary to inspect if an exact match is found, this is a more efficient
+    /// matching method compared to [`BusinessMatchRecords::compare()`].
+    pub fn chain(business: &BusinessLicense, address_list: &[&Addresses]) -> Self {
         let mut matching = Vec::new();
         let mut divergent = Vec::new();
         let mut missing = Vec::new();
@@ -104,6 +112,9 @@ impl BusinessMatchRecords {
         }
     }
 
+    /// For each [`BusinessLicense`] object in `businesses`, this method creates a
+    /// `BusinessMatchRecords` using the [`BusinessMatchRecords::new()`] method.  Match records
+    /// will include matching, divergent and missing records.
     pub fn compare(businesses: &BusinessLicenses, addresses: &Addresses) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
@@ -122,6 +133,9 @@ impl BusinessMatchRecords {
         BusinessMatchRecords { records }
     }
 
+    /// Compares each address in `businesses` against the addresses in `addresses` using the
+    /// [`BusinessMatchRecords::chain()`] method, which returns only an exact match if available,
+    /// otherwise returning a list of partial matches or a missing record.
     pub fn compare_chain(businesses: &BusinessLicenses, addresses: &[&Addresses]) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
@@ -140,6 +154,11 @@ impl BusinessMatchRecords {
         BusinessMatchRecords { records }
     }
 
+    /// The `filter` method filters the [`BusinessMatchRecord`] objects in the `records` field
+    /// based upon the match status of the record.  The `filter` field accepts the values
+    /// "missing", "nonmissing", "divergent", "matching", "unique" and "multiple". The "unique"
+    /// option returns records where the business name is unique.  The "multiple" options returns
+    /// records where multiple licenses exist registered under the same business name.
     pub fn filter(&self, filter: &str) -> Self {
         let mut records = Vec::new();
         match filter {
@@ -156,7 +175,7 @@ impl BusinessMatchRecords {
                     .records
                     .par_iter()
                     .cloned()
-                    .filter(|record| record.match_status == MatchStatus::Missing)
+                    .filter(|record| record.match_status != MatchStatus::Missing)
                     .collect(),
             ),
             "divergent" => records.append(
@@ -208,6 +227,10 @@ impl BusinessMatchRecords {
         BusinessMatchRecords { records }
     }
 
+    /// The `filter_field` method filters [`BusinessMatchRecord`] objects in the `records` field
+    /// by comparing the value of the field specified in `filter` to the value of `field`.  The
+    /// `filter` field accepts the value "name", and matches the value of `field` against the company
+    /// name associated with the record.
     pub fn filter_field(&self, filter: &str, field: &str) -> Self {
         let mut records = Vec::new();
         match filter {
@@ -224,29 +247,31 @@ impl BusinessMatchRecords {
         BusinessMatchRecords { records }
     }
 
+    /// Writes the contents of `BusinessMatchRecords` to a CSV file at location `title`.  Each element in
+    /// the vector of type [`BusinessMatchRecord`] maps to a row of data on the CSV.
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        let mut wtr = csv::Writer::from_path(title)?;
-        for i in self.records.clone() {
-            wtr.serialize(i)?;
-        }
-        wtr.flush()?;
+        to_csv(self.records_mut(), title)?;
         Ok(())
     }
 
+    /// Creates a new `BusinessMatchRecords` struct from a CSV file located at `path`.  This method
+    /// does not parse raw business license data, and should only be used to read files output from
+    /// [`BusinessMatchRecords::to_csv()`].
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let mut records = Vec::new();
-        let file = std::fs::File::open(path)?;
-        let mut rdr = csv::Reader::from_reader(file);
-
-        for result in rdr.deserialize() {
-            let record: BusinessMatchRecord = result?;
-            records.push(record);
-        }
-
+        let records = from_csv(path)?;
         Ok(BusinessMatchRecords { records })
+    }
+
+    /// The `records` field holds a vector of type [`BusinessMatchRecord`].  This method returns a
+    /// mutable reference to the vector.
+    pub fn records_mut(&mut self) -> &mut Vec<BusinessMatchRecord> {
+        &mut self.records
     }
 }
 
+/// The `BusinessLicense` struct is designed to deserialize CSV data produced by querying the
+/// EnerGov SQL database for active business licenses.  If the structure of the SQL query changes,
+/// this function will need to change to match the resulting fields in the CSV.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BusinessLicense {
@@ -288,6 +313,8 @@ pub struct BusinessLicense {
 }
 
 impl BusinessLicense {
+    /// Compares the address of `BusinessLicense` to `address`, producing either a matching
+    /// [`BusinessMatchRecord`], any divergent [`BusinessMatchRecord`], or `None` if missing.
     pub fn coincident(&self, address: &Address) -> Option<BusinessMatchRecord> {
         let mut match_status = MatchStatus::Missing;
         let mut business_match = None;
@@ -326,6 +353,8 @@ impl BusinessLicense {
         business_match
     }
 
+    /// The `company_name` field represents the registered name of the business.  This method
+    /// returns the cloned value of the field.
     pub fn company_name(&self) -> Option<String> {
         match self.company_name.clone() {
             Some(name) => Some(name.trim().to_string()),
@@ -333,38 +362,56 @@ impl BusinessLicense {
         }
     }
 
+    /// The `contact_name` field represents the business owner name.  This method clones the
+    /// value of the field.
     pub fn contact_name(&self) -> Option<String> {
         self.contact_name.to_owned()
     }
 
+    /// The `business_type` field represents the tax classification associated with a business
+    /// license.  This method clones the value of the field.
     pub fn business_type(&self) -> String {
         self.business_type.to_owned()
     }
 
+    /// The `dba` field represents the alias name associated with a business license.  This method
+    /// clones the value of the field.
     pub fn dba(&self) -> Option<String> {
         self.dba.to_owned()
     }
 
+    /// The `license` field represents the license ID associated with the business.  This method
+    /// clones the value of the field.
     pub fn license(&self) -> String {
         self.license.to_owned()
     }
 
+    /// The `expires` field represents the time of expiration for the active business license.
+    /// This method clones the value of the field.
     pub fn expires(&self) -> String {
         self.expires.to_owned()
     }
 
+    /// The `pre_directional` field represents the street pre-directional designation associated
+    /// with a business license.  This method clones the value of the field.
     pub fn pre_directional(&self) -> Option<StreetNamePreDirectional> {
         self.street_name_pre_directional
     }
 
+    /// The `post_type` field represents the street post type designation of the business address.
+    /// This method returns the cloned value of the field.
     pub fn post_type(&self) -> Option<StreetNamePostType> {
         self.street_name_post_type
     }
 
+    /// The `subaddress_identifier` field represents the subaddress unit identifier associated with
+    /// a business address.  This method clones the value of the field.
     pub fn subaddress_identifier(&self) -> Option<String> {
         self.subaddress_identifier.to_owned()
     }
 
+    /// The `label` method creates a string representation of the complete street address
+    /// associated with a business license.
     fn label(&self) -> String {
         let street_name = match self.post_type() {
             Some(post_type) => format!("{} {:?}", self.street_name, post_type),
@@ -384,25 +431,24 @@ impl BusinessLicense {
     }
 }
 
+/// The `BusinessLicenses` struct holds a `records` field containing a vector of type
+/// [`BusinessLicense`].
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BusinessLicenses {
+    /// The `records` field contains a vector of type [`BusinessLicense`].
     pub records: Vec<BusinessLicense>,
 }
 
 impl BusinessLicenses {
+    /// Creates a new `BusinessLicenses` struct from a CSV file located at `path`.
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let mut data = Vec::new();
-        let file = std::fs::File::open(path)?;
-        let mut rdr = csv::Reader::from_reader(file);
-
-        for result in rdr.deserialize() {
-            let record: BusinessLicense = result?;
-            data.push(record);
-        }
-
-        Ok(BusinessLicenses { records: data })
+        let records = from_csv(path)?;
+        Ok(BusinessLicenses { records })
     }
 
+    /// Returns the subset of `BusinessLicenses` where the value of the `filter` field is equal to
+    /// the test value in `field`.  Currently `filter` can take the value `name`, referring to the
+    /// company name.
     pub fn filter(&self, filter: &str, field: &str) -> Self {
         let mut records = Vec::new();
         match filter {
@@ -419,6 +465,8 @@ impl BusinessLicenses {
         BusinessLicenses { records }
     }
 
+    /// Retains one record from each license in `BusinessLicenses`, keeping the first encountered,
+    /// intended to remove duplicate licenses from a record.
     pub fn deduplicate(&self) -> Self {
         let mut records = Vec::new();
         let mut licenses = HashSet::new();

@@ -1,34 +1,43 @@
-use crate::address::*;
-use crate::address_components::*;
-use crate::utils;
+use crate::prelude::*;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
+/// The `Mismatch` enum tracks the fields of an address that can diverge while still potentially
+/// referring to the same location.
 pub enum Mismatch {
+    /// Represents a mismatch in the subaddress type.
     SubaddressType(String),
+    /// Represents a mismatch in the floor number.
     Floor(String),
+    /// Represents a mismatch in the building identifier.
     Building(String),
+    /// Represents a mismatch in the address status.
     Status(String),
 }
 
 impl Mismatch {
+    /// The `subaddress_type` method captures information about the mismatch between subaddress
+    /// type fields as a message contained in the enum variant.
     pub fn subaddress_type(from: Option<SubaddressType>, to: Option<SubaddressType>) -> Self {
         let message = format!("{:?} not equal to {:?}", from, to);
         Self::SubaddressType(message)
     }
 
+    /// The `floor` method captures information about the mismatch between the `floor` fields as a message contained in the enum variant.
     pub fn floor(from: Option<i64>, to: Option<i64>) -> Self {
         let message = format!("{:?} not equal to {:?}", from, to);
         Self::Floor(message)
     }
 
+    /// The `building` method captures information about the mismatch between the `building` fields as a message contained in the enum variant.
     pub fn building(from: Option<String>, to: Option<String>) -> Self {
         let message = format!("{:?} not equal to {:?}", from, to);
         Self::Building(message)
     }
 
+    /// The `status` method captures information about the mismatch between the `status` fields as a message contained in the enum variant.
     pub fn status(from: AddressStatus, to: AddressStatus) -> Self {
         let message = format!("{:?} not equal to {:?}", from, to);
         Self::Status(message)
@@ -248,25 +257,21 @@ impl MatchRecords {
     }
 
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        let mut wtr = csv::Writer::from_path(title)?;
-        for i in self.records.clone() {
-            wtr.serialize(i)?;
-        }
-        wtr.flush()?;
+        to_csv(self.records_mut(), title)?;
         Ok(())
     }
 
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let mut records = Vec::new();
-        let file = std::fs::File::open(path)?;
-        let mut rdr = csv::Reader::from_reader(file);
-
-        for result in rdr.deserialize() {
-            let record: MatchRecord = result?;
-            records.push(record);
-        }
-
+        let records = from_csv(path)?;
         Ok(MatchRecords { records })
+    }
+
+    pub fn records_ref(&self) -> &Vec<MatchRecord> {
+        &self.records
+    }
+
+    pub fn records_mut(&mut self) -> &mut Vec<MatchRecord> {
+        &mut self.records
     }
 }
 
@@ -452,7 +457,7 @@ impl MatchPartialRecords {
     }
 
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        utils::to_csv(&mut self.records(), title)?;
+        to_csv(&mut self.records(), title)?;
         Ok(())
     }
 

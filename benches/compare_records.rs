@@ -1,4 +1,4 @@
-use address::data::*;
+use address::prelude::*;
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn compare_records(c: &mut Criterion) {
@@ -11,8 +11,8 @@ pub fn compare_records(c: &mut Criterion) {
     c.bench_function("compare records", |b| {
         b.iter(|| {
             MatchRecords::compare(
-                &source_addresses.records[(0..10)].to_vec(),
-                &target_addresses.records[(0..1000)],
+                &source_addresses.records_ref()[0..10].to_vec(),
+                &target_addresses.records_ref()[0..1000],
             );
         })
     });

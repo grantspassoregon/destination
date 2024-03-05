@@ -1,5 +1,6 @@
 use crate::address_components::*;
-use crate::utils::*;
+use crate::utils;
+use crate::utils::deserialize_arcgis_data;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -127,15 +128,7 @@ pub struct CountyAddresses {
 
 impl CountyAddresses {
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let mut data = Vec::new();
-        let file = std::fs::File::open(path)?;
-        let mut rdr = csv::Reader::from_reader(file);
-
-        for result in rdr.deserialize() {
-            let record: CountyAddress = result?;
-            data.push(record);
-        }
-
-        Ok(CountyAddresses { records: data })
+        let records = utils::from_csv(path)?;
+        Ok(CountyAddresses { records })
     }
 }

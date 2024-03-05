@@ -1,3 +1,5 @@
+//! The `address_components` module holds type definitions and methods for address component
+//! elements, as defined by FGDC guidelines.
 mod address_status;
 mod floor;
 mod street_name_post_type;

@@ -1,5 +1,5 @@
-use crate::error::AddressError;
-use crate::{address::PartialAddress, parser::parse_address};
+use crate::prelude::*;
+use aid::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -26,15 +26,7 @@ pub struct BusinessesRaw {
 
 impl BusinessesRaw {
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let mut records = Vec::new();
-        let file = std::fs::File::open(path)?;
-        let mut rdr = csv::Reader::from_reader(file);
-
-        for result in rdr.deserialize() {
-            let record: BusinessRaw = result?;
-            records.push(record);
-        }
-
+        let records = from_csv(path)?;
         Ok(BusinessesRaw { records })
     }
 
@@ -115,7 +107,7 @@ impl Business {
 }
 
 impl TryFrom<BusinessRaw> for Business {
-    type Error = AddressError;
+    type Error = Bandage;
 
     fn try_from(raw: BusinessRaw) -> Result<Self, Self::Error> {
         match parse_address(&raw.street_address_label) {
@@ -134,7 +126,7 @@ impl TryFrom<BusinessRaw> for Business {
                 tourism: raw.tourism,
                 district: raw.district,
             }),
-            Err(_) => Err(AddressError::ParseError),
+            Err(_) => Err(Bandage::Parse),
         }
     }
 }
@@ -145,7 +137,7 @@ pub struct Businesses {
 }
 
 impl Businesses {
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
+    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Clean<Self> {
         let raw = BusinessesRaw::from_csv(path)?;
         let mut records = Vec::new();
         for record in raw.records {
