@@ -14,7 +14,9 @@ pub mod parser;
 pub mod utils;
 
 pub mod prelude {
-    pub use crate::address::{Address, Addresses, PartialAddress, PartialAddresses};
+    pub use crate::address::{
+        Addres, Addreses, Address, Addresses, PartialAddress, PartialAddresses, Point, Points,
+    };
     pub use crate::address_components::{
         deserialize_mixed_post_type, deserialize_mixed_pre_directional, AddressStatus,
         StreetNamePostType, StreetNamePreDirectional, SubaddressType,

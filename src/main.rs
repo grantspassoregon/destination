@@ -91,282 +91,335 @@ fn main() -> Clean<()> {
                 warn!("Filter parameter (-f or --filter) must be set.");
             }
         }
-        "drift" => {
-            info!("Calculating spatial drift between datasets.");
-            trace!("Reading source addresses.");
-            let mut source_addresses = Addresses::default();
-            if let Some(source_type) = &cli.source_type {
-                match source_type.as_str() {
-                    "grants_pass" => {
-                        source_addresses = Addresses::from(CityAddresses::from_csv(&cli.source)?)
-                    }
-                    "grants_pass_2022" => {
-                        source_addresses =
-                            Addresses::from(GrantsPass2022Addresses::from_csv(&cli.source)?)
-                    }
-                    _ => error!("Invalid source data type."),
-                }
-            } else {
-                error!("No source data type provided.");
-            }
-
-            trace!("Reading target addresses.");
-            let mut target_addresses = Addresses::default();
-            if let Some(target) = &cli.target {
-                if let Some(target_type) = &cli.target_type {
-                    match target_type.as_str() {
-                        "grants_pass" => {
-                            target_addresses = Addresses::from(CityAddresses::from_csv(target)?)
-                        }
-                        "grants_pass_2022" => {
-                            target_addresses =
-                                Addresses::from(GrantsPass2022Addresses::from_csv(target)?)
-                        }
-                        _ => error!("Invalid target data type."),
-                    }
-                } else {
-                    error!("No target data type provided.");
-                }
-            } else {
-                error!("No target data specified.");
-            }
-
-            let mut deltas = source_addresses.deltas(&target_addresses, 99.0);
-            deltas.to_csv(cli.output.clone())?;
-        }
-        "lexisnexis" => {
-            info!("Reading source records.");
-            let mut source_addresses = Addresses::default();
-            if let Some(source_type) = &cli.source_type {
-                match source_type.as_str() {
-                    "grants_pass" => {
-                        source_addresses =
-                            Addresses::from(CityAddresses::from_csv(cli.source.clone())?)
-                    }
-                    "grants_pass_2022" => {
-                        source_addresses =
-                            Addresses::from(GrantsPass2022Addresses::from_csv(cli.source.clone())?)
-                    }
-                    "josephine_county" => {
-                        source_addresses =
-                            Addresses::from(CountyAddresses::from_csv(cli.source.clone())?)
-                    }
-                    _ => error!("Unrecognized file format."),
-                }
-            }
-
-            info!(
-                "Source records read: {} entries.",
-                source_addresses.records_ref().len()
-            );
-
-            trace!("Reading exclusion addresses.");
-            let mut target_addresses = Addresses::default();
-            if let Some(target) = &cli.target {
-                if let Some(target_type) = &cli.target_type {
-                    match target_type.as_str() {
-                        "josephine_county" => {
-                            target_addresses = Addresses::from(CountyAddresses::from_csv(target)?)
-                        }
-                        _ => error!("Invalid target data type."),
-                    }
-                } else {
-                    error!("No target data type provided.");
-                }
-            } else {
-                error!("No target data specified.");
-            }
-            // target_addresses = target_addresses.citify();
-            info!(
-                "Exclusion records read: {} entries.",
-                target_addresses.records_ref().len()
-            );
-            let mut lx = LexisNexis::from_addresses(&source_addresses, &target_addresses)?;
-            lx.to_csv(cli.output)?;
-        }
-        "orphan_streets" => {
-            info!("Reading source records.");
-            let mut source_addresses = Addresses::default();
-            if let Some(source_type) = &cli.source_type {
-                match source_type.as_str() {
-                    "grants_pass" => {
-                        source_addresses =
-                            Addresses::from(CityAddresses::from_csv(cli.source.clone())?)
-                    }
-                    "grants_pass_2022" => {
-                        source_addresses =
-                            Addresses::from(GrantsPass2022Addresses::from_csv(cli.source.clone())?)
-                    }
-                    "josephine_county" => {
-                        source_addresses =
-                            Addresses::from(CountyAddresses::from_csv(cli.source.clone())?)
-                    }
-                    _ => error!("Unrecognized file format."),
-                }
-            }
-
-            info!(
-                "Source records read: {} entries.",
-                source_addresses.records_ref().len()
-            );
-
-            trace!("Reading exclusion addresses.");
-            let mut target_addresses = Addresses::default();
-            if let Some(target) = &cli.target {
-                if let Some(target_type) = &cli.target_type {
-                    match target_type.as_str() {
-                        "josephine_county" => {
-                            target_addresses = Addresses::from(CountyAddresses::from_csv(target)?)
-                        }
-                        _ => error!("Invalid target data type."),
-                    }
-                } else {
-                    error!("No target data type provided.");
-                }
-            } else {
-                error!("No target data specified.");
-            }
-            info!(
-                "Exclusion records read: {} entries.",
-                target_addresses.records_ref().len()
-            );
-            let orphans = &source_addresses.orphan_streets(&target_addresses);
-            info!("{:?}", orphans);
-        }
+        // "drift" => {
+        //     info!("Calculating spatial drift between datasets.");
+        //     trace!("Reading source addresses.");
+        //     let mut source_addresses = Addresses::default();
+        //     if let Some(source_type) = &cli.source_type {
+        //         match source_type.as_str() {
+        //             "grants_pass" => {
+        //                 source_addresses = Addresses::from(CityAddresses::from_csv(&cli.source)?)
+        //             }
+        //             "grants_pass_2022" => {
+        //                 source_addresses =
+        //                     Addresses::from(GrantsPass2022Addresses::from_csv(&cli.source)?)
+        //             }
+        //             _ => error!("Invalid source data type."),
+        //         }
+        //     } else {
+        //         error!("No source data type provided.");
+        //     }
+        //
+        //     trace!("Reading target addresses.");
+        //     let mut target_addresses = Addresses::default();
+        //     if let Some(target) = &cli.target {
+        //         if let Some(target_type) = &cli.target_type {
+        //             match target_type.as_str() {
+        //                 "grants_pass" => {
+        //                     target_addresses = Addresses::from(CityAddresses::from_csv(target)?)
+        //                 }
+        //                 "grants_pass_2022" => {
+        //                     target_addresses =
+        //                         Addresses::from(GrantsPass2022Addresses::from_csv(target)?)
+        //                 }
+        //                 _ => error!("Invalid target data type."),
+        //             }
+        //         } else {
+        //             error!("No target data type provided.");
+        //         }
+        //     } else {
+        //         error!("No target data specified.");
+        //     }
+        //
+        //     let mut deltas = source_addresses.deltas(&target_addresses, 99.0);
+        //     deltas.to_csv(cli.output.clone())?;
+        // }
+        // "lexisnexis" => {
+        //     info!("Reading source records.");
+        //     let mut source_addresses = Addresses::default();
+        //     if let Some(source_type) = &cli.source_type {
+        //         match source_type.as_str() {
+        //             "grants_pass" => {
+        //                 source_addresses =
+        //                     Addresses::from(CityAddresses::from_csv(cli.source.clone())?)
+        //             }
+        //             "grants_pass_2022" => {
+        //                 source_addresses =
+        //                     Addresses::from(GrantsPass2022Addresses::from_csv(cli.source.clone())?)
+        //             }
+        //             "josephine_county" => {
+        //                 source_addresses =
+        //                     Addresses::from(CountyAddresses::from_csv(cli.source.clone())?)
+        //             }
+        //             _ => error!("Unrecognized file format."),
+        //         }
+        //     }
+        //
+        //     info!(
+        //         "Source records read: {} entries.",
+        //         source_addresses.records_ref().len()
+        //     );
+        //
+        //     trace!("Reading exclusion addresses.");
+        //     let mut target_addresses = Addresses::default();
+        //     if let Some(target) = &cli.target {
+        //         if let Some(target_type) = &cli.target_type {
+        //             match target_type.as_str() {
+        //                 "josephine_county" => {
+        //                     target_addresses = Addresses::from(CountyAddresses::from_csv(target)?)
+        //                 }
+        //                 _ => error!("Invalid target data type."),
+        //             }
+        //         } else {
+        //             error!("No target data type provided.");
+        //         }
+        //     } else {
+        //         error!("No target data specified.");
+        //     }
+        //     // target_addresses = target_addresses.citify();
+        //     info!(
+        //         "Exclusion records read: {} entries.",
+        //         target_addresses.records_ref().len()
+        //     );
+        //     let mut lx = LexisNexis::from_addresses(&source_addresses, &target_addresses)?;
+        //     lx.to_csv(cli.output)?;
+        // }
+        // "orphan_streets" => {
+        //     info!("Reading source records.");
+        //     let mut source_addresses = Addresses::default();
+        //     if let Some(source_type) = &cli.source_type {
+        //         match source_type.as_str() {
+        //             "grants_pass" => {
+        //                 source_addresses =
+        //                     Addresses::from(CityAddresses::from_csv(cli.source.clone())?)
+        //             }
+        //             "grants_pass_2022" => {
+        //                 source_addresses =
+        //                     Addresses::from(GrantsPass2022Addresses::from_csv(cli.source.clone())?)
+        //             }
+        //             "josephine_county" => {
+        //                 source_addresses =
+        //                     Addresses::from(CountyAddresses::from_csv(cli.source.clone())?)
+        //             }
+        //             _ => error!("Unrecognized file format."),
+        //         }
+        //     }
+        //
+        //     info!(
+        //         "Source records read: {} entries.",
+        //         source_addresses.records_ref().len()
+        //     );
+        //
+        //     trace!("Reading exclusion addresses.");
+        //     let mut target_addresses = Addresses::default();
+        //     if let Some(target) = &cli.target {
+        //         if let Some(target_type) = &cli.target_type {
+        //             match target_type.as_str() {
+        //                 "josephine_county" => {
+        //                     target_addresses = Addresses::from(CountyAddresses::from_csv(target)?)
+        //                 }
+        //                 _ => error!("Invalid target data type."),
+        //             }
+        //         } else {
+        //             error!("No target data type provided.");
+        //         }
+        //     } else {
+        //         error!("No target data specified.");
+        //     }
+        //     info!(
+        //         "Exclusion records read: {} entries.",
+        //         target_addresses.records_ref().len()
+        //     );
+        //     let orphans = &source_addresses.orphan_streets(&target_addresses);
+        //     info!("{:?}", orphans);
+        // }
+        // "compare" => {
+        //     if cli.business {
+        //         info!("Matching business addresses.");
+        //         info!("Reading source records.");
+        //         let source_addresses = BusinessLicenses::from_csv(cli.source.clone())?;
+        //         info!(
+        //             "Source records read: {} entries.",
+        //             source_addresses.records.len()
+        //         );
+        //         let source_addresses = source_addresses.deduplicate();
+        //         info!(
+        //             "Records deduplicated: {} remaining.",
+        //             source_addresses.records.len()
+        //         );
+        //         info!("Reading comparison records.");
+        //         let mut target_addresses = Addresses::default();
+        //         if let Some(target) = &cli.target {
+        //             if let Some(target_type) = &cli.target_type {
+        //                 match target_type.as_str() {
+        //                     "grants_pass" => {
+        //                         target_addresses = Addresses::from(CityAddresses::from_csv(target)?)
+        //                     }
+        //                     "grants_pass_2022" => {
+        //                         target_addresses =
+        //                             Addresses::from(GrantsPass2022Addresses::from_csv(target)?)
+        //                     }
+        //                     _ => info!("Unrecognized file format."),
+        //                 }
+        //             }
+        //             info!(
+        //                 "Target records read: {} entries.",
+        //                 target_addresses.records_ref().len()
+        //             );
+        //         }
+        //         if let Some(alternate) = cli.alternate {
+        //             info!("Comparing multiple targets.");
+        //             let mut alt_target = Addresses::default();
+        //             if let Some(target_type) = &cli.alternate_type {
+        //                 match target_type.as_str() {
+        //                     "grants_pass" => {
+        //                         alt_target = Addresses::from(CityAddresses::from_csv(alternate)?)
+        //                     }
+        //                     "grants_pass_2022" => {
+        //                         alt_target =
+        //                             Addresses::from(GrantsPass2022Addresses::from_csv(alternate)?)
+        //                     }
+        //                     _ => error!("Unrecognized file format."),
+        //                 }
+        //             }
+        //             info!(
+        //                 "Alternate target records read: {} entries.",
+        //                 alt_target.records_ref().len()
+        //             );
+        //             info!("Comparing records.");
+        //             let mut match_records = BusinessMatchRecords::compare_chain(
+        //                 &source_addresses,
+        //                 &[&target_addresses, &alt_target],
+        //             );
+        //             info!("{:?} records categorized.", match_records.records.len());
+        //             info!("Output file: {:?}", cli.output);
+        //             match_records.to_csv(cli.output)?;
+        //         } else {
+        //             info!("Comparing records.");
+        //             let mut match_records =
+        //                 BusinessMatchRecords::compare(&source_addresses, &target_addresses);
+        //             info!("{:?} records categorized.", match_records.records.len());
+        //             info!("Output file: {:?}", cli.output);
+        //             match_records.to_csv(cli.output)?;
+        //         }
+        //     } else {
+        //         info!("Matching addresses.");
+        //         info!("Reading source records.");
+        //         let mut source_addresses = Addresses::default();
+        //         if let Some(source_type) = &cli.source_type {
+        //             match source_type.as_str() {
+        //                 "grants_pass" => {
+        //                     source_addresses = Addresses::from(CityAddresses::from_csv(cli.source)?)
+        //                 }
+        //                 "grants_pass_2022" => {
+        //                     source_addresses =
+        //                         Addresses::from(GrantsPass2022Addresses::from_csv(cli.source)?)
+        //                 }
+        //                 "josephine_county" => {
+        //                     source_addresses =
+        //                         Addresses::from(CountyAddresses::from_csv(cli.source)?)
+        //                 }
+        //                 _ => error!("Unrecognized file format."),
+        //             }
+        //         }
+        //
+        //         info!(
+        //             "Source records read: {} entries.",
+        //             source_addresses.records_ref().len()
+        //         );
+        //         if cli.duplicates {
+        //             info!("Screening for duplicate records.");
+        //             let mut same = source_addresses.filter("duplicate");
+        //             info!("Duplicate records: {:?}", same.records_ref().len());
+        //             info!("Output file: {:?}", cli.output);
+        //             same.to_csv(cli.output)?;
+        //         } else if let Some(target) = cli.target {
+        //             info!("Reading comparison records.");
+        //             let mut target_addresses = Addresses::default();
+        //             if let Some(target_type) = cli.target_type {
+        //                 match target_type.as_str() {
+        //                     "grants_pass" => {
+        //                         target_addresses = Addresses::from(CityAddresses::from_csv(target)?)
+        //                     }
+        //                     "grants_pass_2022" => {
+        //                         target_addresses =
+        //                             Addresses::from(GrantsPass2022Addresses::from_csv(target)?)
+        //                     }
+        //                     "josephine_county" => {
+        //                         target_addresses =
+        //                             Addresses::from(CountyAddresses::from_csv(target)?)
+        //                     }
+        //                     _ => error!("Unrecognized file format."),
+        //                 }
+        //             }
+        //             info!(
+        //                 "Comparison records read: {} entries.",
+        //                 target_addresses.records_ref().len()
+        //             );
+        //             info!("Comparing records.");
+        //             let mut match_records = MatchRecords::compare(
+        //                 source_addresses.records_ref(),
+        //                 target_addresses.records_ref(),
+        //             );
+        //             info!(
+        //                 "{:?} records categorized.",
+        //                 match_records.records_ref().len()
+        //             );
+        //             info!("Output file: {:?}", cli.output);
+        //             match_records.to_csv(cli.output)?;
+        //         }
+        //     }
+        // }
         "compare" => {
-            if cli.business {
-                info!("Matching business addresses.");
-                info!("Reading source records.");
-                let source_addresses = BusinessLicenses::from_csv(cli.source.clone())?;
-                info!(
-                    "Source records read: {} entries.",
-                    source_addresses.records.len()
-                );
-                let source_addresses = source_addresses.deduplicate();
-                info!(
-                    "Records deduplicated: {} remaining.",
-                    source_addresses.records.len()
-                );
-                info!("Reading comparison records.");
-                let mut target_addresses = Addresses::default();
-                if let Some(target) = &cli.target {
-                    if let Some(target_type) = &cli.target_type {
-                        match target_type.as_str() {
-                            "grants_pass" => {
-                                target_addresses = Addresses::from(CityAddresses::from_csv(target)?)
+            if let Some(source_type) = &cli.source_type {
+                match source_type.as_str() {
+                    "grants_pass" => {
+                        let source = CityAddresses::from_csv(cli.source.clone())?;
+                        if let Some(target_type) = &cli.target_type {
+                            match target_type.as_str() {
+                                "josephine_county" => {
+                                    if let Some(path) = cli.target {
+                                        let target = CountyAddresses::from_csv(path)?;
+                                        tracing::info!("Records: {}", &target.records.len());
+                                        info!("Comparing records.");
+                                        let mut match_records =
+                                            MatchRecords::compare(&source.records, &target.records);
+                                        info!(
+                                            "{:?} records categorized.",
+                                            match_records.records_ref().len()
+                                        );
+                                        info!("Output file: {:?}", cli.output);
+                                        match_records.to_csv(cli.output)?;
+                                    }
+                                }
+                                _ => tracing::info!("Source not recognized."),
                             }
-                            "grants_pass_2022" => {
-                                target_addresses =
-                                    Addresses::from(GrantsPass2022Addresses::from_csv(target)?)
-                            }
-                            _ => info!("Unrecognized file format."),
                         }
                     }
-                    info!(
-                        "Target records read: {} entries.",
-                        target_addresses.records_ref().len()
-                    );
-                }
-                if let Some(alternate) = cli.alternate {
-                    info!("Comparing multiple targets.");
-                    let mut alt_target = Addresses::default();
-                    if let Some(target_type) = &cli.alternate_type {
-                        match target_type.as_str() {
-                            "grants_pass" => {
-                                alt_target = Addresses::from(CityAddresses::from_csv(alternate)?)
+                    "josephine_county" => {
+                        let source = CountyAddresses::from_csv(cli.source.clone())?;
+                        if let Some(target_type) = &cli.target_type {
+                            match target_type.as_str() {
+                                "grants_pass" => {
+                                    if let Some(path) = cli.target {
+                                        let target = CityAddresses::from_csv(path)?;
+                                        tracing::info!("Records: {}", target.records.len());
+                                        info!("Comparing records.");
+                                        let mut match_records =
+                                            MatchRecords::compare(&source.records, &target.records);
+                                        info!(
+                                            "{:?} records categorized.",
+                                            match_records.records_ref().len()
+                                        );
+                                        info!("Output file: {:?}", cli.output);
+                                        match_records.to_csv(cli.output)?;
+                                    }
+                                }
+                                _ => tracing::info!("Source not recognized."),
                             }
-                            "grants_pass_2022" => {
-                                alt_target =
-                                    Addresses::from(GrantsPass2022Addresses::from_csv(alternate)?)
-                            }
-                            _ => error!("Unrecognized file format."),
                         }
                     }
-                    info!(
-                        "Alternate target records read: {} entries.",
-                        alt_target.records_ref().len()
-                    );
-                    info!("Comparing records.");
-                    let mut match_records = BusinessMatchRecords::compare_chain(
-                        &source_addresses,
-                        &[&target_addresses, &alt_target],
-                    );
-                    info!("{:?} records categorized.", match_records.records.len());
-                    info!("Output file: {:?}", cli.output);
-                    match_records.to_csv(cli.output)?;
-                } else {
-                    info!("Comparing records.");
-                    let mut match_records =
-                        BusinessMatchRecords::compare(&source_addresses, &target_addresses);
-                    info!("{:?} records categorized.", match_records.records.len());
-                    info!("Output file: {:?}", cli.output);
-                    match_records.to_csv(cli.output)?;
-                }
-            } else {
-                info!("Matching addresses.");
-                info!("Reading source records.");
-                let mut source_addresses = Addresses::default();
-                if let Some(source_type) = &cli.source_type {
-                    match source_type.as_str() {
-                        "grants_pass" => {
-                            source_addresses = Addresses::from(CityAddresses::from_csv(cli.source)?)
-                        }
-                        "grants_pass_2022" => {
-                            source_addresses =
-                                Addresses::from(GrantsPass2022Addresses::from_csv(cli.source)?)
-                        }
-                        "josephine_county" => {
-                            source_addresses =
-                                Addresses::from(CountyAddresses::from_csv(cli.source)?)
-                        }
-                        _ => error!("Unrecognized file format."),
-                    }
-                }
-
-                info!(
-                    "Source records read: {} entries.",
-                    source_addresses.records_ref().len()
-                );
-                if cli.duplicates {
-                    info!("Screening for duplicate records.");
-                    let mut same = source_addresses.filter("duplicate");
-                    info!("Duplicate records: {:?}", same.records_ref().len());
-                    info!("Output file: {:?}", cli.output);
-                    same.to_csv(cli.output)?;
-                } else if let Some(target) = cli.target {
-                    info!("Reading comparison records.");
-                    let mut target_addresses = Addresses::default();
-                    if let Some(target_type) = cli.target_type {
-                        match target_type.as_str() {
-                            "grants_pass" => {
-                                target_addresses = Addresses::from(CityAddresses::from_csv(target)?)
-                            }
-                            "grants_pass_2022" => {
-                                target_addresses =
-                                    Addresses::from(GrantsPass2022Addresses::from_csv(target)?)
-                            }
-                            "josephine_county" => {
-                                target_addresses =
-                                    Addresses::from(CountyAddresses::from_csv(target)?)
-                            }
-                            _ => error!("Unrecognized file format."),
-                        }
-                    }
-                    info!(
-                        "Comparison records read: {} entries.",
-                        target_addresses.records_ref().len()
-                    );
-                    info!("Comparing records.");
-                    let mut match_records = MatchRecords::compare(
-                        source_addresses.records_ref(),
-                        target_addresses.records_ref(),
-                    );
-                    info!(
-                        "{:?} records categorized.",
-                        match_records.records_ref().len()
-                    );
-                    info!("Output file: {:?}", cli.output);
-                    match_records.to_csv(cli.output)?;
+                    _ => tracing::info!("Source not recognized."),
                 }
             }
         }

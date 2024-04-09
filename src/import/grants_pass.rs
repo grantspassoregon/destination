@@ -1,4 +1,5 @@
 use crate::address_components::*;
+use crate::prelude::{Addres, Addreses, Point, Points};
 use crate::utils;
 use crate::utils::deserialize_arcgis_data;
 use serde::{Deserialize, Serialize};
@@ -24,7 +25,7 @@ pub struct CityAddress {
     #[serde(rename(deserialize = "St_PosTyp"))]
     // #[serde(deserialize_with = "deserialize_mixed_post_type",
     //         rename(deserialize = "St_PosTyp"))]
-    street_name_post_type: StreetNamePostType,
+    street_name_post_type: Option<StreetNamePostType>,
     #[serde(deserialize_with = "csv::invalid_option")]
     subaddress_type: Option<SubaddressType>,
     #[serde(deserialize_with = "deserialize_arcgis_data")]
@@ -111,7 +112,7 @@ impl CityAddress {
         self.street_name_pre_directional
     }
 
-    pub fn street_name_post_type(&self) -> StreetNamePostType {
+    pub fn street_name_post_type(&self) -> Option<StreetNamePostType> {
         self.street_name_post_type
     }
 
@@ -164,10 +165,87 @@ impl CityAddress {
     }
 }
 
+impl Addres for CityAddress {
+    fn number(&self) -> i64 {
+        self.address_number
+    }
+
+    fn number_suffix(&self) -> &Option<String> {
+        &self.address_number_suffix
+    }
+
+    fn directional(&self) -> &Option<StreetNamePreDirectional> {
+        &self.street_name_pre_directional
+    }
+
+    fn street_name(&self) -> &String {
+        &self.street_name
+    }
+
+    fn street_type(&self) -> &Option<StreetNamePostType> {
+        &self.street_name_post_type
+    }
+
+    fn subaddress_id(&self) -> &Option<String> {
+        &self.subaddress_identifier
+    }
+
+    fn subaddress_type(&self) -> &Option<SubaddressType> {
+        &self.subaddress_type
+    }
+
+    fn floor(&self) -> &Option<i64> {
+        &self.floor
+    }
+
+    fn building(&self) -> &Option<String> {
+        &self.building
+    }
+
+    fn zip(&self) -> i64 {
+        self.zip_code
+    }
+
+    fn postal_community(&self) -> &String {
+        &self.postal_community
+    }
+
+    fn state(&self) -> &String {
+        &self.state_name
+    }
+
+    fn status(&self) -> &AddressStatus {
+        &self.status
+    }
+}
+
+impl Point for CityAddress {
+    fn lat(&self) -> f64 {
+        self.address_y_coordinate
+    }
+
+    fn lon(&self) -> f64 {
+        self.address_x_coordinate
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CityAddresses {
     pub records: Vec<CityAddress>,
 }
+
+// impl Addreses<CityAddress> for CityAddresses {
+//     fn records(&self) -> &Vec<CityAddress> {
+//         &self.records
+//     }
+// }
+//
+// impl Points<CityAddress> for CityAddresses {
+//     fn records(&self) -> &Vec<CityAddress> {
+//         &self.records
+//     }
+//
+// }
 
 impl CityAddresses {
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {

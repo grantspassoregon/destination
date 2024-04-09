@@ -25,14 +25,12 @@ pub trait Addres {
     fn postal_community(&self) -> &String;
     fn state(&self) -> &String;
     fn status(&self) -> &AddressStatus;
-}
 
-impl dyn Addres {
     /// An address is coincident when the `other` address refers to the same assignment or
     /// location.  If the addresses are coincident, but details (such as the floor number or
     /// address status) differ, then the differences are recorded as a vector of type [`Mismatch`].
     /// The results are converted to type [`AddressMatch`].
-    pub fn coincident<T: Addres>(&self, other: &T) -> AddressMatch {
+    fn coincident<T: Addres>(&self, other: &T) -> AddressMatch {
         let mut coincident = false;
         let mut mismatches = Vec::new();
         if self.number() == other.number()
@@ -62,7 +60,10 @@ impl dyn Addres {
                 ));
             }
             if self.status() != other.status() {
-                mismatches.push(Mismatch::status(self.status().clone(), other.status().clone()));
+                mismatches.push(Mismatch::status(
+                    self.status().clone(),
+                    other.status().clone(),
+                ));
             }
         }
         AddressMatch::new(coincident, mismatches)
@@ -70,20 +71,26 @@ impl dyn Addres {
 
     /// Returns a String representing the address label, consisting of the complete address number,
     /// complete street name and complete subaddress, used to produce map or mailing labels.
-    pub fn label(&self) -> String {
+    fn label(&self) -> String {
         let complete_address_number = match &self.number_suffix() {
             Some(suffix) => format!("{} {}", self.number(), suffix),
             None => self.number().to_string(),
         };
 
         let complete_street_name = match self.directional() {
-            Some(pre_directional) => {
-                match self.street_type() {
-                    Some(post_type) => format!("{} {} {:?}", pre_directional, self.street_name(), post_type),
-                    None => format!("{} {}", pre_directional, self.street_name()),
-                }
-            }
-            None => format!("{} {:?}", self.street_name(), self.street_type()),
+            Some(pre_directional) => match self.street_type() {
+                Some(post_type) => format!(
+                    "{} {} {}",
+                    pre_directional,
+                    self.street_name(),
+                    post_type.abbreviate()
+                ),
+                None => format!("{} {}", pre_directional, self.street_name()),
+            },
+            None => match self.street_type() {
+                Some(post_type) => format!("{} {}", self.street_name(), post_type.abbreviate()),
+                None => format!("{}", self.street_name()),
+            },
         };
 
         let accessory = match self.building() {
@@ -117,21 +124,21 @@ impl dyn Addres {
     }
 
     /// The `complete_street_name` method returns the complete street name of the address.
-    pub fn complete_street_name(&self) -> String {
+    fn complete_street_name(&self) -> String {
         match self.directional() {
-            Some(pre_directional) => {
-                match self.street_type() {
-                    Some(post_type) => format!("{} {} {:?}", pre_directional, self.street_name(), post_type),
-                    None => format!("{} {}", pre_directional, self.street_name()),
+            Some(pre_directional) => match self.street_type() {
+                Some(post_type) => {
+                    format!("{} {} {:?}", pre_directional, self.street_name(), post_type)
                 }
-            }
+                None => format!("{} {}", pre_directional, self.street_name()),
+            },
             None => format!("{} {:?}", self.street_name(), self.street_type()),
         }
     }
 
     /// The `pre_directional` field represents the street name predirectional component of the
     /// complete street name.  This function returns the cloned value of the field.
-    pub fn directional_abbreviated(&self) -> Option<String> {
+    fn directional_abbreviated(&self) -> Option<String> {
         match self.directional() {
             Some(StreetNamePreDirectional::NORTH) => Some("N".to_string()),
             Some(StreetNamePreDirectional::EAST) => Some("E".to_string()),
@@ -144,35 +151,157 @@ impl dyn Addres {
             None => None,
         }
     }
+
+    /// The `filter_field` method returns the subset of addresses where the field `filter` is equal
+    /// to the value in `field`.
+    fn filter_field<T: Addres + Clone + Send + Sync>(values: &[T], filter: &str, field: &str) -> Vec<T> {
+        let mut records = Vec::new();
+        match filter {
+            "label" => records.append(
+                &mut values
+                    // .iter()
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| field == record.label())
+                    .collect(),
+            ),
+            "street_name" => records.append(
+                &mut values
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| field == record.street_name())
+                    .collect(),
+            ),
+            "pre_directional" => records.append(
+                &mut values
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| {
+                        if let Some(dir) = record.directional() {
+                            field == &format!("{}", dir)
+                        } else {
+                            false
+                        }
+                    })
+                    .collect(),
+            ),
+            "post_type" => records.append(
+                &mut values
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| field == &format!("{:?}", record.street_type()))
+                    .collect(),
+            ),
+
+            _ => info!("Invalid filter provided."),
+        }
+        records
+    }
+
+    /// Writes the contents of `Addresses` to a CSV file output to path `title`.  Each element
+    /// of the vector in `records` writes to a row on the CSV file.
+    fn to_csv<T: Addres + Clone + Serialize>(
+        values: &mut [T],
+        title: std::path::PathBuf,
+    ) -> Result<(), std::io::Error> {
+        utils::to_csv(&mut values.to_vec(), title)?;
+        Ok(())
+    }
+
+    // /// Filter elements of the `records` vector according to the argument specified in `filter`.
+    // /// Currently only the value "duplicate" is supported as an argument to `filter`, which only
+    // /// retains duplicate addresses in the vector.  Duplicate addresses are defined as having
+    // /// identical address labels using the [`Address::label()`] method.
+    // fn filter<T: Addres + Clone>(values: &[T], filter: &str) -> Vec<T> {
+    //     let mut records = Vec::new();
+    //     match filter {
+    //         "duplicate" => {
+    //             let style = indicatif::ProgressStyle::with_template(
+    //         "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Checking for duplicate addresses.'}",
+    //     )
+    //     .unwrap();
+    //             let mut seen = HashSet::new();
+    //             let bar = ProgressBar::new(values.len() as u64);
+    //             bar.set_style(style);
+    //             for address in values {
+    //                 let label = address.label();
+    //                 if !seen.contains(&label) {
+    //                     seen.insert(label.clone());
+    //                     let mut same = Addres::filter_field(values, "label", &label);
+    //                     if same.len() > 1 {
+    //                         records.append(&mut same);
+    //                     }
+    //                 }
+    //                 bar.inc(1);
+    //             }
+    //         }
+    //         _ => error!("Invalid filter provided."),
+    //     }
+    //     records
+    // }
 }
 
 pub trait Point {
     fn lat(&self) -> f64;
     fn lon(&self) -> f64;
-}
-
-impl dyn Point {
-    // /// Distance between address and other addresses with matching label.
-    // /// Iterates through records of `others`, calculates the distance from self
-    // /// to matching addresses in others, collects the results into a vector and
-    // /// returns the results in the records field of a new `AddressDeltas` struct.
-    // pub fn deltas<T: Point>(&self, others: &T, min: f64) -> AddressDeltas {
-    //     let records = others
-    //         .records_ref()
-    //         .par_iter()
-    //         .filter(|v| v.label() == self.label())
-    //         .map(|v| AddressDelta::new(v, v.distance(self)))
-    //         .filter(|d| d.delta > min)
-    //         .collect::<Vec<AddressDelta>>();
-    //     AddressDeltas { records }
-    // }
 
     /// The `distance` function returns the distance between a point `self` and another point
     /// `other` in the same unit as `self`.
-    pub fn distance<T: Point>(&self, other: &T) -> f64 {
-        ((self.lat() - other.lat()).powi(2)
-            + (self.lon() - other.lon()).powi(2))
-        .sqrt()
+    fn distance<T: Point + ?Sized>(&self, other: &T) -> f64 {
+        ((self.lat() - other.lat()).powi(2) + (self.lon() - other.lon()).powi(2)).sqrt()
+    }
+
+    /// Distance between address and other addresses with matching label.
+    /// Iterates through records of `others`, calculates the distance from self
+    /// to matching addresses in others, collects the results into a vector and
+    /// returns the results in the records field of a new `AddressDeltas` struct.
+    //     pub fn deltas<'a, V: Point + rayon::iter::IntoParallelIterator + rayon::iter::IntoParallelRefIterator<'a>, U: Points<V> + ParallelProgressIterator + rayon::iter::IntoParallelIterator + rayon::iter::IntoParallelRefIterator<'a> + Addres>(&self, others: &U, min: f64) -> AddressDeltas {
+    fn delta<T: Addres + Clone + Point + Sync + Send>(
+        &self,
+        others: &[T],
+        min: f64,
+    ) -> AddressDeltas
+    where
+        Self: Addres + Point + Sized + Clone + Send + Sync,
+    {
+        let records = others
+            .par_iter()
+            .filter(|v| v.label() == self.label())
+            .map(|v| AddressDelta::new(v, v.distance(self)))
+            .filter(|d| d.delta > min)
+            .collect::<Vec<AddressDelta>>();
+        AddressDeltas { records }
+    }
+
+    /// Distance between addresses and other addresses with matching label.
+    /// Iterates through records of `others`, calculates the distance from self
+    /// to matching addresses in others, collects the results into a vector and
+    /// returns the results in the records field of a new `AddressDeltas` struct. Calls
+    /// [`Address::deltas()`].
+    fn deltas<
+        'a,
+        T: Point + Addres + Clone + Sync + Send,
+        U: Point + Addres + Clone + Sync + Send,
+    >(
+        values: &[T],
+        other: &[U],
+        min: f64,
+    ) -> AddressDeltas {
+        let style = indicatif::ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Calculating deltas...'}",
+        )
+        .unwrap();
+        let records_raw = values
+            .par_iter()
+            .progress_with_style(style)
+            .map(|v| Point::delta(v, other, min))
+            .collect::<Vec<AddressDeltas>>();
+        let mut records = Vec::new();
+        records_raw
+            .iter()
+            .map(|v| records.append(&mut v.records()))
+            .for_each(drop);
+        AddressDeltas { records }
     }
 }
 
@@ -194,6 +323,16 @@ pub struct Address {
     status: AddressStatus,
     address_latitude: f64,
     address_longitude: f64,
+}
+
+impl Point for Address {
+    fn lat(&self) -> f64 {
+        self.address_latitude
+    }
+
+    fn lon(&self) -> f64 {
+        self.address_longitude
+    }
 }
 
 impl Address {
@@ -298,16 +437,16 @@ impl Address {
     /// Iterates through records of `others`, calculates the distance from self
     /// to matching addresses in others, collects the results into a vector and
     /// returns the results in the records field of a new `AddressDeltas` struct.
-    pub fn deltas(&self, others: &Addresses, min: f64) -> AddressDeltas {
-        let records = others
-            .records_ref()
-            .par_iter()
-            .filter(|v| v.label() == self.label())
-            .map(|v| AddressDelta::new(v, v.distance(self)))
-            .filter(|d| d.delta > min)
-            .collect::<Vec<AddressDelta>>();
-        AddressDeltas { records }
-    }
+    // pub fn deltas(&self, others: &Addresses, min: f64) -> AddressDeltas {
+    //     let records = others
+    //         .records_ref()
+    //         .par_iter()
+    //         .filter(|v| v.label() == self.label())
+    //         .map(|v| AddressDelta::new(v, v.distance(self)))
+    //         .filter(|d| d.delta > min)
+    //         .collect::<Vec<AddressDelta>>();
+    //     AddressDeltas { records }
+    // }
 
     /// The `distance` function returns the distance between a point `self` and another point
     /// `other` in the same unit as `self`.
@@ -425,49 +564,49 @@ impl Address {
     }
 }
 
-impl From<CityAddress> for Address {
-    fn from(item: CityAddress) -> Self {
-        Address {
-            address_number: item.address_number(),
-            address_number_suffix: item.address_number_suffix(),
-            street_name_pre_directional: item.street_name_pre_directional(),
-            street_name: item.street_name(),
-            street_name_post_type: item.street_name_post_type(),
-            subaddress_type: item.subaddress_type(),
-            subaddress_identifier: item.subaddress_identifier(),
-            floor: item.floor(),
-            building: item.building(),
-            zip_code: item.zip_code(),
-            postal_community: item.postal_community(),
-            state_name: item.state_name(),
-            status: item.status(),
-            address_latitude: item.address_latitude(),
-            address_longitude: item.address_longitude(),
-        }
-    }
-}
-
-impl From<&CityAddress> for Address {
-    fn from(item: &CityAddress) -> Self {
-        Address {
-            address_number: item.address_number(),
-            address_number_suffix: item.address_number_suffix(),
-            street_name_pre_directional: item.street_name_pre_directional(),
-            street_name: item.street_name(),
-            street_name_post_type: item.street_name_post_type(),
-            subaddress_type: item.subaddress_type(),
-            subaddress_identifier: item.subaddress_identifier(),
-            floor: item.floor(),
-            building: item.building(),
-            zip_code: item.zip_code(),
-            postal_community: item.postal_community(),
-            state_name: item.state_name(),
-            status: item.status(),
-            address_latitude: item.address_latitude(),
-            address_longitude: item.address_longitude(),
-        }
-    }
-}
+// impl From<CityAddress> for Address {
+//     fn from(item: CityAddress) -> Self {
+//         Address {
+//             address_number: item.address_number(),
+//             address_number_suffix: item.address_number_suffix(),
+//             street_name_pre_directional: item.street_name_pre_directional(),
+//             street_name: item.street_name(),
+//             street_name_post_type: item.street_name_post_type(),
+//             subaddress_type: item.subaddress_type(),
+//             subaddress_identifier: item.subaddress_identifier(),
+//             floor: item.floor(),
+//             building: item.building(),
+//             zip_code: item.zip_code(),
+//             postal_community: item.postal_community(),
+//             state_name: item.state_name(),
+//             status: item.status(),
+//             address_latitude: item.address_latitude(),
+//             address_longitude: item.address_longitude(),
+//         }
+//     }
+// }
+//
+// impl From<&CityAddress> for Address {
+//     fn from(item: &CityAddress) -> Self {
+//         Address {
+//             address_number: item.address_number(),
+//             address_number_suffix: item.address_number_suffix(),
+//             street_name_pre_directional: item.street_name_pre_directional(),
+//             street_name: item.street_name(),
+//             street_name_post_type: item.street_name_post_type(),
+//             subaddress_type: item.subaddress_type(),
+//             subaddress_identifier: item.subaddress_identifier(),
+//             floor: item.floor(),
+//             building: item.building(),
+//             zip_code: item.zip_code(),
+//             postal_community: item.postal_community(),
+//             state_name: item.state_name(),
+//             status: item.status(),
+//             address_latitude: item.address_latitude(),
+//             address_longitude: item.address_longitude(),
+//         }
+//     }
+// }
 
 impl TryFrom<CountyAddress> for Address {
     type Error = ();
@@ -577,24 +716,22 @@ impl TryFrom<&GrantsPass2022Address> for Address {
     }
 }
 
-
-pub trait Addreses<T: Addres> {
+pub trait Addreses<T: Addres + Clone + Serialize + IntoParallelIterator> {
     fn records(&self) -> &Vec<T>;
-}
 
-impl<T: Addres + Clone + Serialize> dyn Addreses<T> {
     /// The `filter_field` method returns the subset of addresses where the field `filter` is equal
     /// to the value in `field`.
-    pub fn filter_field(&self, filter: &str, field: &str) -> Vec<T> {
+    fn filter_field(&self, filter: &str, field: &str) -> Vec<T> {
         let mut records = Vec::new();
         match filter {
-            // "label" => records.append( &mut self
-            //         .records()
-            //         .iter()
-            //         .cloned()
-            //         .filter(|record| field == record.label())
-            //         .collect(),
-            // ),
+            "label" => records.append(
+                &mut self
+                    .records()
+                    .iter()
+                    .cloned()
+                    .filter(|record| field == record.label())
+                    .collect(),
+            ),
             "street_name" => records.append(
                 &mut self
                     .records()
@@ -613,7 +750,8 @@ impl<T: Addres + Clone + Serialize> dyn Addreses<T> {
                             field == &format!("{}", dir)
                         } else {
                             false
-                        }})
+                        }
+                    })
                     .collect(),
             ),
             "post_type" => records.append(
@@ -632,43 +770,70 @@ impl<T: Addres + Clone + Serialize> dyn Addreses<T> {
 
     /// Writes the contents of `Addresses` to a CSV file output to path `title`.  Each element
     /// of the vector in `records` writes to a row on the CSV file.
-    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
+    fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
         utils::to_csv(&mut self.records().clone(), title)?;
         Ok(())
     }
 
-    // /// Filter elements of the `records` vector according to the argument specified in `filter`.
-    // /// Currently only the value "duplicate" is supported as an argument to `filter`, which only
-    // /// retains duplicate addresses in the vector.  Duplicate addresses are defined as having
-    // /// identical address labels using the [`Address::label()`] method.
-    // pub fn filter(&self, filter: &str) -> Self {
-    //     let mut records = Vec::new();
-    //     match filter {
-    //         "duplicate" => {
-    //             let style = indicatif::ProgressStyle::with_template(
-    //         "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Checking for duplicate addresses.'}",
+    /// Filter elements of the `records` vector according to the argument specified in `filter`.
+    /// Currently only the value "duplicate" is supported as an argument to `filter`, which only
+    /// retains duplicate addresses in the vector.  Duplicate addresses are defined as having
+    /// identical address labels using the [`Address::label()`] method.
+    fn filter(&self, filter: &str) -> Vec<T> {
+        let mut records = Vec::new();
+        match filter {
+            "duplicate" => {
+                let style = indicatif::ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Checking for duplicate addresses.'}",
+        )
+        .unwrap();
+                let mut seen = HashSet::new();
+                let bar = ProgressBar::new(self.records().len() as u64);
+                bar.set_style(style);
+                for address in self.records() {
+                    let label = address.label();
+                    if !seen.contains(&label) {
+                        seen.insert(label.clone());
+                        let mut same = self.filter_field("label", &label);
+                        if same.len() > 1 {
+                            records.append(&mut same);
+                        }
+                    }
+                    bar.inc(1);
+                }
+            }
+            _ => error!("Invalid filter provided."),
+        }
+        records
+    }
+}
+
+pub trait Points<T: Point + Addres + Clone + Serialize> {
+    fn records(&self) -> &Vec<T>;
+
+    // /// Distance between addresses and other addresses with matching label.
+    // /// Iterates through records of `others`, calculates the distance from self
+    // /// to matching addresses in others, collects the results into a vector and
+    // /// returns the results in the records field of a new `AddressDeltas` struct. Calls
+    // /// [`Address::deltas()`].
+    // fn deltas<U: Points<T> + Addreses<T>>(&self, other: &U, min: f64) -> AddressDeltas {
+    //     let style = indicatif::ProgressStyle::with_template(
+    //         "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Calculating deltas...'}",
     //     )
     //     .unwrap();
-    //             let mut seen = HashSet::new();
-    //             let bar = ProgressBar::new(self.records().len() as u64);
-    //             bar.set_style(style);
-    //             for address in self.records() {
-    //                 let label = address.label();
-    //                 if !seen.contains(&label) {
-    //                     seen.insert(label.clone());
-    //                     let mut same = self.filter_field("label", &label);
-    //                     if same.records.len() > 1 {
-    //                         records.append(&mut same.records);
-    //                     }
-    //                 }
-    //                 bar.inc(1);
-    //             }
-    //         }
-    //         _ => error!("Invalid filter provided."),
-    //     }
-    //     Addresses { records }
+    //     let records_raw = self
+    //         .records()
+    //         .iter()
+    //         // .progress_with_style(style)
+    //         .map(|v| v.deltas(other, min))
+    //         .collect::<Vec<AddressDeltas>>();
+    //     let mut records = Vec::new();
+    //     records_raw
+    //         .iter()
+    //         .map(|v| records.append(&mut v.records()))
+    //         .for_each(drop);
+    //     AddressDeltas { records }
     // }
-
 }
 
 /// The `Addresses` struct holds a vector of type [`Address`].
@@ -760,29 +925,29 @@ impl Addresses {
         Ok(())
     }
 
-    /// Distance between addresses and other addresses with matching label.
-    /// Iterates through records of `others`, calculates the distance from self
-    /// to matching addresses in others, collects the results into a vector and
-    /// returns the results in the records field of a new `AddressDeltas` struct. Calls
-    /// [`Address::deltas()`].
-    pub fn deltas(&self, other: &Addresses, min: f64) -> AddressDeltas {
-        let style = indicatif::ProgressStyle::with_template(
-            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Calculating deltas...'}",
-        )
-        .unwrap();
-        let records_raw = self
-            .records_ref()
-            .par_iter()
-            .progress_with_style(style)
-            .map(|v| v.deltas(other, min))
-            .collect::<Vec<AddressDeltas>>();
-        let mut records = Vec::new();
-        records_raw
-            .iter()
-            .map(|v| records.append(&mut v.records()))
-            .for_each(drop);
-        AddressDeltas { records }
-    }
+    // /// Distance between addresses and other addresses with matching label.
+    // /// Iterates through records of `others`, calculates the distance from self
+    // /// to matching addresses in others, collects the results into a vector and
+    // /// returns the results in the records field of a new `AddressDeltas` struct. Calls
+    // /// [`Address::deltas()`].
+    // pub fn deltas(&self, other: &Addresses, min: f64) -> AddressDeltas {
+    //     let style = indicatif::ProgressStyle::with_template(
+    //         "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Calculating deltas...'}",
+    //     )
+    //     .unwrap();
+    //     let records_raw = self
+    //         .records_ref()
+    //         .par_iter()
+    //         .progress_with_style(style)
+    //         .map(|v| v.deltas(other, min))
+    //         .collect::<Vec<AddressDeltas>>();
+    //     let mut records = Vec::new();
+    //     records_raw
+    //         .iter()
+    //         .map(|v| records.append(&mut v.records()))
+    //         .for_each(drop);
+    //     AddressDeltas { records }
+    // }
 
     /// Compares the complete street name of an address to the value in `street`, returning true if
     /// equal.
@@ -878,17 +1043,17 @@ impl Addresses {
     }
 }
 
-impl From<CityAddresses> for Addresses {
-    fn from(item: CityAddresses) -> Self {
-        let mut records = Vec::new();
-        for address in item.records {
-            if let Ok(record) = Address::try_from(address) {
-                records.push(record);
-            }
-        }
-        Addresses { records }
-    }
-}
+// impl From<CityAddresses> for Addresses {
+//     fn from(item: CityAddresses) -> Self {
+//         let mut records = Vec::new();
+//         for address in item.records {
+//             if let Ok(record) = Address::try_from(address) {
+//                 records.push(record);
+//             }
+//         }
+//         Addresses { records }
+//     }
+// }
 
 impl From<CountyAddresses> for Addresses {
     fn from(item: CountyAddresses) -> Self {
@@ -1119,12 +1284,12 @@ pub struct AddressDelta {
 
 impl AddressDelta {
     /// Initiates a new `AddressDelta` struct from the provided input values.
-    pub fn new(address: &Address, delta: f64) -> Self {
+    pub fn new<T: Addres + Point>(address: &T, delta: f64) -> Self {
         AddressDelta {
             label: address.label(),
             delta,
-            latitude: address.address_latitude(),
-            longitude: address.address_longitude(),
+            latitude: address.lat(),
+            longitude: address.lon(),
         }
     }
 }

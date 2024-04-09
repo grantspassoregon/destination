@@ -97,10 +97,13 @@ pub struct MatchRecords {
 }
 
 impl MatchRecords {
-    pub fn new(self_address: &Address, other_addresses: &[Address]) -> Self {
+    pub fn new<T: Addres + Point, U: Addres + Point>(
+        self_address: &T,
+        other_addresses: &[U],
+    ) -> Self {
         let address_label = self_address.label();
-        let latitude = self_address.address_latitude();
-        let longitude = self_address.address_longitude();
+        let latitude = self_address.lat();
+        let longitude = self_address.lon();
 
         let mut match_record = Vec::new();
 
@@ -164,15 +167,19 @@ impl MatchRecords {
         }
     }
 
-    pub fn compare(self_addresses: &[Address], other_addresses: &[Address]) -> Self {
+    pub fn compare<T: Addres + Point, U: Addres + Point>(
+        self_addresses: &[T],
+        other_addresses: &[U],
+    ) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )
         .unwrap();
         let record = self_addresses
-            .par_iter()
+            .iter()
+            // .par_iter()
             .map(|address| MatchRecords::new(address, other_addresses))
-            .progress_with_style(style)
+            // .progress_with_style(style)
             .collect::<Vec<MatchRecords>>();
         let mut records = Vec::new();
         for mut item in record {

@@ -44,7 +44,10 @@ pub fn from_csv<T: DeserializeOwned + Clone, P: AsRef<std::path::Path>>(
     for result in rdr.deserialize() {
         match result {
             Ok(record) => records.push(record),
-            Err(_) => dropped += 1,
+            Err(e) => {
+                tracing::info!("Dropping: {}", e.to_string());
+                dropped += 1;
+            }
         }
     }
     tracing::info!("{} records dropped.", dropped);
