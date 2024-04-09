@@ -1,11 +1,12 @@
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// The `SubaddressType` enum represents the subaddress type of an address.  Valid type
 /// designations include the list of secondary unit designators in Appendix C2 of the United States
 /// Postal Service (USPS) Publication 28 - Postal Addressing Standards.
 #[allow(missing_docs)]
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum SubaddressType {
     Apartment,
     Basement,
@@ -29,12 +30,46 @@ pub enum SubaddressType {
     Stop,
     Suite,
     Trailer,
+    #[default]
     Unit,
     Upper,
     /// Recreation room.  A shared space common to apartment complexes.
     Rec,
     /// Laundry room.  A shared space common to apartment complexes.
     Laundry,
+}
+
+impl fmt::Display for SubaddressType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Apartment => write!(f, "Apartment"),
+            Self::Basement => write!(f, "Basement"),
+            Self::Building => write!(f, "Building"),
+            Self::Department => write!(f, "Department"),
+            Self::Floor => write!(f, "Floor"),
+            Self::Front => write!(f, "Front"),
+            Self::Hanger => write!(f, "Hanger"),
+            Self::Key => write!(f, "Key"),
+            Self::Lobby => write!(f, "Lobby"),
+            Self::Lot => write!(f, "Lot"),
+            Self::Lower => write!(f, "Lower"),
+            Self::Office => write!(f, "Office"),
+            Self::Penthouse => write!(f, "Penthouse"),
+            Self::Pier => write!(f, "Pier"),
+            Self::Rear => write!(f, "Rear"),
+            Self::Room => write!(f, "Room"),
+            Self::Side => write!(f, "Side"),
+            Self::Slip => write!(f, "Slip"),
+            Self::Space => write!(f, "Space"),
+            Self::Stop => write!(f, "Stop"),
+            Self::Suite => write!(f, "Suite"),
+            Self::Trailer => write!(f, "Trailer"),
+            Self::Unit => write!(f, "Unit"),
+            Self::Upper => write!(f, "Upper"),
+            Self::Rec => write!(f, "Rec"),
+            Self::Laundry => write!(f, "Laundry"),
+        }
+    }
 }
 
 /// Deserialization function for subaddress types.  This works if all the subaddress types in the
@@ -74,6 +109,14 @@ pub fn deserialize_abbreviated_subaddress_type<'de, D: Deserializer<'de>>(
         "LAUN" => Ok(Some(SubaddressType::Laundry)),
         _ => Ok(None),
     }
+}
+
+pub fn deserialize_mixed_subaddress_type<'de, D: Deserializer<'de>>(
+    de: D,
+) -> Result<Option<SubaddressType>, D::Error> {
+    let intermediate = Deserialize::deserialize(de)?;
+    let result = match_mixed_subaddress_type(intermediate);
+    Ok(result)
 }
 
 /// Matches the target data against novel spellings of valid subaddress types.  Add any missing spelling

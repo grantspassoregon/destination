@@ -14,13 +14,16 @@ pub struct CityAddress {
     )]
     address_number_suffix: Option<String>,
     #[serde(
-        deserialize_with = "csv::invalid_option",
+        deserialize_with = "deserialize_mixed_pre_directional",
+        // deserialize_with = "csv::invalid_option",
         rename(deserialize = "St_PreDir")
     )]
     street_name_pre_directional: Option<StreetNamePreDirectional>,
     #[serde(rename(deserialize = "St_Name"))]
     street_name: String,
     #[serde(rename(deserialize = "St_PosTyp"))]
+    // #[serde(deserialize_with = "deserialize_mixed_post_type",
+    //         rename(deserialize = "St_PosTyp"))]
     street_name_post_type: StreetNamePostType,
     #[serde(deserialize_with = "csv::invalid_option")]
     subaddress_type: Option<SubaddressType>,

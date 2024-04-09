@@ -11,6 +11,171 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tracing::{error, info, trace};
 
+pub trait Addres {
+    fn number(&self) -> i64;
+    fn number_suffix(&self) -> &Option<String>;
+    fn directional(&self) -> &Option<StreetNamePreDirectional>;
+    fn street_name(&self) -> &String;
+    fn street_type(&self) -> &Option<StreetNamePostType>;
+    fn subaddress_id(&self) -> &Option<String>;
+    fn subaddress_type(&self) -> &Option<SubaddressType>;
+    fn floor(&self) -> &Option<i64>;
+    fn building(&self) -> &Option<String>;
+    fn zip(&self) -> i64;
+    fn postal_community(&self) -> &String;
+    fn state(&self) -> &String;
+    fn status(&self) -> &AddressStatus;
+}
+
+impl dyn Addres {
+    /// An address is coincident when the `other` address refers to the same assignment or
+    /// location.  If the addresses are coincident, but details (such as the floor number or
+    /// address status) differ, then the differences are recorded as a vector of type [`Mismatch`].
+    /// The results are converted to type [`AddressMatch`].
+    pub fn coincident<T: Addres>(&self, other: &T) -> AddressMatch {
+        let mut coincident = false;
+        let mut mismatches = Vec::new();
+        if self.number() == other.number()
+            && self.number_suffix() == other.number_suffix()
+            && self.directional() == other.directional()
+            && self.street_name() == other.street_name()
+            && self.street_type() == other.street_type()
+            && self.subaddress_id() == other.subaddress_id()
+            && self.zip() == other.zip()
+            && self.postal_community() == other.postal_community()
+            && self.state() == other.state()
+        {
+            coincident = true;
+            if self.subaddress_type() != other.subaddress_type() {
+                mismatches.push(Mismatch::subaddress_type(
+                    self.subaddress_type().clone(),
+                    other.subaddress_type().clone(),
+                ));
+            }
+            if self.floor() != other.floor() {
+                mismatches.push(Mismatch::floor(self.floor().clone(), other.floor().clone()));
+            }
+            if self.building() != other.building() {
+                mismatches.push(Mismatch::building(
+                    self.building().clone(),
+                    other.building().clone(),
+                ));
+            }
+            if self.status() != other.status() {
+                mismatches.push(Mismatch::status(self.status().clone(), other.status().clone()));
+            }
+        }
+        AddressMatch::new(coincident, mismatches)
+    }
+
+    /// Returns a String representing the address label, consisting of the complete address number,
+    /// complete street name and complete subaddress, used to produce map or mailing labels.
+    pub fn label(&self) -> String {
+        let complete_address_number = match &self.number_suffix() {
+            Some(suffix) => format!("{} {}", self.number(), suffix),
+            None => self.number().to_string(),
+        };
+
+        let complete_street_name = match self.directional() {
+            Some(pre_directional) => {
+                match self.street_type() {
+                    Some(post_type) => format!("{} {} {:?}", pre_directional, self.street_name(), post_type),
+                    None => format!("{} {}", pre_directional, self.street_name()),
+                }
+            }
+            None => format!("{} {:?}", self.street_name(), self.street_type()),
+        };
+
+        let accessory = match self.building() {
+            Some(value) => Some(format!("BLDG {}", value)),
+            None => None,
+        };
+
+        let complete_subaddress = match &self.subaddress_id() {
+            Some(identifier) => match self.subaddress_type() {
+                Some(subaddress_type) => Some(format!("{} {}", subaddress_type, identifier)),
+                None => Some(format!("#{}", identifier)),
+            },
+            None => self
+                .subaddress_type()
+                .map(|subaddress_type| format!("{}", subaddress_type)),
+        };
+
+        match complete_subaddress {
+            Some(subaddress) => format!(
+                "{} {} {}",
+                complete_address_number, complete_street_name, subaddress
+            ),
+            None => match accessory {
+                Some(value) => format!(
+                    "{} {} {}",
+                    complete_address_number, complete_street_name, value
+                ),
+                None => format!("{} {}", complete_address_number, complete_street_name),
+            },
+        }
+    }
+
+    /// The `complete_street_name` method returns the complete street name of the address.
+    pub fn complete_street_name(&self) -> String {
+        match self.directional() {
+            Some(pre_directional) => {
+                match self.street_type() {
+                    Some(post_type) => format!("{} {} {:?}", pre_directional, self.street_name(), post_type),
+                    None => format!("{} {}", pre_directional, self.street_name()),
+                }
+            }
+            None => format!("{} {:?}", self.street_name(), self.street_type()),
+        }
+    }
+
+    /// The `pre_directional` field represents the street name predirectional component of the
+    /// complete street name.  This function returns the cloned value of the field.
+    pub fn directional_abbreviated(&self) -> Option<String> {
+        match self.directional() {
+            Some(StreetNamePreDirectional::NORTH) => Some("N".to_string()),
+            Some(StreetNamePreDirectional::EAST) => Some("E".to_string()),
+            Some(StreetNamePreDirectional::SOUTH) => Some("S".to_string()),
+            Some(StreetNamePreDirectional::WEST) => Some("W".to_string()),
+            Some(StreetNamePreDirectional::NORTHEAST) => Some("NE".to_string()),
+            Some(StreetNamePreDirectional::NORTHWEST) => Some("NW".to_string()),
+            Some(StreetNamePreDirectional::SOUTHEAST) => Some("SE".to_string()),
+            Some(StreetNamePreDirectional::SOUTHWEST) => Some("SW".to_string()),
+            None => None,
+        }
+    }
+}
+
+pub trait Point {
+    fn lat(&self) -> f64;
+    fn lon(&self) -> f64;
+}
+
+impl dyn Point {
+    // /// Distance between address and other addresses with matching label.
+    // /// Iterates through records of `others`, calculates the distance from self
+    // /// to matching addresses in others, collects the results into a vector and
+    // /// returns the results in the records field of a new `AddressDeltas` struct.
+    // pub fn deltas<T: Point>(&self, others: &T, min: f64) -> AddressDeltas {
+    //     let records = others
+    //         .records_ref()
+    //         .par_iter()
+    //         .filter(|v| v.label() == self.label())
+    //         .map(|v| AddressDelta::new(v, v.distance(self)))
+    //         .filter(|d| d.delta > min)
+    //         .collect::<Vec<AddressDelta>>();
+    //     AddressDeltas { records }
+    // }
+
+    /// The `distance` function returns the distance between a point `self` and another point
+    /// `other` in the same unit as `self`.
+    pub fn distance<T: Point>(&self, other: &T) -> f64 {
+        ((self.lat() - other.lat()).powi(2)
+            + (self.lon() - other.lon()).powi(2))
+        .sqrt()
+    }
+}
+
 /// The `Address` struct defines the fields of a valid address.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Address {
@@ -410,6 +575,100 @@ impl TryFrom<&GrantsPass2022Address> for Address {
             None => Err(()),
         }
     }
+}
+
+
+pub trait Addreses<T: Addres> {
+    fn records(&self) -> &Vec<T>;
+}
+
+impl<T: Addres + Clone + Serialize> dyn Addreses<T> {
+    /// The `filter_field` method returns the subset of addresses where the field `filter` is equal
+    /// to the value in `field`.
+    pub fn filter_field(&self, filter: &str, field: &str) -> Vec<T> {
+        let mut records = Vec::new();
+        match filter {
+            // "label" => records.append( &mut self
+            //         .records()
+            //         .iter()
+            //         .cloned()
+            //         .filter(|record| field == record.label())
+            //         .collect(),
+            // ),
+            "street_name" => records.append(
+                &mut self
+                    .records()
+                    .iter()
+                    .cloned()
+                    .filter(|record| field == record.street_name())
+                    .collect(),
+            ),
+            "pre_directional" => records.append(
+                &mut self
+                    .records()
+                    .iter()
+                    .cloned()
+                    .filter(|record| {
+                        if let Some(dir) = record.directional() {
+                            field == &format!("{}", dir)
+                        } else {
+                            false
+                        }})
+                    .collect(),
+            ),
+            "post_type" => records.append(
+                &mut self
+                    .records()
+                    .iter()
+                    .cloned()
+                    .filter(|record| field == &format!("{:?}", record.street_type()))
+                    .collect(),
+            ),
+
+            _ => info!("Invalid filter provided."),
+        }
+        records
+    }
+
+    /// Writes the contents of `Addresses` to a CSV file output to path `title`.  Each element
+    /// of the vector in `records` writes to a row on the CSV file.
+    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
+        utils::to_csv(&mut self.records().clone(), title)?;
+        Ok(())
+    }
+
+    // /// Filter elements of the `records` vector according to the argument specified in `filter`.
+    // /// Currently only the value "duplicate" is supported as an argument to `filter`, which only
+    // /// retains duplicate addresses in the vector.  Duplicate addresses are defined as having
+    // /// identical address labels using the [`Address::label()`] method.
+    // pub fn filter(&self, filter: &str) -> Self {
+    //     let mut records = Vec::new();
+    //     match filter {
+    //         "duplicate" => {
+    //             let style = indicatif::ProgressStyle::with_template(
+    //         "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Checking for duplicate addresses.'}",
+    //     )
+    //     .unwrap();
+    //             let mut seen = HashSet::new();
+    //             let bar = ProgressBar::new(self.records().len() as u64);
+    //             bar.set_style(style);
+    //             for address in self.records() {
+    //                 let label = address.label();
+    //                 if !seen.contains(&label) {
+    //                     seen.insert(label.clone());
+    //                     let mut same = self.filter_field("label", &label);
+    //                     if same.records.len() > 1 {
+    //                         records.append(&mut same.records);
+    //                     }
+    //                 }
+    //                 bar.inc(1);
+    //             }
+    //         }
+    //         _ => error!("Invalid filter provided."),
+    //     }
+    //     Addresses { records }
+    // }
+
 }
 
 /// The `Addresses` struct holds a vector of type [`Address`].
