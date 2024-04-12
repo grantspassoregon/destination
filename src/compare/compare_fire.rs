@@ -1,7 +1,4 @@
-use crate::address::*;
-use crate::compare::*;
-use crate::import::fire_inspection::*;
-use crate::utils;
+use crate::prelude::*;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -14,7 +11,7 @@ pub struct FireInspectionMatch {
 }
 
 impl FireInspectionMatch {
-    pub fn compare(inspection: &FireInspection, addresses: &Addresses) -> Self {
+    pub fn compare<T: Address + GeoPoint>(inspection: &FireInspection, addresses: &[T]) -> Self {
         let record = MatchPartialRecord::compare(&inspection.address(), addresses);
         FireInspectionMatch {
             inspection: inspection.clone(),
@@ -37,7 +34,7 @@ pub struct FireInspectionMatches {
 }
 
 impl FireInspectionMatches {
-    pub fn compare(inspections: &FireInspections, addresses: &Addresses) -> Self {
+    pub fn compare<T: Address + GeoPoint + Send + Sync>(inspections: &FireInspections, addresses: &[T]) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )
@@ -119,12 +116,12 @@ impl FireInspectionMatchRecords {
     }
 
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        utils::to_csv(self.records_mut(), title)?;
+        to_csv(self.records_mut(), title)?;
         Ok(())
     }
 
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let records = utils::from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(FireInspectionMatchRecords { records })
     }
 

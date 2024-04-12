@@ -148,13 +148,13 @@ impl LexisNexis {
     /// The `from_addresses` method creates a [`LexisNexis`] struct from a set of addresses to
     /// include in the range selection `include`, and a set of addresses to exclude from the range
     /// selection `exclude`.
-    pub fn from_addresses(include: &Addresses, exclude: &Addresses) -> Clean<LexisNexis> {
+    pub fn from_addresses(include: &CommonAddresses, exclude: &CommonAddresses) -> Clean<LexisNexis> {
         let mut seen = HashSet::new();
         let mut records = Vec::new();
         for address in include.records_ref() {
             let comp_street = address.complete_street_name();
-            let street = address.street_name();
-            let post_type = address.post_type();
+            let street = address.street_name.clone();
+            let post_type = address.street_type;
             if !seen.contains(&comp_street) {
                 seen.insert(comp_street.clone());
                 let mut inc = include.filter_field("street_name", &street);
@@ -176,8 +176,10 @@ impl LexisNexis {
                     builder.address_number_from = Some(rng.0);
                     builder.address_number_to = Some(rng.1);
                     builder.street_name_pre_directional = address.pre_directional_abbreviated();
-                    builder.street_name = Some(address.street_name());
-                    builder.street_name_post_type = Some(address.post_type().abbreviate());
+                    builder.street_name = Some(address.street_name.clone());
+                    if let Some(street_type) = address.street_type {
+                        builder.street_name_post_type = Some(street_type.abbreviate());
+                    }
                     builder.postal_community = Some(address.postal_community());
                     builder.zip_code = Some(address.zip_code());
                     if let Ok(built) = builder.build() {
@@ -229,17 +231,17 @@ impl LexisNexisRange {
     /// The `from_addresses` method creates a [`LexisNexisRange`] from a set of addresses to
     /// include in the range selection `include`, and a set of addresses to exclude from the range
     /// selection `exclude`.
-    pub fn from_addresses(include: &Addresses, exclude: &Addresses) -> Self {
+    pub fn from_addresses(include: &CommonAddresses, exclude: &CommonAddresses) -> Self {
         let mut records = include
             .records_ref()
             .iter()
-            .map(|v| LexisNexisRangeItem::new(v.address_number(), true))
+            .map(|v| LexisNexisRangeItem::new(v.number, true))
             .collect::<Vec<LexisNexisRangeItem>>();
         records.extend(
             exclude
                 .records_ref()
                 .iter()
-                .map(|v| LexisNexisRangeItem::new(v.address_number(), false))
+                .map(|v| LexisNexisRangeItem::new(v.number, false))
                 .collect::<Vec<LexisNexisRangeItem>>(),
         );
         records.sort_by_key(|v| v.num);

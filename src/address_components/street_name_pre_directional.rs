@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 /// complete street name.  Predirectionals in the City consist of NW, NE, SW and SE, but County
 /// roads annexed by the City can contain N, E, S and W.
 #[allow(missing_docs)]
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Default)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
 pub enum StreetNamePreDirectional {
     NORTHEAST,
     NORTHWEST,

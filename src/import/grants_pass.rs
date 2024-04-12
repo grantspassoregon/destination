@@ -1,11 +1,324 @@
 use crate::address_components::*;
-use crate::prelude::{Addres, Addreses, Point, Points};
+use crate::prelude::{Address, GeoPoint, Point, from_csv};
 use crate::utils;
 use crate::utils::deserialize_arcgis_data;
 use serde::{Deserialize, Serialize};
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "PascalCase")]
 
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, PartialOrd)]
+#[serde(rename_all = "PascalCase")]
+pub struct GrantsPassAddress {
+    #[serde(rename(deserialize = "Add_Number"))]
+    pub address_number: i64,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "AddNum_Suf")
+    )]
+    pub address_number_suffix: Option<String>,
+    #[serde(
+        deserialize_with = "deserialize_mixed_pre_directional",
+        rename(deserialize = "St_PreDir")
+    )]
+    pub street_name_pre_directional: Option<StreetNamePreDirectional>,
+    #[serde(rename(deserialize = "St_Name"))]
+    pub street_name: String,
+    #[serde(rename(deserialize = "St_PosTyp"))]
+    pub street_name_post_type: Option<StreetNamePostType>,
+    #[serde(deserialize_with = "csv::invalid_option")]
+    pub subaddress_type: Option<SubaddressType>,
+    #[serde(deserialize_with = "deserialize_arcgis_data")]
+    pub subaddress_identifier: Option<String>,
+    #[serde(deserialize_with = "csv::invalid_option")]
+    pub floor: Option<i64>,
+    #[serde(deserialize_with = "deserialize_arcgis_data")]
+    pub building: Option<String>,
+    #[serde(rename(deserialize = "Post_Code"))]
+    pub zip_code: i64,
+    #[serde(rename(deserialize = "STATUS"))]
+    pub status: AddressStatus,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "NOTIFICATION")
+    )]
+    pub notification: Option<String>,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "NOTES")
+    )]
+    pub notes: Option<String>,
+    #[serde(rename(deserialize = "GlobalID"))]
+    pub global_id: String,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "created_user")
+    )]
+    pub created_user: Option<String>,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "created_date")
+    )]
+    pub created_date: Option<String>,
+    #[serde(rename(deserialize = "last_edited_user"))]
+    pub last_edited_user: String,
+    #[serde(rename(deserialize = "last_edited_date"))]
+    pub last_edited_date: String,
+    pub complete_address_number: String,
+    pub complete_street_name: String,
+    #[serde(deserialize_with = "deserialize_arcgis_data")]
+    pub complete_subaddress: Option<String>,
+    pub complete_street_address: String,
+    #[serde(rename(deserialize = "FULLADDRESS"))]
+    pub street_address_label: String,
+    pub place_state_zip: String,
+    #[serde(rename(deserialize = "Post_Comm"))]
+    pub postal_community: String,
+    pub state_name: String,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "Inc_Muni")
+    )]
+    pub incorporated_municipality: Option<String>,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "Uninc_Comm")
+    )]
+    pub unincorporated_community: Option<String>,
+}
+
+impl Address for GrantsPassAddress {
+    fn number(&self) -> i64 {
+        self.address_number
+    }
+
+    fn number_suffix(&self) -> &Option<String> {
+        &self.address_number_suffix
+    }
+
+    fn directional(&self) -> &Option<StreetNamePreDirectional> {
+        &self.street_name_pre_directional
+    }
+
+    fn street_name(&self) -> &String {
+        &self.street_name
+    }
+
+    fn street_type(&self) -> &Option<StreetNamePostType> {
+        &self.street_name_post_type
+    }
+
+    fn subaddress_id(&self) -> &Option<String> {
+        &self.subaddress_identifier
+    }
+
+    fn subaddress_type(&self) -> &Option<SubaddressType> {
+        &self.subaddress_type
+    }
+
+    fn floor(&self) -> &Option<i64> {
+        &self.floor
+    }
+
+    fn building(&self) -> &Option<String> {
+        &self.building
+    }
+
+    fn zip(&self) -> i64 {
+        self.zip_code
+    }
+
+    fn postal_community(&self) -> &String {
+        &self.postal_community
+    }
+
+    fn state(&self) -> &String {
+        &self.state_name
+    }
+
+    fn status(&self) -> &AddressStatus {
+        &self.status
+    }
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, PartialOrd)]
+pub struct GrantsPassAddresses {
+    pub records: Vec<GrantsPassAddress>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, PartialOrd)]
+#[serde(rename_all = "PascalCase")]
+pub struct GrantsPassSpatialAddress {
+    #[serde(rename(deserialize = "Add_Number"))]
+    pub address_number: i64,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "AddNum_Suf")
+    )]
+    pub address_number_suffix: Option<String>,
+    #[serde(
+        deserialize_with = "deserialize_mixed_pre_directional",
+        rename(deserialize = "St_PreDir")
+    )]
+    pub street_name_pre_directional: Option<StreetNamePreDirectional>,
+    #[serde(rename(deserialize = "St_Name"))]
+    pub street_name: String,
+    #[serde(rename(deserialize = "St_PosTyp"))]
+    pub street_name_post_type: Option<StreetNamePostType>,
+    #[serde(deserialize_with = "csv::invalid_option")]
+    pub subaddress_type: Option<SubaddressType>,
+    #[serde(deserialize_with = "deserialize_arcgis_data")]
+    pub subaddress_identifier: Option<String>,
+    #[serde(deserialize_with = "csv::invalid_option")]
+    pub floor: Option<i64>,
+    #[serde(deserialize_with = "deserialize_arcgis_data")]
+    pub building: Option<String>,
+    #[serde(rename(deserialize = "Post_Code"))]
+    pub zip_code: i64,
+    #[serde(rename(deserialize = "STATUS"))]
+    pub status: AddressStatus,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "NOTIFICATION")
+    )]
+    pub notification: Option<String>,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "NOTES")
+    )]
+    pub notes: Option<String>,
+    #[serde(rename(deserialize = "GlobalID"))]
+    pub global_id: String,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "created_user")
+    )]
+    pub created_user: Option<String>,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "created_date")
+    )]
+    pub created_date: Option<String>,
+    #[serde(rename(deserialize = "last_edited_user"))]
+    pub last_edited_user: String,
+    #[serde(rename(deserialize = "last_edited_date"))]
+    pub last_edited_date: String,
+    pub complete_address_number: String,
+    pub complete_street_name: String,
+    #[serde(deserialize_with = "deserialize_arcgis_data")]
+    pub complete_subaddress: Option<String>,
+    pub complete_street_address: String,
+    #[serde(rename(deserialize = "FULLADDRESS"))]
+    pub street_address_label: String,
+    pub place_state_zip: String,
+    #[serde(rename(deserialize = "Post_Comm"))]
+    pub postal_community: String,
+    pub state_name: String,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "Inc_Muni")
+    )]
+    pub incorporated_municipality: Option<String>,
+    #[serde(
+        deserialize_with = "deserialize_arcgis_data",
+        rename(deserialize = "Uninc_Comm")
+    )]
+    pub unincorporated_community: Option<String>,
+    #[serde(rename(deserialize = "AddressYCoordinate"))]
+    pub x: f64,
+    #[serde(rename(deserialize = "AddressXCoordinate"))]
+    pub y: f64,
+    #[serde(rename(deserialize = "latitude"))]
+    pub latitude: f64,
+    #[serde(rename(deserialize = "longitude"))]
+    pub longitude: f64,
+}
+
+impl Address for GrantsPassSpatialAddress {
+    fn number(&self) -> i64 {
+        self.address_number
+    }
+
+    fn number_suffix(&self) -> &Option<String> {
+        &self.address_number_suffix
+    }
+
+    fn directional(&self) -> &Option<StreetNamePreDirectional> {
+        &self.street_name_pre_directional
+    }
+
+    fn street_name(&self) -> &String {
+        &self.street_name
+    }
+
+    fn street_type(&self) -> &Option<StreetNamePostType> {
+        &self.street_name_post_type
+    }
+
+    fn subaddress_id(&self) -> &Option<String> {
+        &self.subaddress_identifier
+    }
+
+    fn subaddress_type(&self) -> &Option<SubaddressType> {
+        &self.subaddress_type
+    }
+
+    fn floor(&self) -> &Option<i64> {
+        &self.floor
+    }
+
+    fn building(&self) -> &Option<String> {
+        &self.building
+    }
+
+    fn zip(&self) -> i64 {
+        self.zip_code
+    }
+
+    fn postal_community(&self) -> &String {
+        &self.postal_community
+    }
+
+    fn state(&self) -> &String {
+        &self.state_name
+    }
+
+    fn status(&self) -> &AddressStatus {
+        &self.status
+    }
+}
+
+impl Point for GrantsPassSpatialAddress {
+    fn x(&self) -> f64 {
+        self.x
+    }
+
+    fn y(&self) -> f64 {
+        self.y
+    }
+}
+
+impl GeoPoint for GrantsPassSpatialAddress {
+    fn lat(&self) -> f64 {
+        self.latitude
+    }
+
+    fn lon(&self) -> f64 {
+        self.longitude
+    }
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, PartialOrd)]
+pub struct GrantsPassSpatialAddresses {
+    pub records: Vec<GrantsPassSpatialAddress>,
+}
+
+impl GrantsPassSpatialAddresses {
+    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
+        let records = from_csv(path)?;
+        Ok(GrantsPassSpatialAddresses { records })
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, PartialOrd)]
+#[serde(rename_all = "PascalCase")]
 pub struct CityAddress {
     #[serde(rename(deserialize = "Add_Number"))]
     address_number: i64,
@@ -165,7 +478,7 @@ impl CityAddress {
     }
 }
 
-impl Addres for CityAddress {
+impl Address for CityAddress {
     fn number(&self) -> i64 {
         self.address_number
     }
@@ -220,12 +533,12 @@ impl Addres for CityAddress {
 }
 
 impl Point for CityAddress {
-    fn lat(&self) -> f64 {
-        self.address_y_coordinate
+    fn x(&self) -> f64 {
+        self.address_x_coordinate
     }
 
-    fn lon(&self) -> f64 {
-        self.address_x_coordinate
+    fn y(&self) -> f64 {
+        self.address_y_coordinate
     }
 }
 
@@ -234,18 +547,6 @@ pub struct CityAddresses {
     pub records: Vec<CityAddress>,
 }
 
-// impl Addreses<CityAddress> for CityAddresses {
-//     fn records(&self) -> &Vec<CityAddress> {
-//         &self.records
-//     }
-// }
-//
-// impl Points<CityAddress> for CityAddresses {
-//     fn records(&self) -> &Vec<CityAddress> {
-//         &self.records
-//     }
-//
-// }
 
 impl CityAddresses {
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {

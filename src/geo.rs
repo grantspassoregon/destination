@@ -1,43 +1,379 @@
-use crate::prelude::{Address, CityAddress, CityAddresses};
+use crate::prelude::{Address, AddressDelta, AddressDeltas, CommonAddress, AddressStatus, StreetNamePreDirectional, StreetNamePostType, SubaddressType};
+use indicatif::ParallelProgressIterator;
+use serde::{Deserialize, Serialize};
+use rayon::prelude::*;
 
-#[derive(Debug, Clone)]
+pub trait Point {
+    fn x(&self) -> f64;
+    fn y(&self) -> f64;
+    
+    /// The `distance` function returns the distance between a point `self` and another point
+    /// `other` in the same unit as `self`.
+    fn distance<T: Point + ?Sized>(&self, other: &T) -> f64 {
+        ((self.y() - other.y()).powi(2) + (self.x() - other.x()).powi(2)).sqrt()
+    }
+
+    /// Distance between address and other addresses with matching label.
+    /// Iterates through records of `others`, calculates the distance from self
+    /// to matching addresses in others, collects the results into a vector and
+    /// returns the results in the records field of a new `AddressDeltas` struct.
+    //     pub fn deltas<'a, V: Point + rayon::iter::IntoParallelIterator + rayon::iter::IntoParallelRefIterator<'a>, U: Points<V> + ParallelProgressIterator + rayon::iter::IntoParallelIterator + rayon::iter::IntoParallelRefIterator<'a> + Addres>(&self, others: &U, min: f64) -> AddressDeltas {
+    fn delta<T: Address + Clone + Point + Sync + Send>(
+        &self,
+        others: &[T],
+        min: f64,
+    ) -> AddressDeltas
+    where
+        Self: Address + Point + Sized + Clone + Send + Sync,
+    {
+        let records = others
+            .par_iter()
+            .filter(|v| v.label() == self.label())
+            .map(|v| AddressDelta::new(v, v.distance(self)))
+            .filter(|d| d.delta > min)
+            .collect::<Vec<AddressDelta>>();
+        AddressDeltas { records }
+    }
+
+    /// Distance between addresses and other addresses with matching label.
+    /// Iterates through records of `others`, calculates the distance from self
+    /// to matching addresses in others, collects the results into a vector and
+    /// returns the results in the records field of a new `AddressDeltas` struct. Calls
+    /// [`Address::deltas()`].
+    fn deltas<
+        'a,
+        T: Point + Address + Clone + Sync + Send,
+        U: Point + Address + Clone + Sync + Send,
+    >(
+        values: &[T],
+        other: &[U],
+        min: f64,
+    ) -> AddressDeltas {
+        let style = indicatif::ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Calculating deltas...'}",
+        )
+        .unwrap();
+        let records_raw = values
+            .par_iter()
+            .progress_with_style(style)
+            .map(|v| Point::delta(v, other, min))
+            .collect::<Vec<AddressDeltas>>();
+        let mut records = Vec::new();
+        records_raw
+            .iter()
+            .map(|v| records.append(&mut v.records()))
+            .for_each(drop);
+        AddressDeltas { records }
+    }
+}
+
+pub trait GeoPoint {
+    fn lat(&self) -> f64;
+    fn lon(&self) -> f64;
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct GeoAddress {
-    pub address: Address,
-    pub x_coordinate: f64,
-    pub y_coordinate: f64,
+    pub address: CommonAddress,
     pub latitude: f64,
     pub longitude: f64,
 }
 
-// impl From<&CityAddress> for GeoAddress {
-//     fn from(address: &CityAddress) -> Self {
-//         let x_coordinate = address.address_x_coordinate();
-//         let y_coordinate = address.address_y_coordinate();
-//         let latitude = address.address_latitude();
-//         let longitude = address.address_longitude();
-//         let address = Address::from(address);
-//         Self {
-//             address,
-//             x_coordinate,
-//             y_coordinate,
-//             latitude,
-//             longitude,
-//         }
-//     }
-// }
+impl Address for GeoAddress {
+    fn number(&self) -> i64 {
+        self.address.number
+    }
 
-#[derive(Debug, Clone)]
+    fn number_suffix(&self) -> &Option<String> {
+        &self.address.number_suffix
+    }
+
+    fn directional(&self) -> &Option<StreetNamePreDirectional> {
+        &self.address.directional
+    }
+
+    fn street_name(&self) -> &String {
+        &self.address.street_name
+    }
+
+    fn street_type(&self) -> &Option<StreetNamePostType> {
+        &self.address.street_type
+    }
+
+    fn subaddress_id(&self) -> &Option<String> {
+        &self.address.subaddress_id
+    }
+
+    fn subaddress_type(&self) -> &Option<SubaddressType> {
+        &self.address.subaddress_type
+    }
+
+    fn floor(&self) -> &Option<i64> {
+        &self.address.floor
+    }
+
+    fn building(&self) -> &Option<String> {
+        &self.address.building
+    }
+
+    fn zip(&self) -> i64 {
+        self.address.zip
+    }
+
+    fn postal_community(&self) -> &String {
+        &self.address.postal_community
+    }
+
+    fn state(&self) -> &String {
+        &self.address.state
+    }
+
+    fn status(&self) -> &AddressStatus {
+        &self.address.status
+    }
+}
+
+impl GeoPoint for GeoAddress {
+    fn lat(&self) -> f64 {
+        self.latitude
+    }
+
+    fn lon(&self) -> f64 {
+        self.longitude
+    }
+}
+
+impl<T: Address + GeoPoint + Clone> From<&T> for GeoAddress {
+    fn from(data: &T) -> Self {
+        let latitude = data.lat();
+        let longitude = data.lon();
+        let address = CommonAddress::from(data);
+        Self {
+            address,
+            latitude,
+            longitude,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct GeoAddresses {
     pub records: Vec<GeoAddress>,
 }
 
-// impl From<&CityAddresses> for GeoAddresses {
-//     fn from(addresses: &CityAddresses) -> Self {
-//         let records = addresses
-//             .records
-//             .iter()
-//             .map(|v| GeoAddress::from(v))
-//             .collect::<Vec<GeoAddress>>();
-//         Self { records }
-//     }
-// }
+impl<T: Address + GeoPoint + Clone + Sized> From<&[T]> for GeoAddresses {
+    fn from(addresses: &[T]) -> Self {
+        let records = addresses.iter().map(|v| GeoAddress::from(v)).collect::<Vec<GeoAddress>>();
+        Self { records }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
+pub struct AddressPoint {
+    pub address: CommonAddress,
+    pub x: f64,
+    pub y: f64,
+}
+
+impl Address for AddressPoint {
+    fn number(&self) -> i64 {
+        self.address.number
+    }
+
+    fn number_suffix(&self) -> &Option<String> {
+        &self.address.number_suffix
+    }
+
+    fn directional(&self) -> &Option<StreetNamePreDirectional> {
+        &self.address.directional
+    }
+
+    fn street_name(&self) -> &String {
+        &self.address.street_name
+    }
+
+    fn street_type(&self) -> &Option<StreetNamePostType> {
+        &self.address.street_type
+    }
+
+    fn subaddress_id(&self) -> &Option<String> {
+        &self.address.subaddress_id
+    }
+
+    fn subaddress_type(&self) -> &Option<SubaddressType> {
+        &self.address.subaddress_type
+    }
+
+    fn floor(&self) -> &Option<i64> {
+        &self.address.floor
+    }
+
+    fn building(&self) -> &Option<String> {
+        &self.address.building
+    }
+
+    fn zip(&self) -> i64 {
+        self.address.zip
+    }
+
+    fn postal_community(&self) -> &String {
+        &self.address.postal_community
+    }
+
+    fn state(&self) -> &String {
+        &self.address.state
+    }
+
+    fn status(&self) -> &AddressStatus {
+        &self.address.status
+    }
+}
+
+impl Point for AddressPoint {
+    fn x(&self) -> f64 {
+        self.x
+    }
+
+    fn y(&self) -> f64 {
+        self.y
+    }
+}
+
+impl<T: Address + Point + Clone> From<&T> for AddressPoint {
+    fn from(data: &T) -> Self {
+        let address = CommonAddress::from(data);
+        let x = data.x();
+        let y = data.y();
+        Self {
+            address,
+            x,
+            y
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
+pub struct AddressPoints {
+    pub records: Vec<AddressPoint>,
+}
+
+impl<T: Address + Point + Clone + Sized> From<&[T]> for AddressPoints {
+    fn from(addresses: &[T]) -> Self {
+        let records = addresses.iter().map(|v| AddressPoint::from(v)).collect::<Vec<AddressPoint>>();
+        Self { records }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
+pub struct SpatialAddress {
+    pub address: CommonAddress,
+    pub latitude: f64,
+    pub longitude: f64,
+    pub x: f64,
+    pub y: f64,
+}
+
+impl Address for SpatialAddress {
+    fn number(&self) -> i64 {
+        self.address.number
+    }
+
+    fn number_suffix(&self) -> &Option<String> {
+        &self.address.number_suffix
+    }
+
+    fn directional(&self) -> &Option<StreetNamePreDirectional> {
+        &self.address.directional
+    }
+
+    fn street_name(&self) -> &String {
+        &self.address.street_name
+    }
+
+    fn street_type(&self) -> &Option<StreetNamePostType> {
+        &self.address.street_type
+    }
+
+    fn subaddress_id(&self) -> &Option<String> {
+        &self.address.subaddress_id
+    }
+
+    fn subaddress_type(&self) -> &Option<SubaddressType> {
+        &self.address.subaddress_type
+    }
+
+    fn floor(&self) -> &Option<i64> {
+        &self.address.floor
+    }
+
+    fn building(&self) -> &Option<String> {
+        &self.address.building
+    }
+
+    fn zip(&self) -> i64 {
+        self.address.zip
+    }
+
+    fn postal_community(&self) -> &String {
+        &self.address.postal_community
+    }
+
+    fn state(&self) -> &String {
+        &self.address.state
+    }
+
+    fn status(&self) -> &AddressStatus {
+        &self.address.status
+    }
+}
+
+impl GeoPoint for SpatialAddress {
+    fn lat(&self) -> f64 {
+        self.latitude
+    }
+
+    fn lon(&self) -> f64 {
+        self.longitude
+    }
+}
+
+impl Point for SpatialAddress {
+    fn x(&self) -> f64 {
+        self.x
+    }
+
+    fn y(&self) -> f64 {
+        self.y
+    }
+}
+
+impl<T: Address + Point + GeoPoint + Clone> From<&T> for SpatialAddress {
+    fn from(data: &T) -> Self {
+        let latitude = data.lat();
+        let longitude = data.lon();
+        let address = CommonAddress::from(data);
+        let x = data.x();
+        let y = data.y();
+        Self {
+            address,
+            latitude,
+            longitude,
+            x,
+            y
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
+pub struct SpatialAddresses {
+    pub records: Vec<SpatialAddress>,
+}
+
+impl<T: Address + Point + GeoPoint + Clone + Sized> From<&[T]> for SpatialAddresses {
+    fn from(addresses: &[T]) -> Self {
+        let records = addresses.iter().map(|v| SpatialAddress::from(v)).collect::<Vec<SpatialAddress>>();
+        Self { records }
+    }
+}
+
+

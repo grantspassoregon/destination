@@ -6,7 +6,7 @@ use std::fmt;
 /// designations include the list of secondary unit designators in Appendix C2 of the United States
 /// Postal Service (USPS) Publication 28 - Postal Addressing Standards.
 #[allow(missing_docs)]
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Default)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
 pub enum SubaddressType {
     Apartment,
     Basement,

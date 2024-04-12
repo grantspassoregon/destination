@@ -39,13 +39,13 @@ impl Mismatch {
 
     /// The `status` method captures information about the mismatch between the `status` fields as a message contained in the enum variant.
     pub fn status(from: AddressStatus, to: AddressStatus) -> Self {
-        let message = format!("{:?} not equal to {:?}", from, to);
+        let message = format!("{} not equal to {}", from, to);
         Self::Status(message)
     }
 }
 
-struct Mismatches {
-    fields: Vec<Mismatch>,
+pub struct Mismatches {
+    pub fields: Vec<Mismatch>,
 }
 
 impl Mismatches {
@@ -55,8 +55,8 @@ impl Mismatches {
 }
 
 pub struct AddressMatch {
-    coincident: bool,
-    mismatches: Option<Mismatches>,
+    pub coincident: bool,
+    pub mismatches: Option<Mismatches>,
 }
 
 impl AddressMatch {
@@ -97,7 +97,7 @@ pub struct MatchRecords {
 }
 
 impl MatchRecords {
-    pub fn new<T: Addres + Point, U: Addres + Point>(
+    pub fn new<T: Address + GeoPoint, U: Address + GeoPoint>(
         self_address: &T,
         other_addresses: &[U],
     ) -> Self {
@@ -167,7 +167,7 @@ impl MatchRecords {
         }
     }
 
-    pub fn compare<T: Addres + Point, U: Addres + Point>(
+    pub fn compare<T: Address + GeoPoint + Send + Sync, U: Address + GeoPoint + Send + Sync>(
         self_addresses: &[T],
         other_addresses: &[U],
     ) -> Self {
@@ -176,10 +176,9 @@ impl MatchRecords {
         )
         .unwrap();
         let record = self_addresses
-            .iter()
-            // .par_iter()
+            .par_iter()
             .map(|address| MatchRecords::new(address, other_addresses))
-            // .progress_with_style(style)
+            .progress_with_style(style)
             .collect::<Vec<MatchRecords>>();
         let mut records = Vec::new();
         for mut item in record {
@@ -282,49 +281,51 @@ pub struct MatchPartialRecord {
 }
 
 impl MatchPartialRecord {
-    pub fn coincident(partial: &PartialAddress, address: &Address) -> Option<MatchPartialRecord> {
+    pub fn coincident<T: Address + GeoPoint>(partial: &PartialAddress, address: &T) -> Option<MatchPartialRecord> {
         let mut match_status = MatchStatus::Missing;
 
-        if let Some(value) = partial.address_number() {
-            if value == address.address_number() {
+        if let Some(value) = partial.address_number {
+            if value == address.number() {
                 match_status = MatchStatus::Matching;
             }
         }
 
-        if partial.street_name_pre_directional() != address.pre_directional()
+        if &partial.street_name_pre_directional != address.directional()
             && match_status == MatchStatus::Matching
         {
             match_status = MatchStatus::Missing;
         }
 
-        if let Some(value) = partial.street_name() {
+        if let Some(value) = &partial.street_name {
             if value != address.street_name() && match_status == MatchStatus::Matching {
                 match_status = MatchStatus::Missing;
             }
         }
 
         if let Some(value) = partial.street_name_post_type() {
-            if value != address.post_type() && match_status == MatchStatus::Matching {
-                match_status = MatchStatus::Missing;
+            if let &Some(street_type) = address.street_type() {
+                if value != street_type && match_status == MatchStatus::Matching {
+                    match_status = MatchStatus::Missing;
+                }
             }
         }
 
-        if partial.subaddress_identifier() != address.subaddress_identifier()
+        if &partial.subaddress_identifier() != address.subaddress_id()
             && match_status == MatchStatus::Matching
         {
             match_status = MatchStatus::Divergent;
         }
 
-        if address.subaddress_identifier() == None
-            && partial.building() != address.building()
+        if address.subaddress_id() == &None
+            && &partial.building() != address.building()
             && match_status == MatchStatus::Matching
         {
             match_status = MatchStatus::Divergent;
         }
 
-        if address.subaddress_identifier() == None
-            && address.building() == None
-            && partial.floor() != address.floor()
+        if address.subaddress_id() == &None
+            && address.building() == &None
+            && &partial.floor() != address.floor()
             && match_status == MatchStatus::Matching
         {
             match_status = MatchStatus::Divergent;
@@ -335,18 +336,18 @@ impl MatchPartialRecord {
                 match_status,
                 address_label: partial.label(),
                 other_label: Some(address.label()),
-                longitude: Some(address.address_longitude()),
-                latitude: Some(address.address_latitude()),
+                longitude: Some(address.lon()),
+                latitude: Some(address.lat()),
             })
         } else {
             None
         }
     }
 
-    pub fn compare(partial: &PartialAddress, addresses: &Addresses) -> MatchPartialRecords {
+    pub fn compare<T: Address + GeoPoint>(partial: &PartialAddress, addresses: &[T]) -> MatchPartialRecords {
         let mut records = Vec::new();
-        for address in addresses.records().clone() {
-            let coincident = MatchPartialRecord::coincident(partial, &address);
+        for address in addresses {
+            let coincident = MatchPartialRecord::coincident(partial, address);
             if let Some(record) = coincident {
                 records.push(record);
             }
@@ -396,7 +397,7 @@ pub struct MatchPartialRecords {
 }
 
 impl MatchPartialRecords {
-    pub fn compare(self_addresses: &PartialAddresses, other_addresses: &Addresses) -> Self {
+    pub fn compare<T: Address + GeoPoint + Send + Sync>(self_addresses: &PartialAddresses, other_addresses: &[T]) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )

@@ -1,5 +1,5 @@
 use crate::address_components::*;
-use crate::prelude::{Addres, Addreses, Point, Points};
+use crate::prelude::{Address, GeoPoint};
 use crate::utils;
 use crate::utils::deserialize_arcgis_data;
 use serde::{Deserialize, Serialize};
@@ -58,7 +58,7 @@ pub struct CountyAddress {
     // address_longitude: f64,
 }
 
-impl Addres for CountyAddress {
+impl Address for CountyAddress {
     fn number(&self) -> i64 {
         self.address_number
     }
@@ -112,7 +112,7 @@ impl Addres for CountyAddress {
     }
 }
 
-impl Point for CountyAddress {
+impl GeoPoint for CountyAddress {
     fn lat(&self) -> f64 {
         self.address_latitude
     }

@@ -63,28 +63,28 @@ fn load_county_addresses() -> Result<(), std::io::Error> {
 //     Ok(())
 // }
 
-#[test]
-fn read_gp2022_addresses() -> Result<(), std::io::Error> {
-    if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
-        .try_init()
-        .is_ok()
-    {};
-    info!("Subscriber initialized.");
-
-    let file = "c:/users/erose/Documents/addresses_2022.csv";
-    let addresses = GrantsPass2022Addresses::from_csv(file)?;
-    info!(
-        "City addresses loaded: {} entries.",
-        addresses.records.len()
-    );
-    let addresses = Addresses::from(addresses);
-    info!(
-        "Addresses converted: {} entries.",
-        addresses.records_ref().len()
-    );
-    Ok(())
-}
+// #[test]
+// fn read_gp2022_addresses() -> Result<(), std::io::Error> {
+//     if tracing_subscriber::fmt()
+//         .with_max_level(tracing::Level::TRACE)
+//         .try_init()
+//         .is_ok()
+//     {};
+//     info!("Subscriber initialized.");
+//
+//     let file = "c:/users/erose/Documents/addresses_2022.csv";
+//     let addresses = GrantsPass2022Addresses::from_csv(file)?;
+//     info!(
+//         "City addresses loaded: {} entries.",
+//         addresses.records.len()
+//     );
+//     let addresses = CommonAddresses::from(addresses);
+//     info!(
+//         "Addresses converted: {} entries.",
+//         addresses.records_ref().len()
+//     );
+//     Ok(())
+// }
 
 #[test]
 fn read_business_licenses() -> Result<(), std::io::Error> {

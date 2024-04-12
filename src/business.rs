@@ -41,9 +41,9 @@ pub struct BusinessMatchRecords {
 impl BusinessMatchRecords {
     /// Matches the provided address associated with a business license against the addresses in
     /// `addresses`, creating a new `BusinessMatchRecords` struct containing the results.
-    pub fn new(business: &BusinessLicense, addresses: &Addresses) -> Self {
+    pub fn new<T: Address + GeoPoint>(business: &BusinessLicense, addresses: &[T]) -> Self {
         let mut records = Vec::new();
-        for address in addresses.records_ref() {
+        for address in addresses {
             let business_match = business.coincident(address);
             if let Some(record) = business_match {
                 records.push(record);
@@ -84,7 +84,7 @@ impl BusinessMatchRecords {
     /// list of partial (divergent) matches if found, otherwise a missing record.  Since divergent
     /// addresses are unnecessary to inspect if an exact match is found, this is a more efficient
     /// matching method compared to [`BusinessMatchRecords::compare()`].
-    pub fn chain(business: &BusinessLicense, address_list: &[&Addresses]) -> Self {
+    pub fn chain<T: Address + GeoPoint>(business: &BusinessLicense, address_list: &[&[T]]) -> Self {
         let mut matching = Vec::new();
         let mut divergent = Vec::new();
         let mut missing = Vec::new();
@@ -113,7 +113,7 @@ impl BusinessMatchRecords {
     /// For each [`BusinessLicense`] object in `businesses`, this method creates a
     /// `BusinessMatchRecords` using the [`BusinessMatchRecords::new()`] method.  Match records
     /// will include matching, divergent and missing records.
-    pub fn compare(businesses: &BusinessLicenses, addresses: &Addresses) -> Self {
+    pub fn compare<T: Address + GeoPoint + Send + Sync>(businesses: &BusinessLicenses, addresses: &[T]) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )
@@ -134,7 +134,7 @@ impl BusinessMatchRecords {
     /// Compares each address in `businesses` against the addresses in `addresses` using the
     /// [`BusinessMatchRecords::chain()`] method, which returns only an exact match if available,
     /// otherwise returning a list of partial matches or a missing record.
-    pub fn compare_chain(businesses: &BusinessLicenses, addresses: &[&Addresses]) -> Self {
+    pub fn compare_chain<T: Address + GeoPoint + Send + Sync>(businesses: &BusinessLicenses, addresses: &[&[T]]) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )
@@ -313,21 +313,21 @@ pub struct BusinessLicense {
 impl BusinessLicense {
     /// Compares the address of `BusinessLicense` to `address`, producing either a matching
     /// [`BusinessMatchRecord`], any divergent [`BusinessMatchRecord`], or `None` if missing.
-    pub fn coincident(&self, address: &Address) -> Option<BusinessMatchRecord> {
+    pub fn coincident<T: Address + GeoPoint>(&self, address: &T) -> Option<BusinessMatchRecord> {
         let mut match_status = MatchStatus::Missing;
         let mut business_match = None;
         let street_name = self.street_name.trim().to_string();
-        if self.address_number == address.address_number()
-            && self.street_name_pre_directional == address.pre_directional()
-            && street_name == address.street_name()
-            && self.street_name_post_type == Some(address.post_type())
+        if self.address_number == address.number()
+            && self.street_name_pre_directional == *address.directional()
+            && street_name == *address.street_name()
+            && self.street_name_post_type == *address.street_type()
         // && self.postal_community == address.postal_community()
         // && self.state_name == address.state_name()
         {
-            if self.subaddress_identifier != address.subaddress_identifier() {
+            if self.subaddress_identifier != *address.subaddress_id() {
                 match_status = MatchStatus::Divergent;
             }
-            if self.zip_code != address.zip_code() {
+            if self.zip_code != address.zip() {
                 match_status = MatchStatus::Divergent;
             }
             if match_status != MatchStatus::Divergent {
@@ -343,8 +343,8 @@ impl BusinessLicense {
                 license: self.license(),
                 expires: self.expires(),
                 other_address_label: Some(address.label()),
-                address_latitude: Some(address.address_latitude()),
-                address_longitude: Some(address.address_longitude()),
+                address_latitude: Some(address.lat()),
+                address_longitude: Some(address.lon()),
             });
         }
         business_match
