@@ -1,10 +1,12 @@
 //! The `address` module defines the library data standard for a valid address, and provides
 //! implementation blocks to convert data from import types to the valid address format.
 use crate::prelude::*;
+use aid::prelude::*;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::path::Path;
 use tracing::{error, info, trace};
 
 pub trait Address {
@@ -674,6 +676,28 @@ impl CommonAddresses {
     }
 }
 
+impl Portable<CommonAddresses> for CommonAddresses {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        Ok(save(self, path)?)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = from_csv(path)?;
+        Ok(Self{ records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+    }
+}
+
+
 impl<T: Address + Clone> From<&[T]> for CommonAddresses {
     fn from(addresses: &[T]) -> Self {
         let records = addresses.iter().map(|v| CommonAddress::from(v)).collect::<Vec<CommonAddress>>();
@@ -765,10 +789,55 @@ impl Address for SpatialAddress {
     }
 }
 
+impl<T: Address + Point + GeoPoint> From<&T> for SpatialAddress {
+    fn from(address: &T) -> Self {
+        let x = address.x();
+        let y = address.y();
+        let lat = address.lat();
+        let lon = address.lon();
+        let address = CommonAddress::from(address);
+        Self {
+            address,
+            x,
+            y,
+            lat,
+            lon,
+        }
+    }
+}
+
 /// The `SpatialAddresses` struct holds a vector of type [`SpatialAddress`].
 #[derive(Default, Serialize, Deserialize, Clone)]
 pub struct SpatialAddresses {
     pub records: Vec<SpatialAddress>,
+}
+
+impl Portable<SpatialAddresses> for SpatialAddresses {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        Ok(save(self, path)?)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = from_csv(path)?;
+        Ok(Self{ records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+    }
+}
+
+impl<T: Address + Clone + Point + GeoPoint> From<&[T]> for SpatialAddresses {
+    fn from(addresses: &[T]) -> Self {
+        let records = addresses.iter().map(|v| SpatialAddress::from(v)).collect::<Vec<SpatialAddress>>();
+        Self { records }
+    }
 }
 
 
