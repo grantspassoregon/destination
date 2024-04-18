@@ -494,7 +494,7 @@ impl<T: Address> From<&T> for CommonAddress {
 }
 
 /// The `CommonAddresses` struct holds a vector of type [`CommonAddress`].
-#[derive(Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct CommonAddresses {
     pub records: Vec<CommonAddress>,
 }
@@ -807,7 +807,7 @@ impl<T: Address + Point + GeoPoint> From<&T> for SpatialAddress {
 }
 
 /// The `SpatialAddresses` struct holds a vector of type [`SpatialAddress`].
-#[derive(Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct SpatialAddresses {
     pub records: Vec<SpatialAddress>,
 }
