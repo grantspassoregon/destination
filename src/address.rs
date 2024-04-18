@@ -404,6 +404,60 @@ impl CommonAddress {
     }
 }
 
+impl Address for CommonAddress {
+    fn number(&self) -> i64 {
+        self.number
+    }
+
+    fn number_suffix(&self) -> &Option<String> {
+        &self.number_suffix
+    }
+
+    fn directional(&self) -> &Option<StreetNamePreDirectional> {
+        &self.directional
+    }
+
+    fn street_name(&self) -> &String {
+        &self.street_name
+    }
+
+    fn street_type(&self) -> &Option<StreetNamePostType> {
+        &self.street_type
+    }
+
+    fn subaddress_id(&self) -> &Option<String> {
+        &self.subaddress_id
+    }
+
+    fn subaddress_type(&self) -> &Option<SubaddressType> {
+        &self.subaddress_type
+    }
+
+    fn floor(&self) -> &Option<i64> {
+        &self.floor
+    }
+
+    fn building(&self) -> &Option<String> {
+        &self.building
+    }
+
+    fn zip(&self) -> i64 {
+        self.zip
+    }
+
+    fn postal_community(&self) -> &String {
+        &self.postal_community
+    }
+
+    fn state(&self) -> &String {
+        &self.state
+    }
+
+    fn status(&self) -> &AddressStatus {
+        &self.status
+    }
+}
+
 impl<T: Address> From<&T> for CommonAddress {
     fn from(address: &T) -> Self {
         let number = address.number();
@@ -436,158 +490,6 @@ impl<T: Address> From<&T> for CommonAddress {
         }
     }
 }
-
-// impl From<CityAddress> for Address {
-//     fn from(item: CityAddress) -> Self {
-//         Address {
-//             address_number: item.address_number(),
-//             address_number_suffix: item.address_number_suffix(),
-//             street_name_pre_directional: item.street_name_pre_directional(),
-//             street_name: item.street_name(),
-//             street_name_post_type: item.street_name_post_type(),
-//             subaddress_type: item.subaddress_type(),
-//             subaddress_identifier: item.subaddress_identifier(),
-//             floor: item.floor(),
-//             building: item.building(),
-//             zip_code: item.zip_code(),
-//             postal_community: item.postal_community(),
-//             state_name: item.state_name(),
-//             status: item.status(),
-//             address_latitude: item.address_latitude(),
-//             address_longitude: item.address_longitude(),
-//         }
-//     }
-// }
-//
-// impl From<&CityAddress> for Address {
-//     fn from(item: &CityAddress) -> Self {
-//         Address {
-//             address_number: item.address_number(),
-//             address_number_suffix: item.address_number_suffix(),
-//             street_name_pre_directional: item.street_name_pre_directional(),
-//             street_name: item.street_name(),
-//             street_name_post_type: item.street_name_post_type(),
-//             subaddress_type: item.subaddress_type(),
-//             subaddress_identifier: item.subaddress_identifier(),
-//             floor: item.floor(),
-//             building: item.building(),
-//             zip_code: item.zip_code(),
-//             postal_community: item.postal_community(),
-//             state_name: item.state_name(),
-//             status: item.status(),
-//             address_latitude: item.address_latitude(),
-//             address_longitude: item.address_longitude(),
-//         }
-//     }
-// }
-
-// impl TryFrom<CountyAddress> for CommonAddress {
-//     type Error = ();
-//
-//     fn try_from(item: CountyAddress) -> Result<Self, Self::Error> {
-//         match item.street_name_post_type() {
-//             Some(post_type) => Ok(CommonAddress {
-//                 number: item.address_number(),
-//                 number_suffix: item.address_number_suffix(),
-//                 directional: item.street_name_pre_directional(),
-//                 street_name: item.street_name(),
-//                 street_type: post_type,
-//                 subaddress_type: item.subaddress_type(),
-//                 subaddress_id: item.subaddress_identifier(),
-//                 floor: item.floor(),
-//                 building: None,
-//                 zip: item.zip_code(),
-//                 postal_community: item.postal_community(),
-//                 state: item.state_name(),
-//                 status: item.status(),
-//                 // address_latitude: item.address_latitude(),
-//                 // address_longitude: item.address_longitude(),
-//             }),
-//             None => Err(()),
-//         }
-//     }
-// }
-
-// impl TryFrom<&CountyAddress> for CommonAddress {
-//     type Error = ();
-//
-//     fn try_from(item: &CountyAddress) -> Result<Self, Self::Error> {
-//         match item.street_name_post_type() {
-//             Some(post_type) => Ok(CommonAddress {
-//                 number: item.address_number(),
-//                 number_suffix: item.address_number_suffix(),
-//                 directional: item.street_name_pre_directional(),
-//                 street_name: item.street_name(),
-//                 street_type: Some(post_type),
-//                 subaddress_type: item.subaddress_type(),
-//                 subaddress_id: item.subaddress_identifier(),
-//                 floor: item.floor(),
-//                 building: None,
-//                 zip: item.zip_code(),
-//                 postal_community: item.postal_community(),
-//                 state: item.state_name(),
-//                 status: item.status(),
-//                 // address_latitude: item.address_latitude(),
-//                 // address_longitude: item.address_longitude(),
-//             }),
-//             None => Err(()),
-//         }
-//     }
-// }
-//
-// impl TryFrom<GrantsPass2022Address> for CommonAddress {
-//     type Error = ();
-//
-//     fn try_from(item: GrantsPass2022Address) -> Result<Self, Self::Error> {
-//         match item.post_type() {
-//             Some(post_type) => Ok(CommonAddress {
-//                 number: item.address_number(),
-//                 number_suffix: None,
-//                 directional: item.pre_directional(),
-//                 street_name: item.street_name(),
-//                 street_type: Some(post_type),
-//                 subaddress_type: None,
-//                 subaddress_id: item.subaddress_identifier(),
-//                 floor: item.floor(),
-//                 building: None,
-//                 zip: item.zip_code(),
-//                 postal_community: item.postal_community(),
-//                 state: item.state_name(),
-//                 status: item.status(),
-//                 // address_latitude: item.address_latitude(),
-//                 // address_longitude: item.address_longitude(),
-//             }),
-//             None => Err(()),
-//         }
-//     }
-// }
-//
-// impl TryFrom<&GrantsPass2022Address> for CommonAddress {
-//     type Error = ();
-//
-//     fn try_from(item: &GrantsPass2022Address) -> Result<Self, Self::Error> {
-//         match item.post_type() {
-//             Some(post_type) => Ok(CommonAddress {
-//                 number: item.address_number(),
-//                 number_suffix: None,
-//                 directional: item.pre_directional(),
-//                 street_name: item.street_name(),
-//                 street_type: Some(post_type),
-//                 subaddress_type: None,
-//                 subaddress_id: item.subaddress_identifier(),
-//                 floor: item.floor(),
-//                 building: None,
-//                 zip: item.zip_code(),
-//                 postal_community: item.postal_community(),
-//                 state: item.state_name(),
-//                 status: item.status(),
-//                 // address_latitude: item.address_latitude(),
-//                 // address_longitude: item.address_longitude(),
-//             }),
-//             None => Err(()),
-//         }
-//     }
-// }
 
 /// The `CommonAddresses` struct holds a vector of type [`CommonAddress`].
 #[derive(Default, Serialize, Deserialize, Clone)]
@@ -779,42 +681,90 @@ impl<T: Address + Clone> From<&[T]> for CommonAddresses {
     }
 }
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
+pub struct SpatialAddress {
+    address: CommonAddress,
+    x: f64,
+    y: f64,
+    lat: f64,
+    lon: f64,
+}
 
-// impl From<CityAddresses> for Addresses {
-//     fn from(item: CityAddresses) -> Self {
-//         let mut records = Vec::new();
-//         for address in item.records {
-//             if let Ok(record) = Address::try_from(address) {
-//                 records.push(record);
-//             }
-//         }
-//         Addresses { records }
-//     }
-// }
+impl Point for SpatialAddress {
+    fn x(&self) -> f64 {
+        self.x
+    }
 
-// impl From<CountyAddresses> for CommonAddresses {
-//     fn from(item: CountyAddresses) -> Self {
-//         let mut records = Vec::new();
-//         for address in item.records {
-//             if let Ok(record) = CommonAddress::try_from(address) {
-//                 records.push(record);
-//             }
-//         }
-//         CommonAddresses { records }
-//     }
-// }
-//
-// impl From<GrantsPass2022Addresses> for CommonAddresses {
-//     fn from(item: GrantsPass2022Addresses) -> Self {
-//         let mut records = Vec::new();
-//         for address in item.records {
-//             if let Ok(record) = CommonAddress::try_from(address) {
-//                 records.push(record);
-//             }
-//         }
-//         CommonAddresses { records }
-//     }
-// }
+    fn y(&self) -> f64 {
+        self.y
+    }
+}
+
+impl GeoPoint for SpatialAddress {
+    fn lat(&self) -> f64 {
+        self.lat
+    }
+
+    fn lon(&self) -> f64 {
+        self.lon
+    }
+}
+
+
+impl Address for SpatialAddress {
+    fn number(&self) -> i64 {
+        self.address.number
+    }
+
+    fn number_suffix(&self) -> &Option<String> {
+        &self.address.number_suffix
+    }
+
+    fn directional(&self) -> &Option<StreetNamePreDirectional> {
+        &self.address.directional
+    }
+
+    fn street_name(&self) -> &String {
+        &self.address.street_name
+    }
+
+    fn street_type(&self) -> &Option<StreetNamePostType> {
+        &self.address.street_type
+    }
+
+    fn subaddress_id(&self) -> &Option<String> {
+        &self.address.subaddress_id
+    }
+
+    fn subaddress_type(&self) -> &Option<SubaddressType> {
+        &self.address.subaddress_type
+    }
+
+    fn floor(&self) -> &Option<i64> {
+        &self.address.floor
+    }
+
+    fn building(&self) -> &Option<String> {
+        &self.address.building
+    }
+
+    fn zip(&self) -> i64 {
+        self.address.zip
+    }
+
+    fn postal_community(&self) -> &String {
+        &self.address.postal_community
+    }
+
+    fn state(&self) -> &String {
+        &self.address.state
+    }
+
+    fn status(&self) -> &AddressStatus {
+        &self.address.status
+    }
+}
+
 
 /// The `PartialAddress` struct contains optional fields so that incomplete or missing data can be
 /// compared against [`Addresses`] or [`PartialAddresses`] for potential matches.  Used to help
