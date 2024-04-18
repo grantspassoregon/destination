@@ -87,8 +87,9 @@ pub fn multi_word(input: &str) -> IResult<&str, Vec<&str>> {
     let mut cond = test;
     tracing::trace!("Starting condition is {:#?}", &test);
     while !cond {
-        let (rem, next) = single_word(rem)?;
+        let (rem, next) = single_word(remaining)?;
         name.push(next);
+        tracing::trace!("Name is {:#?}", &name);
         let (_, test) = is_post_type(rem)?;
         remaining = rem;
         cond = test;

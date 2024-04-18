@@ -1,6 +1,6 @@
 use address::prelude::*;
 use aid::prelude::*;
-use tracing::info;
+use tracing::{info, trace};
 
 #[test]
 fn load_city_addresses() -> Result<(), std::io::Error> {
@@ -11,12 +11,16 @@ fn load_city_addresses() -> Result<(), std::io::Error> {
     {};
     info!("Subscriber initialized.");
 
+    trace!("Deserializing city addresses from a csv file.");
     let file = "tests/test_data/city_addresses_20240226.csv";
     let addresses = CityAddresses::from_csv(file)?;
-    info!(
+    assert_eq!(addresses.records.len(), 27437);
+    trace!(
         "City addresses loaded: {} entries.",
         addresses.records.len()
     );
+    // let addresses = GrantsPassAddresses::from_csv(file)?;
+    assert_eq!(addresses.records.len(), 27437);
     Ok(())
 }
 
@@ -29,39 +33,36 @@ fn load_county_addresses() -> Result<(), std::io::Error> {
     {};
     info!("Subscriber initialized.");
 
+    trace!("Deserializing county addresses from a csv file.");
     let file = "tests/test_data/county_addresses_20240226.csv";
     let addresses = CountyAddresses::from_csv(file)?;
-    info!(
+    assert_eq!(addresses.records.len(), 45015);
+    trace!(
         "County addresses loaded: {} entries.",
         addresses.records.len()
     );
-    info!("Record 1059:");
-    info!("{:?}", addresses.records[1058]);
-    info!("Record 28091:");
-    info!("{:?}", addresses.records[28090]);
-    info!("Record 19424:");
-    info!("{:?}", addresses.records[19423]);
     Ok(())
 }
 
-// #[test]
-// fn load_geo_addresses() -> Result<(), std::io::Error> {
-//     if tracing_subscriber::fmt()
-//         .with_max_level(tracing::Level::TRACE)
-//         .try_init()
-//         .is_ok()
-//     {};
-//     info!("Subscriber initialized.");
-//
-//     let file = "tests/test_data/city_addresses_20240226.csv";
-//     let addresses = CityAddresses::from_csv(file)?;
-//     let geo_addresses = GeoAddresses::from(&addresses);
-//     info!(
-//         "Geo addresses loaded: {} entries.",
-//         geo_addresses.records.len()
-//     );
-//     Ok(())
-// }
+#[test]
+fn load_geo_addresses() -> Result<(), std::io::Error> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+
+    let file = "tests/test_data/city_addresses_20240226.csv";
+    let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
+    let geo_addresses = GeoAddresses::from(&addresses.records[..]);
+    assert_eq!(addresses.records.len(), geo_addresses.records.len());
+    info!(
+        "Geo addresses loaded: {} entries.",
+        geo_addresses.records.len()
+    );
+    Ok(())
+}
 
 // #[test]
 // fn read_gp2022_addresses() -> Result<(), std::io::Error> {
@@ -95,7 +96,7 @@ fn read_business_licenses() -> Result<(), std::io::Error> {
     {};
     info!("Subscriber initialized.");
 
-    let file = "c:/users/erose/Documents/active_business_licenses.csv";
+    let file = "tests/test_data/active_business_licenses.csv";
     let licenses = BusinessLicenses::from_csv(file)?;
     info!(
         "Business licenses loaded: {} entries.",
@@ -132,46 +133,45 @@ fn read_business_licenses() -> Result<(), std::io::Error> {
     Ok(())
 }
 
-// #[test]
-// fn match_city_address() -> Result<(), std::io::Error> {
-//     if tracing_subscriber::fmt()
-//         .with_max_level(tracing::Level::TRACE)
-//         .try_init()
-//         .is_ok()
-//     {};
-//     info!("Subscriber initialized.");
-//     let city_path = "tests/test_data/city_addresses_20240226.csv";
-//     let county_path = "tests/test_data/county_addresses_20240226.csv";
-//     let city_addresses = CityAddresses::from_csv(city_path)?;
-//     let source_addresses = Addresses::from(city_addresses);
-//     let county_addresses = CountyAddresses::from_csv(county_path)?;
-//     let target_addresses = Addresses::from(county_addresses);
-//     let match_records = MatchRecords::new(
-//         &source_addresses.records_ref()[0].clone(),
-//         &target_addresses.records_ref(),
-//     );
-//     info!("Record 0 is: {:?}", match_records.records[0]);
-//     Ok(())
-// }
+#[test]
+fn match_city_address() -> Result<(), std::io::Error> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+    let city_path = "tests/test_data/city_addresses_20240226.csv";
+    let county_path = "tests/test_data/county_addresses_20240226.csv";
+    let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
+    let county_addresses = CountyAddresses::from_csv(county_path)?;
+    info!("Matching single address.");
+    let match_records = MatchRecords::new(
+        &city_addresses.records[0].clone(),
+        &county_addresses.records,
+    );
+    info!("Record 0 is: {:?}", match_records.records[0]);
+    Ok(())
+}
 
-// #[test]
-// fn match_business_addresses() -> Result<(), std::io::Error> {
-//     if tracing_subscriber::fmt()
-//         .with_max_level(tracing::Level::TRACE)
-//         .try_init()
-//         .is_ok()
-//     {};
-//     info!("Subscriber initialized.");
-//     let business_path = "c:/users/erose/documents/active_business_licenses.csv";
-//     let city_path = "c:/users/erose/documents/addresses_20230411.csv";
-//     let business_addresses = BusinessLicenses::from_csv(business_path)?;
-//     let city_addresses = CityAddresses::from_csv(city_path)?;
-//     let target_addresses = Addresses::from(city_addresses);
-//     let match_records = BusinessMatchRecords::compare(&business_addresses, &target_addresses);
-//     info!("Records: {:?}", match_records.records.len());
-//
-//     Ok(())
-// }
+#[test]
+fn match_business_addresses() -> Result<(), std::io::Error> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+    let business_path = "tests/test_data/active_business_licenses.csv";
+    let city_path = "tests/test_data/city_addresses_20240226.csv";
+    let business_addresses = BusinessLicenses::from_csv(business_path)?;
+    let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
+    let match_records = BusinessMatchRecords::compare(&business_addresses, &city_addresses.records);
+    assert_eq!(match_records.records.len(), 2936);
+    info!("Business addresses match against commmon addresses.");
+
+    Ok(())
+}
 
 // #[test]
 // fn match_business_address_chain() -> Result<(), std::io::Error> {
@@ -198,76 +198,71 @@ fn read_business_licenses() -> Result<(), std::io::Error> {
 //     Ok(())
 // }
 
-// #[test]
-// fn match_city_addresses() -> Result<(), std::io::Error> {
-//     if tracing_subscriber::fmt()
-//         .with_max_level(tracing::Level::TRACE)
-//         .try_init()
-//         .is_ok()
-//     {};
-//     info!("Subscriber initialized.");
-//     let city_path = "tests/test_data/city_addresses_20240226.csv";
-//     let county_path = "tests/test_data/county_addresses_20240226.csv";
-//     let city_addresses = CityAddresses::from_csv(city_path)?;
-//     let source_addresses = Addresses::from(city_addresses);
-//     let county_addresses = CountyAddresses::from_csv(county_path)?;
-//     let target_addresses = Addresses::from(county_addresses);
-//     let match_records = MatchRecords::compare(
-//         &source_addresses.records_ref()[0..10].to_vec(),
-//         &target_addresses.records_ref(),
-//     );
-//     info!("Records: {:?}", match_records.records);
-//
-//     Ok(())
-// }
+#[test]
+fn match_city_addresses() -> Result<(), std::io::Error> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+    let city_path = "tests/test_data/city_addresses_20240226.csv";
+    let county_path = "tests/test_data/county_addresses_20240226.csv";
+    let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
+    let county_addresses = CountyAddresses::from_csv(county_path)?;
+    let match_records = MatchRecords::compare(
+        &city_addresses.records[0..10].to_vec(),
+        &county_addresses.records,
+    );
+    assert_eq!(match_records.records.len(), 10);
+    Ok(())
+}
 
-// #[test]
-// fn filter_status() -> Result<(), std::io::Error> {
-//     if tracing_subscriber::fmt()
-//         .with_max_level(tracing::Level::TRACE)
-//         .try_init()
-//         .is_ok()
-//     {};
-//     info!("Subscriber initialized.");
-//     let city_path = "tests/test_data/city_addresses_20240226.csv";
-//     let county_path = "tests/test_data/county_addresses_20240226.csv";
-//     let city_addresses = CityAddresses::from_csv(city_path)?;
-//     let source_addresses = Addresses::from(city_addresses);
-//     let county_addresses = CountyAddresses::from_csv(county_path)?;
-//     let target_addresses = Addresses::from(county_addresses);
-//     let match_records = MatchRecords::compare(
-//         &source_addresses.records_ref()[0..10].to_vec(),
-//         &target_addresses.records_ref(),
-//     );
-//     let filtered = match_records.filter("status");
-//     info!("Records: {:?}", filtered.records);
-//
-//     Ok(())
-// }
+#[test]
+fn filter_status() -> Result<(), std::io::Error> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+    let city_path = "tests/test_data/city_addresses_20240226.csv";
+    let county_path = "tests/test_data/county_addresses_20240226.csv";
+    let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
+    let county_addresses = CountyAddresses::from_csv(county_path)?;
+    let match_records = MatchRecords::compare(
+        &city_addresses.records[0..1000].to_vec(),
+        &county_addresses.records,
+    );
+    assert_eq!(match_records.records.len(), 1000);
+    let filtered = match_records.filter("status");
+    assert_eq!(filtered.records.len(), 969);
+    info!("Matches filtered by status.");
+    Ok(())
+}
 
-// #[test]
-// fn filter_missing() -> Result<(), std::io::Error> {
-//     if tracing_subscriber::fmt()
-//         .with_max_level(tracing::Level::TRACE)
-//         .try_init()
-//         .is_ok()
-//     {};
-//     info!("Subscriber initialized.");
-//     let city_path = "tests/test_data/city_addresses_20240226.csv";
-//     let county_path = "tests/test_data/county_addresses_20240226.csv";
-//     let city_addresses = CityAddresses::from_csv(city_path)?;
-//     let source_addresses = Addresses::from(city_addresses);
-//     let county_addresses = CountyAddresses::from_csv(county_path)?;
-//     let target_addresses = Addresses::from(county_addresses);
-//     let match_records = MatchRecords::compare(
-//         &source_addresses.records_ref()[0..100].to_vec(),
-//         &target_addresses.records_ref(),
-//     );
-//     let filtered = match_records.filter("missing");
-//     info!("Records: {:?}", filtered.records);
-//
-//     Ok(())
-// }
+#[test]
+fn filter_missing() -> Result<(), std::io::Error> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+    let city_path = "tests/test_data/city_addresses_20240226.csv";
+    let county_path = "tests/test_data/county_addresses_20240226.csv";
+    let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
+    let county_addresses = CountyAddresses::from_csv(county_path)?;
+    let match_records = MatchRecords::compare(
+        &city_addresses.records[0..1000].to_vec(),
+        &county_addresses.records,
+    );
+    assert_eq!(match_records.records.len(), 1000);
+    let filtered = match_records.filter("missing");
+    assert_eq!(filtered.records.len(), 3);
+    info!("Matches filtered by missing.");
+    Ok(())
+}
 
 #[test]
 fn address_number_parser() {
@@ -362,6 +357,11 @@ fn street_type_parser() {
 
 #[test]
 fn multi_word_parser() {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+        .is_ok()
+    {};
     let a1 = " FIRE MOUNTAIN WAY";
     let a2 = " CENTURYLINK DR";
     let a3 = " ROGUE RIVER AVE, Grants Pass";
