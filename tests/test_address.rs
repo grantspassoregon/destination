@@ -36,6 +36,7 @@ fn save_city_addresses() -> Clean<()> {
     trace!("Opening city addresses from a csv file.");
     let file = "c:/users/erose/documents/city_addresses_20240409.csv";
     let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
+    let addresses = SpatialAddresses::from(&addresses.records[..]);
     trace!("Saving city addresses to binary.");
     addresses.save("c:/users/erose/documents/addresses.data")?;
     Ok(())

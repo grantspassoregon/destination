@@ -1,8 +1,8 @@
 use crate::address_components::*;
-use aid::prelude::*;
-use crate::prelude::{Address, GeoPoint, Point, Portable, from_csv, load_bin, to_csv, save};
+use crate::prelude::{from_csv, load_bin, save, to_csv, Address, GeoPoint, Point, Portable};
 use crate::utils;
 use crate::utils::deserialize_arcgis_data;
+use aid::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -11,10 +11,7 @@ use std::path::Path;
 pub struct GrantsPassAddress {
     #[serde(rename = "Add_Number")]
     pub address_number: i64,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "AddNum_Suf"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "AddNum_Suf")]
     pub address_number_suffix: Option<String>,
     #[serde(
         deserialize_with = "deserialize_mixed_pre_directional",
@@ -37,27 +34,15 @@ pub struct GrantsPassAddress {
     pub zip_code: i64,
     #[serde(rename = "STATUS")]
     pub status: AddressStatus,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "NOTIFICATION"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "NOTIFICATION")]
     pub notification: Option<String>,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "NOTES"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "NOTES")]
     pub notes: Option<String>,
     #[serde(rename(serialize = "GlobalID", deserialize = "GlobalID"))]
     pub global_id: String,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "created_user"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "created_user")]
     pub created_user: Option<String>,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "created_date"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "created_date")]
     pub created_date: Option<String>,
     #[serde(rename = "last_edited_user")]
     pub last_edited_user: String,
@@ -74,15 +59,9 @@ pub struct GrantsPassAddress {
     #[serde(rename = "Post_Comm")]
     pub postal_community: String,
     pub state_name: String,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "Inc_Muni"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "Inc_Muni")]
     pub incorporated_municipality: Option<String>,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "Uninc_Comm"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "Uninc_Comm")]
     pub unincorporated_community: Option<String>,
 }
 
@@ -158,7 +137,7 @@ impl Portable<GrantsPassAddresses> for GrantsPassAddresses {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self{ records })
+        Ok(Self { records })
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
@@ -171,10 +150,7 @@ impl Portable<GrantsPassAddresses> for GrantsPassAddresses {
 pub struct GrantsPassSpatialAddress {
     #[serde(rename = "Add_Number")]
     pub address_number: i64,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "AddNum_Suf"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "AddNum_Suf")]
     pub address_number_suffix: Option<String>,
     #[serde(
         deserialize_with = "deserialize_mixed_pre_directional",
@@ -197,27 +173,15 @@ pub struct GrantsPassSpatialAddress {
     pub zip_code: i64,
     #[serde(rename = "STATUS")]
     pub status: AddressStatus,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "NOTIFICATION"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "NOTIFICATION")]
     pub notification: Option<String>,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "NOTES"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "NOTES")]
     pub notes: Option<String>,
     #[serde(rename(serialize = "GlobalID", deserialize = "GlobalID"))]
     pub global_id: String,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "created_user"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "created_user")]
     pub created_user: Option<String>,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "created_date"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "created_date")]
     pub created_date: Option<String>,
     #[serde(rename = "last_edited_user")]
     pub last_edited_user: String,
@@ -234,15 +198,9 @@ pub struct GrantsPassSpatialAddress {
     #[serde(rename = "Post_Comm")]
     pub postal_community: String,
     pub state_name: String,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "Inc_Muni"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "Inc_Muni")]
     pub incorporated_municipality: Option<String>,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename = "Uninc_Comm"
-    )]
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "Uninc_Comm")]
     pub unincorporated_community: Option<String>,
     #[serde(rename = "AddressYCoordinate")]
     pub x: f64,
@@ -346,7 +304,7 @@ impl Portable<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self{ records })
+        Ok(Self { records })
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
@@ -583,7 +541,6 @@ impl Point for CityAddress {
 pub struct CityAddresses {
     pub records: Vec<CityAddress>,
 }
-
 
 impl CityAddresses {
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {

@@ -281,7 +281,10 @@ pub struct MatchPartialRecord {
 }
 
 impl MatchPartialRecord {
-    pub fn coincident<T: Address + GeoPoint>(partial: &PartialAddress, address: &T) -> Option<MatchPartialRecord> {
+    pub fn coincident<T: Address + GeoPoint>(
+        partial: &PartialAddress,
+        address: &T,
+    ) -> Option<MatchPartialRecord> {
         let mut match_status = MatchStatus::Missing;
 
         if let Some(value) = partial.address_number {
@@ -344,7 +347,10 @@ impl MatchPartialRecord {
         }
     }
 
-    pub fn compare<T: Address + GeoPoint>(partial: &PartialAddress, addresses: &[T]) -> MatchPartialRecords {
+    pub fn compare<T: Address + GeoPoint>(
+        partial: &PartialAddress,
+        addresses: &[T],
+    ) -> MatchPartialRecords {
         let mut records = Vec::new();
         for address in addresses {
             let coincident = MatchPartialRecord::coincident(partial, address);
@@ -397,7 +403,10 @@ pub struct MatchPartialRecords {
 }
 
 impl MatchPartialRecords {
-    pub fn compare<T: Address + GeoPoint + Send + Sync>(self_addresses: &PartialAddresses, other_addresses: &[T]) -> Self {
+    pub fn compare<T: Address + GeoPoint + Send + Sync>(
+        self_addresses: &PartialAddresses,
+        other_addresses: &[T],
+    ) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )

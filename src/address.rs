@@ -152,7 +152,11 @@ pub trait Address {
 
     /// The `filter_field` method returns the subset of addresses where the field `filter` is equal
     /// to the value in `field`.
-    fn filter_field<T: Address + Clone + Send + Sync>(values: &[T], filter: &str, field: &str) -> Vec<T> {
+    fn filter_field<T: Address + Clone + Send + Sync>(
+        values: &[T],
+        filter: &str,
+        field: &str,
+    ) -> Vec<T> {
         let mut records = Vec::new();
         match filter {
             "label" => records.append(
@@ -207,7 +211,6 @@ pub trait Address {
     }
 }
 
-
 /// The `Address` struct defines the fields of a valid address.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CommonAddress {
@@ -230,7 +233,6 @@ pub struct CommonAddress {
     pub state: String,
     pub status: AddressStatus,
 }
-
 
 impl CommonAddress {
     /// An address is coincident when the `other` address refers to the same assignment or
@@ -488,7 +490,7 @@ impl<T: Address> From<&T> for CommonAddress {
             zip,
             postal_community,
             state,
-            status
+            status,
         }
     }
 }
@@ -689,7 +691,7 @@ impl Portable<CommonAddresses> for CommonAddresses {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self{ records })
+        Ok(Self { records })
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
@@ -697,10 +699,12 @@ impl Portable<CommonAddresses> for CommonAddresses {
     }
 }
 
-
 impl<T: Address + Clone> From<&[T]> for CommonAddresses {
     fn from(addresses: &[T]) -> Self {
-        let records = addresses.iter().map(|v| CommonAddress::from(v)).collect::<Vec<CommonAddress>>();
+        let records = addresses
+            .iter()
+            .map(|v| CommonAddress::from(v))
+            .collect::<Vec<CommonAddress>>();
         Self { records }
     }
 }
@@ -733,7 +737,6 @@ impl GeoPoint for SpatialAddress {
         self.lon
     }
 }
-
 
 impl Address for SpatialAddress {
     fn number(&self) -> i64 {
@@ -825,7 +828,7 @@ impl Portable<SpatialAddresses> for SpatialAddresses {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self{ records })
+        Ok(Self { records })
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
@@ -835,11 +838,13 @@ impl Portable<SpatialAddresses> for SpatialAddresses {
 
 impl<T: Address + Clone + Point + GeoPoint> From<&[T]> for SpatialAddresses {
     fn from(addresses: &[T]) -> Self {
-        let records = addresses.iter().map(|v| SpatialAddress::from(v)).collect::<Vec<SpatialAddress>>();
+        let records = addresses
+            .iter()
+            .map(|v| SpatialAddress::from(v))
+            .collect::<Vec<SpatialAddress>>();
         Self { records }
     }
 }
-
 
 /// The `PartialAddress` struct contains optional fields so that incomplete or missing data can be
 /// compared against [`Addresses`] or [`PartialAddresses`] for potential matches.  Used to help

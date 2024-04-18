@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 /// types include the list of recognized street suffix names in Appendix C1 of the United States
 /// Postal Service (USPS) Publication 28 - Postal Addressing Standards.
 #[allow(missing_docs)]
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
+#[derive(
+    Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default, PartialOrd, Ord, Hash,
+)]
 pub enum StreetNamePostType {
     ALLEY,
     ANEX,

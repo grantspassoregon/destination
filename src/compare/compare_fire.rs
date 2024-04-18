@@ -34,7 +34,10 @@ pub struct FireInspectionMatches {
 }
 
 impl FireInspectionMatches {
-    pub fn compare<T: Address + GeoPoint + Send + Sync>(inspections: &FireInspections, addresses: &[T]) -> Self {
+    pub fn compare<T: Address + GeoPoint + Send + Sync>(
+        inspections: &FireInspections,
+        addresses: &[T],
+    ) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )

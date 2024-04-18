@@ -2,7 +2,9 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// The `AddressStatus` enum represents the address status, used by City of Grants Pass staff.
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
+#[derive(
+    Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default, PartialOrd, Ord, Hash,
+)]
 pub enum AddressStatus {
     /// Current active valid address.
     Current,

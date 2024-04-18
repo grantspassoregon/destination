@@ -15,7 +15,8 @@ pub mod utils;
 
 pub mod prelude {
     pub use crate::address::{
-        Address, CommonAddress, CommonAddresses, PartialAddress, PartialAddresses, SpatialAddress, SpatialAddresses, AddressDelta, AddressDeltas, 
+        Address, AddressDelta, AddressDeltas, CommonAddress, CommonAddresses, PartialAddress,
+        PartialAddresses, SpatialAddress, SpatialAddresses,
     };
     pub use crate::address_components::{
         deserialize_mixed_post_type, deserialize_mixed_pre_directional, AddressStatus,
@@ -23,14 +24,14 @@ pub mod prelude {
     };
     pub use crate::business::{BusinessLicenses, BusinessMatchRecords};
     pub use crate::compare::{
-        FireInspectionMatchRecords, FireInspectionMatches, MatchPartialRecord, MatchPartialRecords,
-        MatchRecords, MatchStatus, Mismatch, AddressMatch,
+        AddressMatch, FireInspectionMatchRecords, FireInspectionMatches, MatchPartialRecord,
+        MatchPartialRecords, MatchRecords, MatchStatus, Mismatch,
     };
     pub use crate::geo::{GeoAddress, GeoAddresses, GeoPoint, Point};
     pub use crate::import::{
-        Businesses, CityAddress, CityAddresses, CountyAddress, CountyAddresses, FireInspections,
-        GrantsPass2022Address, GrantsPass2022Addresses, FireInspection,
-        GrantsPassAddress, GrantsPassAddresses, GrantsPassSpatialAddress, GrantsPassSpatialAddresses,
+        Businesses, CityAddress, CityAddresses, CountyAddress, CountyAddresses, FireInspection,
+        FireInspections, GrantsPass2022Address, GrantsPass2022Addresses, GrantsPassAddress,
+        GrantsPassAddresses, GrantsPassSpatialAddress, GrantsPassSpatialAddresses,
     };
     pub use crate::lexisnexis::LexisNexis;
     pub use crate::parser::{
@@ -39,5 +40,5 @@ pub mod prelude {
         parse_subaddress_element, parse_subaddress_elements, parse_subaddress_identifiers,
         parse_subaddress_type, recursive_post_type,
     };
-    pub use crate::utils::{from_csv, to_csv, load_bin, save, Portable};
+    pub use crate::utils::{from_csv, load_bin, save, to_csv, Portable};
 }

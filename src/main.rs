@@ -140,12 +140,14 @@ fn main() -> Clean<()> {
             if let Some(source_type) = &cli.source_type {
                 match source_type.as_str() {
                     "grants_pass" => {
-                        source_addresses =
-                            CommonAddresses::from(&CityAddresses::from_csv(cli.source.clone())?.records[..])
+                        source_addresses = CommonAddresses::from(
+                            &CityAddresses::from_csv(cli.source.clone())?.records[..],
+                        )
                     }
                     "josephine_county" => {
-                        source_addresses =
-                            CommonAddresses::from(&CountyAddresses::from_csv(cli.source.clone())?.records[..])
+                        source_addresses = CommonAddresses::from(
+                            &CountyAddresses::from_csv(cli.source.clone())?.records[..],
+                        )
                     }
                     _ => error!("Unrecognized file format."),
                 }
@@ -162,7 +164,9 @@ fn main() -> Clean<()> {
                 if let Some(target_type) = &cli.target_type {
                     match target_type.as_str() {
                         "josephine_county" => {
-                            target_addresses = CommonAddresses::from(&CountyAddresses::from_csv(target)?.records[..])
+                            target_addresses = CommonAddresses::from(
+                                &CountyAddresses::from_csv(target)?.records[..],
+                            )
                         }
                         _ => error!("Invalid target data type."),
                     }
@@ -372,12 +376,14 @@ fn main() -> Clean<()> {
             if let Some(source_type) = &cli.source_type {
                 match source_type.as_str() {
                     "grants_pass" => {
-                        source =
-                            GeoAddresses::from(&GrantsPassSpatialAddresses::from_csv(cli.source.clone())?.records[..])
+                        source = GeoAddresses::from(
+                            &GrantsPassSpatialAddresses::from_csv(cli.source.clone())?.records[..],
+                        )
                     }
                     "josephine_county" => {
-                        source =
-                            GeoAddresses::from(&CountyAddresses::from_csv(cli.source.clone())?.records[..])
+                        source = GeoAddresses::from(
+                            &CountyAddresses::from_csv(cli.source.clone())?.records[..],
+                        )
                     }
                     _ => error!("Unrecognized file format."),
                 }
@@ -388,21 +394,21 @@ fn main() -> Clean<()> {
                 if let Some(target_path) = &cli.target {
                     match target_type.as_str() {
                         "grants_pass" => {
-                            target =
-                                GeoAddresses::from(&GrantsPassSpatialAddresses::from_csv(target_path)?.records[..])
+                            target = GeoAddresses::from(
+                                &GrantsPassSpatialAddresses::from_csv(target_path)?.records[..],
+                            )
                         }
                         "josephine_county" => {
-                            target =
-                                GeoAddresses::from(&CountyAddresses::from_csv(target_path)?.records[..])
+                            target = GeoAddresses::from(
+                                &CountyAddresses::from_csv(target_path)?.records[..],
+                            )
                         }
                         _ => error!("Unrecognized file format."),
                     }
-
                 }
             }
             info!("Comparing records.");
-            let mut match_records =
-                MatchRecords::compare(&source.records, &target.records);
+            let mut match_records = MatchRecords::compare(&source.records, &target.records);
             info!(
                 "{:?} records categorized.",
                 match_records.records_ref().len()

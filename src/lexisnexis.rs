@@ -148,7 +148,10 @@ impl LexisNexis {
     /// The `from_addresses` method creates a [`LexisNexis`] struct from a set of addresses to
     /// include in the range selection `include`, and a set of addresses to exclude from the range
     /// selection `exclude`.
-    pub fn from_addresses(include: &CommonAddresses, exclude: &CommonAddresses) -> Clean<LexisNexis> {
+    pub fn from_addresses(
+        include: &CommonAddresses,
+        exclude: &CommonAddresses,
+    ) -> Clean<LexisNexis> {
         let mut seen = HashSet::new();
         let mut records = Vec::new();
         for address in include.records_ref() {

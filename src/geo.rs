@@ -1,12 +1,15 @@
-use crate::prelude::{Address, AddressDelta, AddressDeltas, CommonAddress, AddressStatus, StreetNamePreDirectional, StreetNamePostType, SubaddressType};
+use crate::prelude::{
+    Address, AddressDelta, AddressDeltas, AddressStatus, CommonAddress, StreetNamePostType,
+    StreetNamePreDirectional, SubaddressType,
+};
 use indicatif::ParallelProgressIterator;
-use serde::{Deserialize, Serialize};
 use rayon::prelude::*;
+use serde::{Deserialize, Serialize};
 
 pub trait Point {
     fn x(&self) -> f64;
     fn y(&self) -> f64;
-    
+
     /// The `distance` function returns the distance between a point `self` and another point
     /// `other` in the same unit as `self`.
     fn distance<T: Point + ?Sized>(&self, other: &T) -> f64 {
@@ -163,7 +166,10 @@ pub struct GeoAddresses {
 
 impl<T: Address + GeoPoint + Clone + Sized> From<&[T]> for GeoAddresses {
     fn from(addresses: &[T]) -> Self {
-        let records = addresses.iter().map(|v| GeoAddress::from(v)).collect::<Vec<GeoAddress>>();
+        let records = addresses
+            .iter()
+            .map(|v| GeoAddress::from(v))
+            .collect::<Vec<GeoAddress>>();
         Self { records }
     }
 }
@@ -244,11 +250,7 @@ impl<T: Address + Point + Clone> From<&T> for AddressPoint {
         let address = CommonAddress::from(data);
         let x = data.x();
         let y = data.y();
-        Self {
-            address,
-            x,
-            y
-        }
+        Self { address, x, y }
     }
 }
 
@@ -259,7 +261,10 @@ pub struct AddressPoints {
 
 impl<T: Address + Point + Clone + Sized> From<&[T]> for AddressPoints {
     fn from(addresses: &[T]) -> Self {
-        let records = addresses.iter().map(|v| AddressPoint::from(v)).collect::<Vec<AddressPoint>>();
+        let records = addresses
+            .iter()
+            .map(|v| AddressPoint::from(v))
+            .collect::<Vec<AddressPoint>>();
         Self { records }
     }
 }
@@ -359,7 +364,7 @@ impl<T: Address + Point + GeoPoint + Clone> From<&T> for SpatialAddress {
             latitude,
             longitude,
             x,
-            y
+            y,
         }
     }
 }
@@ -371,9 +376,10 @@ pub struct SpatialAddresses {
 
 impl<T: Address + Point + GeoPoint + Clone + Sized> From<&[T]> for SpatialAddresses {
     fn from(addresses: &[T]) -> Self {
-        let records = addresses.iter().map(|v| SpatialAddress::from(v)).collect::<Vec<SpatialAddress>>();
+        let records = addresses
+            .iter()
+            .map(|v| SpatialAddress::from(v))
+            .collect::<Vec<SpatialAddress>>();
         Self { records }
     }
 }
-
-

@@ -113,7 +113,10 @@ impl BusinessMatchRecords {
     /// For each [`BusinessLicense`] object in `businesses`, this method creates a
     /// `BusinessMatchRecords` using the [`BusinessMatchRecords::new()`] method.  Match records
     /// will include matching, divergent and missing records.
-    pub fn compare<T: Address + GeoPoint + Send + Sync>(businesses: &BusinessLicenses, addresses: &[T]) -> Self {
+    pub fn compare<T: Address + GeoPoint + Send + Sync>(
+        businesses: &BusinessLicenses,
+        addresses: &[T],
+    ) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )
@@ -134,7 +137,10 @@ impl BusinessMatchRecords {
     /// Compares each address in `businesses` against the addresses in `addresses` using the
     /// [`BusinessMatchRecords::chain()`] method, which returns only an exact match if available,
     /// otherwise returning a list of partial matches or a missing record.
-    pub fn compare_chain<T: Address + GeoPoint + Send + Sync>(businesses: &BusinessLicenses, addresses: &[&[T]]) -> Self {
+    pub fn compare_chain<T: Address + GeoPoint + Send + Sync>(
+        businesses: &BusinessLicenses,
+        addresses: &[&[T]],
+    ) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )

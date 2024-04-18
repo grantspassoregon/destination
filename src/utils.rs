@@ -5,8 +5,8 @@ use indicatif::{ProgressBar, ProgressStyle};
 use serde::de::{Deserialize, DeserializeOwned, Deserializer};
 use serde::Serialize;
 use std::fs;
-use std::path::PathBuf;
 use std::path::Path;
+use std::path::PathBuf;
 use std::time::Duration;
 use tracing::info;
 
