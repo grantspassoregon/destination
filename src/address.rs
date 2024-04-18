@@ -200,15 +200,6 @@ pub trait Address {
         records
     }
 
-    /// Writes the contents of `Addresses` to a CSV file output to path `title`.  Each element
-    /// of the vector in `records` writes to a row on the CSV file.
-    fn to_csv<T: Address + Clone + Serialize>(
-        values: &mut [T],
-        title: std::path::PathBuf,
-    ) -> Result<(), std::io::Error> {
-        to_csv(&mut values.to_vec(), title)?;
-        Ok(())
-    }
 }
 
 /// The `Address` struct defines the fields of a valid address.

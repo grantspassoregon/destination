@@ -124,6 +124,12 @@ pub struct GrantsPassAddresses {
     pub records: Vec<GrantsPassAddress>,
 }
 
+impl GrantsPassAddresses {
+    pub fn len(&self) -> usize {
+        self.records.len()
+    }
+}
+
 impl Portable<GrantsPassAddresses> for GrantsPassAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = load_bin(path)?;
@@ -289,6 +295,12 @@ impl GeoPoint for GrantsPassSpatialAddress {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, PartialOrd)]
 pub struct GrantsPassSpatialAddresses {
     pub records: Vec<GrantsPassSpatialAddress>,
+}
+
+impl GrantsPassSpatialAddresses {
+    pub fn len(&self) -> usize {
+        self.records.len()
+    }
 }
 
 impl Portable<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {

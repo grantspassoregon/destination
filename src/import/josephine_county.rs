@@ -104,6 +104,12 @@ pub struct JosephineCountyAddresses {
     pub records: Vec<JosephineCountyAddress>,
 }
 
+impl JosephineCountyAddresses {
+    pub fn len(&self) -> usize {
+        self.records.len()
+    }
+}
+
 impl Portable<JosephineCountyAddresses> for JosephineCountyAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = load_bin(path)?;
@@ -250,6 +256,12 @@ impl GeoPoint for JosephineCountySpatialAddress {
 #[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct JosephineCountySpatialAddresses {
     pub records: Vec<JosephineCountySpatialAddress>,
+}
+
+impl JosephineCountySpatialAddresses {
+    pub fn len(&self) -> usize {
+        self.records.len()
+    }
 }
 
 impl Portable<JosephineCountySpatialAddresses> for JosephineCountySpatialAddresses {
