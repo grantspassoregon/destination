@@ -1,8 +1,10 @@
 use crate::address_components::*;
-use crate::prelude::{Address, GeoPoint, Point, from_csv};
+use aid::prelude::*;
+use crate::prelude::{Address, GeoPoint, Point, Portable, from_csv, load_bin, to_csv, save};
 use crate::utils;
 use crate::utils::deserialize_arcgis_data;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, PartialOrd)]
 #[serde(rename_all = "PascalCase")]
@@ -143,10 +145,24 @@ pub struct GrantsPassAddresses {
     pub records: Vec<GrantsPassAddress>,
 }
 
-impl GrantsPassAddresses {
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
+impl Portable<GrantsPassAddresses> for GrantsPassAddresses {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        Ok(save(self, path)?)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(GrantsPassAddresses { records })
+        Ok(Self{ records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
     }
 }
 
@@ -317,10 +333,24 @@ pub struct GrantsPassSpatialAddresses {
     pub records: Vec<GrantsPassSpatialAddress>,
 }
 
-impl GrantsPassSpatialAddresses {
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
+impl Portable<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        Ok(save(self, path)?)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(GrantsPassSpatialAddresses { records })
+        Ok(Self{ records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
     }
 }
 

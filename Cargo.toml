@@ -12,7 +12,8 @@ path = "src/main.rs"
 name = "address"
 
 [dependencies]
-aid = { git = "https://github.com/grantspassoregon/aid.git" }
+aid = { git = "https://github.com/grantspassoregon/aid.git", features = ["bin"] }
+bincode = "1.3.3"
 clap = { version = "4.1.1", features = ["derive"] }
 csv = "1.3.0"
 indicatif = { version = "0.17.3", features = ["rayon"] }

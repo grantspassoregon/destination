@@ -25,7 +25,24 @@ fn load_city_addresses() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn load_county_addresses() -> Result<(), std::io::Error> {
+fn save_city_addresses() -> Clean<()> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+
+    trace!("Opening city addresses from a csv file.");
+    let file = "c:/users/erose/documents/city_addresses_20240409.csv";
+    let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
+    trace!("Saving city addresses to binary.");
+    addresses.save("c:/users/erose/documents/addresses.data")?;
+    Ok(())
+}
+
+#[test]
+fn load_county_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
@@ -45,7 +62,7 @@ fn load_county_addresses() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn load_geo_addresses() -> Result<(), std::io::Error> {
+fn load_geo_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
@@ -134,7 +151,7 @@ fn read_business_licenses() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn match_city_address() -> Result<(), std::io::Error> {
+fn match_city_address() -> Clean<()> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
@@ -155,7 +172,7 @@ fn match_city_address() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn match_business_addresses() -> Result<(), std::io::Error> {
+fn match_business_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
@@ -165,6 +182,7 @@ fn match_business_addresses() -> Result<(), std::io::Error> {
     let business_path = "tests/test_data/active_business_licenses.csv";
     let city_path = "tests/test_data/city_addresses_20240226.csv";
     let business_addresses = BusinessLicenses::from_csv(business_path)?;
+    let records = GrantsPassSpatialAddresses::from_csv(city_path)?;
     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
     let match_records = BusinessMatchRecords::compare(&business_addresses, &city_addresses.records);
     assert_eq!(match_records.records.len(), 2936);
@@ -199,7 +217,7 @@ fn match_business_addresses() -> Result<(), std::io::Error> {
 // }
 
 #[test]
-fn match_city_addresses() -> Result<(), std::io::Error> {
+fn match_city_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .try_init()
@@ -219,7 +237,7 @@ fn match_city_addresses() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn filter_status() -> Result<(), std::io::Error> {
+fn filter_status() -> Clean<()> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .try_init()
@@ -242,7 +260,7 @@ fn filter_status() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn filter_missing() -> Result<(), std::io::Error> {
+fn filter_missing() -> Clean<()> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .try_init()

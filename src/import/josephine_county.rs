@@ -1,8 +1,9 @@
 use crate::address_components::*;
-use crate::prelude::{Address, GeoPoint};
-use crate::utils;
+use crate::prelude::{Address, GeoPoint, Portable, load_bin, save, from_csv, to_csv};
 use crate::utils::deserialize_arcgis_data;
+use aid::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CountyAddress {
@@ -184,23 +185,24 @@ impl CountyAddress {
 pub struct CountyAddresses {
     pub records: Vec<CountyAddress>,
 }
-//
-// impl Addreses<CountyAddress> for CountyAddresses {
-//     fn records(&self) -> &Vec<CountyAddress> {
-//         &self.records
-//     }
-// }
-//
-// impl Points<CountyAddress> for CountyAddresses {
-//     fn records(&self) -> &Vec<CountyAddress> {
-//         &self.records
-//     }
-//
-// }
 
-impl CountyAddresses {
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let records = utils::from_csv(path)?;
-        Ok(CountyAddresses { records })
+impl Portable<CountyAddresses> for CountyAddresses {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        Ok(save(self, path)?)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = from_csv(path)?;
+        Ok(Self{ records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
     }
 }
