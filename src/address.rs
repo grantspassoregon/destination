@@ -199,7 +199,6 @@ pub trait Address {
         }
         records
     }
-
 }
 
 /// The `Address` struct defines the fields of a valid address.
