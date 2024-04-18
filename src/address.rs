@@ -765,6 +765,12 @@ impl Address for SpatialAddress {
     }
 }
 
+/// The `SpatialAddresses` struct holds a vector of type [`SpatialAddress`].
+#[derive(Default, Serialize, Deserialize, Clone)]
+pub struct SpatialAddresses {
+    pub records: Vec<SpatialAddress>,
+}
+
 
 /// The `PartialAddress` struct contains optional fields so that incomplete or missing data can be
 /// compared against [`Addresses`] or [`PartialAddresses`] for potential matches.  Used to help
