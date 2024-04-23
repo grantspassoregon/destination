@@ -6,6 +6,7 @@ use tracing::info;
 
 /// The `Mismatch` enum tracks the fields of an address that can diverge while still potentially
 /// referring to the same location.
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 pub enum Mismatch {
     /// Represents a mismatch in the subaddress type.
     SubaddressType(String),
@@ -44,6 +45,7 @@ impl Mismatch {
     }
 }
 
+#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 pub struct Mismatches {
     pub fields: Vec<Mismatch>,
 }
@@ -54,6 +56,7 @@ impl Mismatches {
     }
 }
 
+#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 pub struct AddressMatch {
     pub coincident: bool,
     pub mismatches: Option<Mismatches>,
@@ -72,14 +75,14 @@ impl AddressMatch {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 pub enum MatchStatus {
     Matching,
     Divergent,
     Missing,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct MatchRecord {
     pub match_status: MatchStatus,
     pub address_label: String,
@@ -91,7 +94,7 @@ pub struct MatchRecord {
     pub latitude: f64,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct MatchRecords {
     pub records: Vec<MatchRecord>,
 }
@@ -271,7 +274,7 @@ impl MatchRecords {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct MatchPartialRecord {
     match_status: MatchStatus,
     address_label: String,
@@ -397,7 +400,7 @@ impl MatchPartialRecord {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct MatchPartialRecords {
     records: Vec<MatchPartialRecord>,
 }

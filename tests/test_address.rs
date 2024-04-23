@@ -43,6 +43,24 @@ fn save_city_addresses() -> Clean<()> {
 }
 
 #[test]
+fn save_county_addresses() -> Clean<()> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+
+    trace!("Opening county addresses from a csv file.");
+    let file = "c:/users/erose/documents/county_addresses_20240418.csv";
+    let addresses = JosephineCountySpatialAddresses::from_csv(file)?;
+    let addresses = SpatialAddresses::from(&addresses.records[..]);
+    trace!("Saving county addresses to binary.");
+    addresses.save("c:/users/erose/documents/county_addresses.data")?;
+    Ok(())
+}
+
+#[test]
 fn load_county_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
