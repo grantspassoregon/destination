@@ -22,9 +22,6 @@ pub fn parse_address_number_suffix(input: &str) -> IResult<&str, Option<&str>> {
     } else {
         Ok((remaining, None))
     }
-    // let (rem, num) = digit1(rem)?;
-    // let (rem, div) = tag("/")(rem)?;
-    // let (rem, den) = digit1(rem)?;
 }
 
 pub fn parse_pre_directional(input: &str) -> IResult<&str, Option<StreetNamePreDirectional>> {
@@ -232,10 +229,10 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
     }
     let mut street_name = String::new();
     for (i, val) in name.iter().enumerate() {
-        if i > 0 && i < name.len() {
+        street_name.push_str(val);
+        if name.len() > 1 && i < name.len() - 1 {
             street_name.push(' ');
         }
-        street_name.push_str(val);
     }
     tracing::trace!("Street name: {:#?}", &street_name);
     address.set_street_name(&street_name);
@@ -251,7 +248,7 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
         let mut subaddress_identifier = String::new();
         for (i, val) in value.iter().enumerate() {
             subaddress_identifier.push_str(val);
-            if i > 0 && i < value.len() {
+            if value.len() > 1 && i < value.len() - 1 {
                 subaddress_identifier.push(' ');
             }
         }
