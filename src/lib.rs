@@ -25,7 +25,7 @@ pub mod prelude {
     pub use crate::business::{BusinessLicenses, BusinessMatchRecords};
     pub use crate::compare::{
         AddressMatch, FireInspectionMatchRecords, FireInspectionMatches, MatchPartialRecord,
-        MatchPartialRecords, MatchRecords, MatchStatus, Mismatch,
+        MatchPartialRecords, MatchRecord, MatchRecords, MatchStatus, Mismatch,
     };
     pub use crate::geo::{GeoAddress, GeoAddresses, GeoPoint, Point};
     pub use crate::import::{
