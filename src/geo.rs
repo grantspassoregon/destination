@@ -44,7 +44,6 @@ pub trait Point {
     /// returns the results in the records field of a new `AddressDeltas` struct. Calls
     /// [`Address::deltas()`].
     fn deltas<
-        'a,
         T: Point + Address + Clone + Sync + Send,
         U: Point + Address + Clone + Sync + Send,
     >(
@@ -168,7 +167,7 @@ impl<T: Address + GeoPoint + Clone + Sized> From<&[T]> for GeoAddresses {
     fn from(addresses: &[T]) -> Self {
         let records = addresses
             .iter()
-            .map(|v| GeoAddress::from(v))
+            .map(GeoAddress::from)
             .collect::<Vec<GeoAddress>>();
         Self { records }
     }
@@ -263,7 +262,7 @@ impl<T: Address + Point + Clone + Sized> From<&[T]> for AddressPoints {
     fn from(addresses: &[T]) -> Self {
         let records = addresses
             .iter()
-            .map(|v| AddressPoint::from(v))
+            .map(AddressPoint::from)
             .collect::<Vec<AddressPoint>>();
         Self { records }
     }
@@ -378,7 +377,7 @@ impl<T: Address + Point + GeoPoint + Clone + Sized> From<&[T]> for SpatialAddres
     fn from(addresses: &[T]) -> Self {
         let records = addresses
             .iter()
-            .map(|v| SpatialAddress::from(v))
+            .map(SpatialAddress::from)
             .collect::<Vec<SpatialAddress>>();
         Self { records }
     }

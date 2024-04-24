@@ -194,6 +194,14 @@ impl MatchRecords {
     pub fn filter(self, filter: &str) -> Self {
         let mut records = Vec::new();
         match filter {
+            "matching" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| record.match_status == MatchStatus::Matching)
+                    .collect(),
+            ),
             "missing" => records.append(
                 &mut self
                     .records
@@ -323,15 +331,15 @@ impl MatchPartialRecord {
             match_status = MatchStatus::Divergent;
         }
 
-        if address.subaddress_id() == &None
+        if address.subaddress_id().is_none()
             && &partial.building() != address.building()
             && match_status == MatchStatus::Matching
         {
             match_status = MatchStatus::Divergent;
         }
 
-        if address.subaddress_id() == &None
-            && address.building() == &None
+        if address.subaddress_id().is_none()
+            && address.building().is_none()
             && &partial.floor() != address.floor()
             && match_status == MatchStatus::Matching
         {
@@ -393,11 +401,11 @@ impl MatchPartialRecord {
     }
 
     pub fn longitude(&self) -> Option<f64> {
-        self.longitude.clone()
+        self.longitude
     }
 
     pub fn latitude(&self) -> Option<f64> {
-        self.latitude.clone()
+        self.latitude
     }
 }
 

@@ -128,6 +128,10 @@ impl GrantsPassAddresses {
     pub fn len(&self) -> usize {
         self.records.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl Portable<GrantsPassAddresses> for GrantsPassAddresses {
@@ -138,7 +142,7 @@ impl Portable<GrantsPassAddresses> for GrantsPassAddresses {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        Ok(save(self, path)?)
+        save(self, path)
     }
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -301,6 +305,10 @@ impl GrantsPassSpatialAddresses {
     pub fn len(&self) -> usize {
         self.records.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl Portable<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
@@ -311,7 +319,7 @@ impl Portable<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        Ok(save(self, path)?)
+        save(self, path)
     }
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {

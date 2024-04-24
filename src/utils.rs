@@ -27,11 +27,11 @@ pub fn deserialize_arcgis_data<'de, D: Deserializer<'de>>(
 /// Generic function to serialize data types into a CSV file.  Called by methods to avoid code
 /// duplication.
 pub fn to_csv<T: Serialize + Clone>(
-    item: &mut Vec<T>,
+    item: &mut [T],
     path: PathBuf,
 ) -> Result<(), std::io::Error> {
     let mut wtr = csv::Writer::from_path(path)?;
-    for i in item.clone() {
+    for i in item {
         wtr.serialize(i)?;
     }
     wtr.flush()?;
@@ -75,7 +75,7 @@ pub fn save<T: Serialize, P: AsRef<Path>>(data: &T, path: P) -> Clean<()> {
 /// The `load_bin` method loads the contents of a file at location `path` into a `Vec<u8>`.
 /// May error reading the file, for example if the location is invalid, or when deserializing
 /// the binary if the format is invalid.
-pub fn load_bin<'a, P: AsRef<Path>>(path: P) -> Clean<Vec<u8>> {
+pub fn load_bin<P: AsRef<Path>>(path: P) -> Clean<Vec<u8>> {
     info!("Loading from binary.");
     let bar = ProgressBar::new_spinner();
     bar.enable_steady_tick(Duration::from_millis(120));

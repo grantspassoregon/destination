@@ -86,10 +86,10 @@ impl std::fmt::Display for StreetNamePreDirectional {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let mut out = "".to_owned();
         match self {
-            StreetNamePreDirectional::NORTH => out.push_str("N"),
-            StreetNamePreDirectional::SOUTH => out.push_str("S"),
-            StreetNamePreDirectional::EAST => out.push_str("E"),
-            StreetNamePreDirectional::WEST => out.push_str("W"),
+            StreetNamePreDirectional::NORTH => out.push('N'),
+            StreetNamePreDirectional::SOUTH => out.push('S'),
+            StreetNamePreDirectional::EAST => out.push('E'),
+            StreetNamePreDirectional::WEST => out.push('W'),
             StreetNamePreDirectional::NORTHEAST => out.push_str("NE"),
             StreetNamePreDirectional::NORTHWEST => out.push_str("NW"),
             StreetNamePreDirectional::SOUTHEAST => out.push_str("SE"),

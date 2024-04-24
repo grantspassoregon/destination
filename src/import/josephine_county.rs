@@ -108,6 +108,10 @@ impl JosephineCountyAddresses {
     pub fn len(&self) -> usize {
         self.records.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl Portable<JosephineCountyAddresses> for JosephineCountyAddresses {
@@ -118,7 +122,7 @@ impl Portable<JosephineCountyAddresses> for JosephineCountyAddresses {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        Ok(save(self, path)?)
+        save(self, path)
     }
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -262,6 +266,10 @@ impl JosephineCountySpatialAddresses {
     pub fn len(&self) -> usize {
         self.records.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl Portable<JosephineCountySpatialAddresses> for JosephineCountySpatialAddresses {
@@ -272,7 +280,7 @@ impl Portable<JosephineCountySpatialAddresses> for JosephineCountySpatialAddress
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        Ok(save(self, path)?)
+        save(self, path)
     }
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -474,7 +482,7 @@ impl Portable<CountyAddresses> for CountyAddresses {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        Ok(save(self, path)?)
+        save(self, path)
     }
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {

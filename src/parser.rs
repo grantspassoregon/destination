@@ -70,11 +70,7 @@ pub fn is_post_type(input: &str) -> IResult<&str, bool> {
     tracing::trace!("Calling is_post_type");
     let (rem, post) = parse_post_type(input)?;
     tracing::trace!("Post type is {:#?}", &post);
-    let test = match post {
-        Some(_) => true,
-        None => false,
-    };
-    Ok((rem, test))
+    Ok((rem, post.is_some()))
 }
 
 pub fn multi_word(input: &str) -> IResult<&str, Vec<&str>> {
@@ -190,7 +186,7 @@ pub fn parse_subaddress_elements(input: &str) -> IResult<&str, Vec<&str>> {
     if let Some(value) = next {
         elements.push(value);
     }
-    while remaining != "" {
+    while !remaining.is_empty() {
         let (rem, next) = parse_subaddress_element(remaining)?;
         if let Some(value) = next {
             elements.push(value);
@@ -234,16 +230,12 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
     if let Some(value) = predir {
         address.set_pre_directional(&value)
     }
-    let mut street_name = name[0].to_owned();
-    if name.len() > 1 {
-        let mut inc = 0;
-        for val in name {
-            if inc > 0 {
-                street_name.push_str(" ");
-                street_name.push_str(val);
-            }
-            inc += 1;
+    let mut street_name = String::new();
+    for (i, val) in name.iter().enumerate() {
+        if i > 0 && i < name.len() {
+            street_name.push(' ');
         }
+        street_name.push_str(val);
     }
     tracing::trace!("Street name: {:#?}", &street_name);
     address.set_street_name(&street_name);
@@ -256,15 +248,11 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
     }
     let (rem, elements) = parse_subaddress_identifiers(rem)?;
     if let Some(value) = elements {
-        let mut subaddress_identifier = value[0].to_owned();
-        if value.len() > 1 {
-            let mut inc = 0;
-            for val in value {
-                if inc > 0 {
-                    subaddress_identifier.push_str(" ");
-                    subaddress_identifier.push_str(val);
-                }
-                inc += 1;
+        let mut subaddress_identifier = String::new();
+        for (i, val) in value.iter().enumerate() {
+            subaddress_identifier.push_str(val);
+            if i > 0 && i < value.len() {
+                subaddress_identifier.push(' ');
             }
         }
         tracing::trace!("Subaddress identifier: {:#?}", &subaddress_identifier);

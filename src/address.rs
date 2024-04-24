@@ -44,12 +44,12 @@ pub trait Address {
             coincident = true;
             if self.subaddress_type() != other.subaddress_type() {
                 mismatches.push(Mismatch::subaddress_type(
-                    self.subaddress_type().clone(),
-                    other.subaddress_type().clone(),
+                    *self.subaddress_type(),
+                    *other.subaddress_type(),
                 ));
             }
             if self.floor() != other.floor() {
-                mismatches.push(Mismatch::floor(self.floor().clone(), other.floor().clone()));
+                mismatches.push(Mismatch::floor(*self.floor(), *other.floor()));
             }
             if self.building() != other.building() {
                 mismatches.push(Mismatch::building(
@@ -59,8 +59,8 @@ pub trait Address {
             }
             if self.status() != other.status() {
                 mismatches.push(Mismatch::status(
-                    self.status().clone(),
-                    other.status().clone(),
+                    *self.status(),
+                    *other.status(),
                 ));
             }
         }
@@ -87,14 +87,15 @@ pub trait Address {
             },
             None => match self.street_type() {
                 Some(post_type) => format!("{} {}", self.street_name(), post_type.abbreviate()),
-                None => format!("{}", self.street_name()),
+                None => self.street_name().to_string(),
             },
         };
 
-        let accessory = match self.building() {
-            Some(value) => Some(format!("BLDG {}", value)),
-            None => None,
-        };
+        let accessory = self.building().as_ref().map(|v| format!("BLDG {v}"));
+        // let accessory = match self.building() {
+        //     Some(value) => Some(format!("BLDG {}", value)),
+        //     None => None,
+        // };
 
         let complete_subaddress = match &self.subaddress_id() {
             Some(identifier) => match self.subaddress_type() {
@@ -180,7 +181,7 @@ pub trait Address {
                     .cloned()
                     .filter(|record| {
                         if let Some(dir) = record.directional() {
-                            field == &format!("{}", dir)
+                            field == format!("{}", dir)
                         } else {
                             false
                         }
@@ -191,7 +192,7 @@ pub trait Address {
                 &mut values
                     .par_iter()
                     .cloned()
-                    .filter(|record| field == &format!("{:?}", record.street_type()))
+                    .filter(|record| field == format!("{:?}", record.street_type()))
                     .collect(),
             ),
 
@@ -281,10 +282,7 @@ impl CommonAddress {
             None => format!("{} {:?}", self.street_name, self.street_type),
         };
 
-        let accessory = match self.building() {
-            Some(value) => Some(format!("BLDG {}", value)),
-            None => None,
-        };
+        let accessory = self.building().as_ref().map(|v| format!("BLDG {v}"));
 
         let complete_subaddress = match &self.subaddress_id {
             Some(identifier) => match self.subaddress_type {
@@ -456,17 +454,17 @@ impl<T: Address> From<&T> for CommonAddress {
     fn from(address: &T) -> Self {
         let number = address.number();
         let number_suffix = address.number_suffix().clone();
-        let directional = address.directional().clone();
+        let directional = *address.directional();
         let street_name = address.street_name().clone();
-        let street_type = address.street_type().clone();
-        let subaddress_type = address.subaddress_type().clone();
+        let street_type = *address.street_type();
+        let subaddress_type = *address.subaddress_type();
         let subaddress_id = address.subaddress_id().clone();
-        let floor = address.floor().clone();
+        let floor = *address.floor();
         let building = address.building().clone();
         let zip = address.zip();
         let postal_community = address.postal_community().clone();
         let state = address.state().clone();
-        let status = address.status().clone();
+        let status = *address.status();
         Self {
             number,
             number_suffix,
@@ -676,7 +674,7 @@ impl Portable<CommonAddresses> for CommonAddresses {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        Ok(save(self, path)?)
+        save(self, path)
     }
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -693,7 +691,7 @@ impl<T: Address + Clone> From<&[T]> for CommonAddresses {
     fn from(addresses: &[T]) -> Self {
         let records = addresses
             .iter()
-            .map(|v| CommonAddress::from(v))
+            .map(CommonAddress::from)
             .collect::<Vec<CommonAddress>>();
         Self { records }
     }
@@ -813,7 +811,7 @@ impl Portable<SpatialAddresses> for SpatialAddresses {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        Ok(save(self, path)?)
+        save(self, path)
     }
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -830,7 +828,7 @@ impl<T: Address + Clone + Point + GeoPoint> From<&[T]> for SpatialAddresses {
     fn from(addresses: &[T]) -> Self {
         let records = addresses
             .iter()
-            .map(|v| SpatialAddress::from(v))
+            .map(SpatialAddress::from)
             .collect::<Vec<SpatialAddress>>();
         Self { records }
     }
@@ -914,7 +912,7 @@ impl PartialAddress {
 
     /// The `floor` field represents the floor of the building on which the address point is located.  This function returns the value of the field.
     pub fn floor(&self) -> Option<i64> {
-        self.floor.clone()
+        self.floor
     }
 
     /// Sets the value of the `address_number` field to Some(`value`).
@@ -964,27 +962,27 @@ impl PartialAddress {
             address.push_str(&format!("{}", address_number));
         }
         if let Some(address_number_suffix) = self.address_number_suffix() {
-            address.push_str(" ");
+            address.push(' ');
             address.push_str(&address_number_suffix);
         }
         if let Some(pre_directional) = self.street_name_pre_directional() {
-            address.push_str(" ");
+            address.push(' ');
             address.push_str(&format!("{:?}", pre_directional));
         }
         if let Some(street_name) = self.street_name() {
-            address.push_str(" ");
+            address.push(' ');
             address.push_str(&street_name);
         }
         if let Some(post_type) = self.street_name_post_type() {
-            address.push_str(" ");
+            address.push(' ');
             address.push_str(&format!("{:?}", post_type));
         }
         if let Some(subtype) = self.subaddress_type() {
-            address.push_str(" ");
+            address.push(' ');
             address.push_str(&format!("{:?}", subtype));
         }
         if let Some(subaddress_identifier) = self.subaddress_identifier() {
-            address.push_str(" ");
+            address.push(' ');
             address.push_str(&subaddress_identifier);
         }
         address

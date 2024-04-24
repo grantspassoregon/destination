@@ -266,11 +266,9 @@ impl LexisNexisRange {
                     min = item.num;
                 }
                 max = item.num;
-            } else {
-                if open {
-                    open = false;
-                    rngs.push((min, max));
-                }
+            } else if open {
+                open = false;
+                rngs.push((min, max));
             }
         }
         if open {
