@@ -16,7 +16,7 @@ pub mod utils;
 pub mod prelude {
     pub use crate::address::{
         Address, AddressDelta, AddressDeltas, CommonAddress, CommonAddresses, PartialAddress,
-        PartialAddresses, SpatialAddress, SpatialAddresses,
+        PartialAddresses,
     };
     pub use crate::address_components::{
         deserialize_mixed_post_type, deserialize_mixed_pre_directional, AddressStatus,
@@ -27,7 +27,7 @@ pub mod prelude {
         AddressMatch, FireInspectionMatchRecords, FireInspectionMatches, MatchPartialRecord,
         MatchPartialRecords, MatchRecord, MatchRecords, MatchStatus, Mismatch,
     };
-    pub use crate::geo::{GeoAddress, GeoAddresses, Point};
+    pub use crate::geo::{GeoAddress, GeoAddresses, Point, SpatialAddress, SpatialAddresses};
     pub use crate::import::{
         Businesses, CityAddress, CityAddresses, CountyAddress, CountyAddresses, FireInspection,
         FireInspections, GrantsPass2022Address, GrantsPass2022Addresses, GrantsPassAddress,

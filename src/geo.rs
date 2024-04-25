@@ -1,7 +1,8 @@
 use crate::prelude::{
-    Address, AddressDelta, AddressDeltas, AddressStatus, CommonAddress, StreetNamePostType,
-    StreetNamePreDirectional, SubaddressType,
+    from_csv, load_bin, save, to_csv, Address, AddressDelta, AddressDeltas, AddressStatus,
+    CommonAddress, Portable, StreetNamePostType, StreetNamePreDirectional, SubaddressType,
 };
+use aid::prelude::Clean;
 use galileo_types::cartesian::CartesianPoint2d;
 use galileo_types::geo::GeoPoint;
 use galileo_types::geometry_type::{
@@ -10,6 +11,7 @@ use galileo_types::geometry_type::{
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 pub trait Point {
     fn x(&self) -> f64;
@@ -413,6 +415,27 @@ impl<T: Address + Point + GeoPoint<Num = f64> + Clone> From<&T> for SpatialAddre
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct SpatialAddresses {
     pub records: Vec<SpatialAddress>,
+}
+
+impl Portable<SpatialAddresses> for SpatialAddresses {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        save(self, path)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = from_csv(path)?;
+        Ok(Self { records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+    }
 }
 
 impl<T: Address + Point + GeoPoint<Num = f64> + Clone + Sized> From<&[T]> for SpatialAddresses {
