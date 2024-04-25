@@ -1,4 +1,7 @@
 use crate::prelude::{Address, AddressDelta, AddressDeltas, CommonAddress, AddressStatus, StreetNamePreDirectional, StreetNamePostType, SubaddressType};
+use galileo_types::cartesian::CartesianPoint2d;
+use galileo_types::geo::GeoPoint;
+use galileo_types::geometry_type::{AmbiguousSpace, CartesianSpace2d, GeoSpace2d, GeometryType, PointGeometryType};
 use indicatif::ParallelProgressIterator;
 use serde::{Deserialize, Serialize};
 use rayon::prelude::*;
@@ -67,11 +70,6 @@ pub trait Point {
     }
 }
 
-pub trait GeoPoint {
-    fn lat(&self) -> f64;
-    fn lon(&self) -> f64;
-}
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct GeoAddress {
     pub address: CommonAddress,
@@ -134,16 +132,24 @@ impl Address for GeoAddress {
 }
 
 impl GeoPoint for GeoAddress {
-    fn lat(&self) -> f64 {
+    type Num = f64;
+
+    fn lat(&self) -> Self::Num {
         self.latitude
     }
 
-    fn lon(&self) -> f64 {
+    fn lon(&self) -> Self::Num {
         self.longitude
     }
 }
 
-impl<T: Address + GeoPoint + Clone> From<&T> for GeoAddress {
+impl GeometryType for GeoAddress {
+    type Type = PointGeometryType;
+    type Space = GeoSpace2d;
+}
+
+
+impl<T: Address + GeoPoint<Num = f64> + Clone> From<&T> for GeoAddress {
     fn from(data: &T) -> Self {
         let latitude = data.lat();
         let longitude = data.lon();
@@ -161,7 +167,7 @@ pub struct GeoAddresses {
     pub records: Vec<GeoAddress>,
 }
 
-impl<T: Address + GeoPoint + Clone + Sized> From<&[T]> for GeoAddresses {
+impl<T: Address + GeoPoint<Num = f64> + Clone + Sized> From<&[T]> for GeoAddresses {
     fn from(addresses: &[T]) -> Self {
         let records = addresses.iter().map(|v| GeoAddress::from(v)).collect::<Vec<GeoAddress>>();
         Self { records }
@@ -237,6 +243,24 @@ impl Point for AddressPoint {
     fn y(&self) -> f64 {
         self.y
     }
+}
+
+impl CartesianPoint2d for AddressPoint {
+    type Num = f64;
+
+    fn x(&self) -> Self::Num {
+        self.x
+    }
+
+    fn y(&self) -> Self::Num {
+        self.y
+    }
+    
+}
+
+impl GeometryType for AddressPoint {
+    type Type = PointGeometryType;
+    type Space = CartesianSpace2d;
 }
 
 impl<T: Address + Point + Clone> From<&T> for AddressPoint {
@@ -328,11 +352,12 @@ impl Address for SpatialAddress {
 }
 
 impl GeoPoint for SpatialAddress {
-    fn lat(&self) -> f64 {
+    type Num = f64;
+    fn lat(&self) -> Self::Num {
         self.latitude
     }
 
-    fn lon(&self) -> f64 {
+    fn lon(&self) -> Self::Num {
         self.longitude
     }
 }
@@ -347,7 +372,25 @@ impl Point for SpatialAddress {
     }
 }
 
-impl<T: Address + Point + GeoPoint + Clone> From<&T> for SpatialAddress {
+impl CartesianPoint2d for SpatialAddress {
+    type Num = f64;
+
+    fn x(&self) -> Self::Num {
+        self.x
+    }
+
+    fn y(&self) -> Self::Num {
+        self.y
+    }
+    
+}
+
+impl GeometryType for SpatialAddress {
+    type Type = PointGeometryType;
+    type Space = AmbiguousSpace;
+}
+
+impl<T: Address + Point + GeoPoint<Num = f64> + Clone> From<&T> for SpatialAddress {
     fn from(data: &T) -> Self {
         let latitude = data.lat();
         let longitude = data.lon();
@@ -369,7 +412,7 @@ pub struct SpatialAddresses {
     pub records: Vec<SpatialAddress>,
 }
 
-impl<T: Address + Point + GeoPoint + Clone + Sized> From<&[T]> for SpatialAddresses {
+impl<T: Address + Point + GeoPoint<Num = f64> + Clone + Sized> From<&[T]> for SpatialAddresses {
     fn from(addresses: &[T]) -> Self {
         let records = addresses.iter().map(|v| SpatialAddress::from(v)).collect::<Vec<SpatialAddress>>();
         Self { records }

@@ -1,6 +1,7 @@
+use crate::prelude::{Address, Point, Portable, from_csv, load_bin, to_csv, save};
 use crate::address_components::*;
 use aid::prelude::*;
-use crate::prelude::{Address, GeoPoint, Point, Portable, from_csv, load_bin, to_csv, save};
+use galileo_types::geo::GeoPoint;
 use crate::utils;
 use crate::utils::deserialize_arcgis_data;
 use serde::{Deserialize, Serialize};
@@ -319,11 +320,13 @@ impl Point for GrantsPassSpatialAddress {
 }
 
 impl GeoPoint for GrantsPassSpatialAddress {
-    fn lat(&self) -> f64 {
+    type Num = f64;
+
+    fn lat(&self) -> Self::Num {
         self.latitude
     }
 
-    fn lon(&self) -> f64 {
+    fn lon(&self) -> Self::Num {
         self.longitude
     }
 }

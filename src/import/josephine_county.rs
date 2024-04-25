@@ -1,7 +1,8 @@
 use crate::address_components::*;
-use crate::prelude::{Address, GeoPoint, Portable, load_bin, save, from_csv, to_csv};
+use crate::prelude::{Address, Portable, load_bin, save, from_csv, to_csv};
 use crate::utils::deserialize_arcgis_data;
 use aid::prelude::*;
+use galileo_types::geo::GeoPoint;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -114,11 +115,13 @@ impl Address for CountyAddress {
 }
 
 impl GeoPoint for CountyAddress {
-    fn lat(&self) -> f64 {
+    type Num = f64;
+
+    fn lat(&self) -> Self::Num {
         self.address_latitude
     }
 
-    fn lon(&self) -> f64 {
+    fn lon(&self) -> Self::Num {
         self.address_longitude
     }
 }

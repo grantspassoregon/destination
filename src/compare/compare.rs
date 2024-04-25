@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -97,7 +98,7 @@ pub struct MatchRecords {
 }
 
 impl MatchRecords {
-    pub fn new<T: Address + GeoPoint, U: Address + GeoPoint>(
+    pub fn new<T: Address + GeoPoint<Num = f64>, U: Address + GeoPoint<Num = f64>>(
         self_address: &T,
         other_addresses: &[U],
     ) -> Self {
@@ -167,7 +168,7 @@ impl MatchRecords {
         }
     }
 
-    pub fn compare<T: Address + GeoPoint + Send + Sync, U: Address + GeoPoint + Send + Sync>(
+    pub fn compare<T: Address + GeoPoint<Num = f64> + Send + Sync, U: Address + GeoPoint<Num = f64> + Send + Sync>(
         self_addresses: &[T],
         other_addresses: &[U],
     ) -> Self {
@@ -281,7 +282,7 @@ pub struct MatchPartialRecord {
 }
 
 impl MatchPartialRecord {
-    pub fn coincident<T: Address + GeoPoint>(partial: &PartialAddress, address: &T) -> Option<MatchPartialRecord> {
+    pub fn coincident<T: Address + GeoPoint<Num = f64>>(partial: &PartialAddress, address: &T) -> Option<MatchPartialRecord> {
         let mut match_status = MatchStatus::Missing;
 
         if let Some(value) = partial.address_number {
@@ -344,7 +345,7 @@ impl MatchPartialRecord {
         }
     }
 
-    pub fn compare<T: Address + GeoPoint>(partial: &PartialAddress, addresses: &[T]) -> MatchPartialRecords {
+    pub fn compare<T: Address + GeoPoint<Num = f64>>(partial: &PartialAddress, addresses: &[T]) -> MatchPartialRecords {
         let mut records = Vec::new();
         for address in addresses {
             let coincident = MatchPartialRecord::coincident(partial, address);
@@ -397,7 +398,7 @@ pub struct MatchPartialRecords {
 }
 
 impl MatchPartialRecords {
-    pub fn compare<T: Address + GeoPoint + Send + Sync>(self_addresses: &PartialAddresses, other_addresses: &[T]) -> Self {
+    pub fn compare<T: Address + GeoPoint<Num = f64> + Send + Sync>(self_addresses: &PartialAddresses, other_addresses: &[T]) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )

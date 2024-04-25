@@ -1,7 +1,9 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
 use crate::prelude::*;
+use galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
+use num_traits::cast::FromPrimitive;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -41,7 +43,7 @@ pub struct BusinessMatchRecords {
 impl BusinessMatchRecords {
     /// Matches the provided address associated with a business license against the addresses in
     /// `addresses`, creating a new `BusinessMatchRecords` struct containing the results.
-    pub fn new<T: Address + GeoPoint>(business: &BusinessLicense, addresses: &[T]) -> Self {
+    pub fn new<T: Address + GeoPoint<Num = f64>>(business: &BusinessLicense, addresses: &[T]) -> Self {
         let mut records = Vec::new();
         for address in addresses {
             let business_match = business.coincident(address);
@@ -84,7 +86,7 @@ impl BusinessMatchRecords {
     /// list of partial (divergent) matches if found, otherwise a missing record.  Since divergent
     /// addresses are unnecessary to inspect if an exact match is found, this is a more efficient
     /// matching method compared to [`BusinessMatchRecords::compare()`].
-    pub fn chain<T: Address + GeoPoint>(business: &BusinessLicense, address_list: &[&[T]]) -> Self {
+    pub fn chain<T: Address + GeoPoint<Num = f64>>(business: &BusinessLicense, address_list: &[&[T]]) -> Self {
         let mut matching = Vec::new();
         let mut divergent = Vec::new();
         let mut missing = Vec::new();
@@ -113,7 +115,7 @@ impl BusinessMatchRecords {
     /// For each [`BusinessLicense`] object in `businesses`, this method creates a
     /// `BusinessMatchRecords` using the [`BusinessMatchRecords::new()`] method.  Match records
     /// will include matching, divergent and missing records.
-    pub fn compare<T: Address + GeoPoint + Send + Sync>(businesses: &BusinessLicenses, addresses: &[T]) -> Self {
+    pub fn compare<T: Address + GeoPoint<Num = f64> + Send + Sync>(businesses: &BusinessLicenses, addresses: &[T]) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )
@@ -134,7 +136,7 @@ impl BusinessMatchRecords {
     /// Compares each address in `businesses` against the addresses in `addresses` using the
     /// [`BusinessMatchRecords::chain()`] method, which returns only an exact match if available,
     /// otherwise returning a list of partial matches or a missing record.
-    pub fn compare_chain<T: Address + GeoPoint + Send + Sync>(businesses: &BusinessLicenses, addresses: &[&[T]]) -> Self {
+    pub fn compare_chain<T: Address + GeoPoint<Num = f64> + Send + Sync>(businesses: &BusinessLicenses, addresses: &[&[T]]) -> Self {
         let style = indicatif::ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Comparing addresses.'}",
         )
@@ -313,7 +315,7 @@ pub struct BusinessLicense {
 impl BusinessLicense {
     /// Compares the address of `BusinessLicense` to `address`, producing either a matching
     /// [`BusinessMatchRecord`], any divergent [`BusinessMatchRecord`], or `None` if missing.
-    pub fn coincident<T: Address + GeoPoint>(&self, address: &T) -> Option<BusinessMatchRecord> {
+    pub fn coincident<T: Address + GeoPoint<Num = f64>>(&self, address: &T) -> Option<BusinessMatchRecord> {
         let mut match_status = MatchStatus::Missing;
         let mut business_match = None;
         let street_name = self.street_name.trim().to_string();
@@ -333,6 +335,8 @@ impl BusinessLicense {
             if match_status != MatchStatus::Divergent {
                 match_status = MatchStatus::Matching;
             }
+            let lat = address.lat();
+            let lat = lat;
             business_match = Some(BusinessMatchRecord {
                 match_status,
                 business_address_label: self.label(),

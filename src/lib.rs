@@ -26,7 +26,7 @@ pub mod prelude {
         FireInspectionMatchRecords, FireInspectionMatches, MatchPartialRecord, MatchPartialRecords,
         MatchRecords, MatchStatus, Mismatch, AddressMatch,
     };
-    pub use crate::geo::{GeoAddress, GeoAddresses, GeoPoint, Point};
+    pub use crate::geo::{GeoAddress, GeoAddresses, Point};
     pub use crate::import::{
         Businesses, CityAddress, CityAddresses, CountyAddress, CountyAddresses, FireInspections,
         GrantsPass2022Address, GrantsPass2022Addresses, FireInspection,
