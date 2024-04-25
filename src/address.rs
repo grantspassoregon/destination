@@ -2,6 +2,7 @@
 //! implementation blocks to convert data from import types to the valid address format.
 use crate::prelude::*;
 use aid::prelude::*;
+use galileo_types::geo::GeoPoint;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -58,10 +59,7 @@ pub trait Address {
                 ));
             }
             if self.status() != other.status() {
-                mismatches.push(Mismatch::status(
-                    *self.status(),
-                    *other.status(),
-                ));
+                mismatches.push(Mismatch::status(*self.status(), *other.status()));
             }
         }
         AddressMatch::new(coincident, mismatches)
@@ -717,11 +715,13 @@ impl Point for SpatialAddress {
 }
 
 impl GeoPoint for SpatialAddress {
-    fn lat(&self) -> f64 {
+    type Num = f64;
+
+    fn lat(&self) -> Self::Num {
         self.lat
     }
 
-    fn lon(&self) -> f64 {
+    fn lon(&self) -> Self::Num {
         self.lon
     }
 }
@@ -780,7 +780,7 @@ impl Address for SpatialAddress {
     }
 }
 
-impl<T: Address + Point + GeoPoint> From<&T> for SpatialAddress {
+impl<T: Address + Point + GeoPoint<Num = f64>> From<&T> for SpatialAddress {
     fn from(address: &T) -> Self {
         let x = address.x();
         let y = address.y();
@@ -824,7 +824,7 @@ impl Portable<SpatialAddresses> for SpatialAddresses {
     }
 }
 
-impl<T: Address + Clone + Point + GeoPoint> From<&[T]> for SpatialAddresses {
+impl<T: Address + Clone + Point + GeoPoint<Num = f64>> From<&[T]> for SpatialAddresses {
     fn from(addresses: &[T]) -> Self {
         let records = addresses
             .iter()

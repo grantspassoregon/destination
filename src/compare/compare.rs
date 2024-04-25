@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -101,7 +102,7 @@ pub struct MatchRecords {
 }
 
 impl MatchRecords {
-    pub fn new<T: Address + GeoPoint, U: Address + GeoPoint>(
+    pub fn new<T: Address + GeoPoint<Num = f64>, U: Address + GeoPoint<Num = f64>>(
         self_address: &T,
         other_addresses: &[U],
     ) -> Self {
@@ -171,7 +172,10 @@ impl MatchRecords {
         }
     }
 
-    pub fn compare<T: Address + GeoPoint + Send + Sync, U: Address + GeoPoint + Send + Sync>(
+    pub fn compare<
+        T: Address + GeoPoint<Num = f64> + Send + Sync,
+        U: Address + GeoPoint<Num = f64> + Send + Sync,
+    >(
         self_addresses: &[T],
         other_addresses: &[U],
     ) -> Self {
@@ -293,7 +297,7 @@ pub struct MatchPartialRecord {
 }
 
 impl MatchPartialRecord {
-    pub fn coincident<T: Address + GeoPoint>(
+    pub fn coincident<T: Address + GeoPoint<Num = f64>>(
         partial: &PartialAddress,
         address: &T,
     ) -> Option<MatchPartialRecord> {
@@ -359,7 +363,7 @@ impl MatchPartialRecord {
         }
     }
 
-    pub fn compare<T: Address + GeoPoint>(
+    pub fn compare<T: Address + GeoPoint<Num = f64>>(
         partial: &PartialAddress,
         addresses: &[T],
     ) -> MatchPartialRecords {
@@ -415,7 +419,7 @@ pub struct MatchPartialRecords {
 }
 
 impl MatchPartialRecords {
-    pub fn compare<T: Address + GeoPoint + Send + Sync>(
+    pub fn compare<T: Address + GeoPoint<Num = f64> + Send + Sync>(
         self_addresses: &PartialAddresses,
         other_addresses: &[T],
     ) -> Self {

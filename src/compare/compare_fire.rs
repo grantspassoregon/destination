@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -11,7 +12,10 @@ pub struct FireInspectionMatch {
 }
 
 impl FireInspectionMatch {
-    pub fn compare<T: Address + GeoPoint>(inspection: &FireInspection, addresses: &[T]) -> Self {
+    pub fn compare<T: Address + GeoPoint<Num = f64>>(
+        inspection: &FireInspection,
+        addresses: &[T],
+    ) -> Self {
         let record = MatchPartialRecord::compare(&inspection.address(), addresses);
         FireInspectionMatch {
             inspection: inspection.clone(),
@@ -34,7 +38,7 @@ pub struct FireInspectionMatches {
 }
 
 impl FireInspectionMatches {
-    pub fn compare<T: Address + GeoPoint + Send + Sync>(
+    pub fn compare<T: Address + GeoPoint<Num = f64> + Send + Sync>(
         inspections: &FireInspections,
         addresses: &[T],
     ) -> Self {
