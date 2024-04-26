@@ -3,9 +3,10 @@ use crate::prelude::{
     CommonAddress, Portable, StreetNamePostType, StreetNamePreDirectional, SubaddressType,
 };
 use aid::prelude::Clean;
-use galileo_types::cartesian::CartesianPoint2d;
-use galileo_types::geo::GeoPoint;
-use galileo_types::geometry_type::{
+use galileo::layer::feature_layer::{Feature, FeatureLayer};
+use galileo::galileo_types::cartesian::CartesianPoint2d;
+use galileo::galileo_types::geo::GeoPoint;
+use galileo::galileo_types::geometry_type::{
     AmbiguousSpace, CartesianSpace2d, GeoSpace2d, GeometryType, PointGeometryType,
 };
 use indicatif::ParallelProgressIterator;

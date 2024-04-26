@@ -1,9 +1,8 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
 use crate::prelude::*;
-use galileo_types::geo::GeoPoint;
+use galileo::galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
-use num_traits::cast::FromPrimitive;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;

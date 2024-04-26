@@ -2,7 +2,6 @@
 //! implementation blocks to convert data from import types to the valid address format.
 use crate::prelude::*;
 use aid::prelude::*;
-use galileo_types::geo::GeoPoint;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};

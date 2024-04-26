@@ -4,7 +4,7 @@ use crate::utils;
 use crate::utils::deserialize_arcgis_data;
 use aid::prelude::*;
 use aid::prelude::*;
-use galileo_types::geo::GeoPoint;
+use galileo::galileo_types::geo::GeoPoint;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 

@@ -1,5 +1,6 @@
 use crate::prelude::*;
-use galileo_types::geo::GeoPoint;
+use galileo::galileo_types::geo::GeoPoint;
+use galileo::galileo_types::geometry_type::{GeometryType, PointGeometryType, GeoSpace2d};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -94,6 +95,23 @@ pub struct MatchRecord {
     pub status: Option<String>,
     pub longitude: f64,
     pub latitude: f64,
+}
+
+impl GeoPoint for MatchRecord {
+    type Num = f64;
+
+    fn lat(&self) -> Self::Num {
+        self.latitude
+    }
+
+    fn lon(&self) -> Self::Num {
+        self.longitude
+    }
+}
+
+impl GeometryType for MatchRecord {
+    type Type = PointGeometryType;
+    type Space = GeoSpace2d;
 }
 
 #[derive(Debug, Default, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]

@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use galileo_types::geo::GeoPoint;
+use galileo::galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};

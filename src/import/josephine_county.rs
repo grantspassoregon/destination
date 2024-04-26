@@ -2,7 +2,7 @@ use crate::address_components::*;
 use crate::prelude::{from_csv, load_bin, save, to_csv, Address, Point, Portable};
 use crate::utils::deserialize_arcgis_data;
 use aid::prelude::*;
-use galileo_types::geo::GeoPoint;
+use galileo::galileo_types::geo::GeoPoint;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
