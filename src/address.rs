@@ -137,11 +137,14 @@ pub trait Address {
         match self.directional() {
             Some(pre_directional) => match self.street_type() {
                 Some(post_type) => {
-                    format!("{} {} {:?}", pre_directional, self.street_name(), post_type)
+                    format!("{} {} {}", pre_directional, self.street_name(), post_type)
                 }
                 None => format!("{} {}", pre_directional, self.street_name()),
             },
-            None => format!("{} {:?}", self.street_name(), self.street_type()),
+            None => match self.street_type() {
+                Some(post_type) => format!("{} {}", self.street_name(), post_type),
+                None => format!("{}", self.street_name()),
+            },
         }
     }
 
@@ -212,8 +215,10 @@ pub trait Address {
     }
 }
 
-pub trait Addresses<T: Address + Clone + Send + Sync> 
-where Self: Vectorized<T> + Clone {
+pub trait Addresses<T: Address + Clone + Send + Sync>
+where
+    Self: Vectorized<T> + Clone,
+{
     fn filter(&self, filter: &str) -> Vec<T> {
         let mut records = Vec::new();
         let values = self.values();
@@ -303,7 +308,10 @@ where Self: Vectorized<T> + Clone {
 
     /// The `orphan_streets` method returns the list of complete street names that are contained in
     /// self but are not present in `other`.
-    fn orphan_streets<V: Address + Clone + Send + Sync, U: Addresses<V>>(&self, other: &U) -> Vec<String> {
+    fn orphan_streets<V: Address + Clone + Send + Sync, U: Addresses<V>>(
+        &self,
+        other: &U,
+    ) -> Vec<String> {
         let mut seen = HashSet::new();
         let mut orphans = Vec::new();
         for address in self.values() {
@@ -367,7 +375,6 @@ where Self: Vectorized<T> + Clone {
             }
         }
     }
-
 }
 
 /// The `CommonAddress` struct defines the fields of a valid address.

@@ -1,5 +1,6 @@
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// The `StreetNamePostType` represents the street name post type of an address.  Acceptable post
 /// types include the list of recognized street suffix names in Appendix C1 of the United States
@@ -431,6 +432,12 @@ impl StreetNamePostType {
             Self::WELL => "WL".to_string(),
             Self::WELLS => "WLS".to_string(),
         }
+    }
+}
+
+impl fmt::Display for StreetNamePostType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 

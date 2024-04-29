@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use galileo::galileo_types::geo::GeoPoint;
-use galileo::galileo_types::geometry_type::{GeometryType, PointGeometryType, GeoSpace2d};
+use galileo::galileo_types::geometry_type::{GeoSpace2d, GeometryType, PointGeometryType};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};

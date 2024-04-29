@@ -1,15 +1,15 @@
 use crate::prelude::{
     from_csv, load_bin, save, to_csv, Address, AddressDelta, AddressDeltas, AddressStatus,
-    CommonAddress, Portable, StreetNamePostType, StreetNamePreDirectional, SubaddressType,
-    Vectorized, Addresses,
+    Addresses, CommonAddress, Portable, StreetNamePostType, StreetNamePreDirectional,
+    SubaddressType, Vectorized,
 };
 use aid::prelude::Clean;
-use galileo::layer::feature_layer::{Feature, FeatureLayer};
 use galileo::galileo_types::cartesian::CartesianPoint2d;
 use galileo::galileo_types::geo::GeoPoint;
 use galileo::galileo_types::geometry_type::{
     AmbiguousSpace, CartesianSpace2d, GeoSpace2d, GeometryType, PointGeometryType,
 };
+use galileo::layer::feature_layer::{Feature, FeatureLayer};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};

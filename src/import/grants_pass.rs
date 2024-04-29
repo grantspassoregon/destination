@@ -1,5 +1,7 @@
 use crate::address_components::*;
-use crate::prelude::{from_csv, load_bin, save, to_csv, Address, Point, Portable, Vectorized, Addresses};
+use crate::prelude::{
+    from_csv, load_bin, save, to_csv, Address, Addresses, Point, Portable, Vectorized,
+};
 use crate::utils;
 use crate::utils::deserialize_arcgis_data;
 use aid::prelude::*;

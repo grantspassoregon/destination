@@ -115,4 +115,3 @@ pub trait Vectorized<T> {
         self.values().is_empty()
     }
 }
-
