@@ -332,7 +332,6 @@ where
         trace!("Running Citify");
         for address in self.values_mut() {
             let comp_street = address.complete_street_name();
-            info!("Street: {}", &comp_street);
             if comp_street == "NE BEAVILLA VIEW" {
                 trace!("Fixing Beavilla View");
                 *address.street_name_mut() = "BEAVILLA".to_owned();
