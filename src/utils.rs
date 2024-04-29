@@ -101,3 +101,18 @@ pub trait Portable<T> {
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<T>;
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()>;
 }
+
+pub trait Vectorized<T> {
+    fn values(&self) -> &Vec<T>;
+    fn values_mut(&mut self) -> &mut Vec<T>;
+    fn into_values(self) -> Vec<T>;
+
+    fn len(&self) -> usize {
+        self.values().len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.values().is_empty()
+    }
+}
+

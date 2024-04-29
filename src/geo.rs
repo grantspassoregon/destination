@@ -1,6 +1,7 @@
 use crate::prelude::{
     from_csv, load_bin, save, to_csv, Address, AddressDelta, AddressDeltas, AddressStatus,
     CommonAddress, Portable, StreetNamePostType, StreetNamePreDirectional, SubaddressType,
+    Vectorized, Addresses,
 };
 use aid::prelude::Clean;
 use galileo::layer::feature_layer::{Feature, FeatureLayer};
@@ -89,52 +90,104 @@ impl Address for GeoAddress {
         self.address.number
     }
 
+    fn number_mut(&mut self) -> &mut i64 {
+        &mut self.address.number
+    }
+
     fn number_suffix(&self) -> &Option<String> {
         &self.address.number_suffix
+    }
+
+    fn number_suffix_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.number_suffix
     }
 
     fn directional(&self) -> &Option<StreetNamePreDirectional> {
         &self.address.directional
     }
 
+    fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
+        &mut self.address.directional
+    }
+
     fn street_name(&self) -> &String {
         &self.address.street_name
+    }
+
+    fn street_name_mut(&mut self) -> &mut String {
+        &mut self.address.street_name
     }
 
     fn street_type(&self) -> &Option<StreetNamePostType> {
         &self.address.street_type
     }
 
+    fn street_type_mut(&mut self) -> &mut Option<StreetNamePostType> {
+        &mut self.address.street_type
+    }
+
     fn subaddress_id(&self) -> &Option<String> {
         &self.address.subaddress_id
+    }
+
+    fn subaddress_id_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.subaddress_id
     }
 
     fn subaddress_type(&self) -> &Option<SubaddressType> {
         &self.address.subaddress_type
     }
 
+    fn subaddress_type_mut(&mut self) -> &mut Option<SubaddressType> {
+        &mut self.address.subaddress_type
+    }
+
     fn floor(&self) -> &Option<i64> {
         &self.address.floor
+    }
+
+    fn floor_mut(&mut self) -> &mut Option<i64> {
+        &mut self.address.floor
     }
 
     fn building(&self) -> &Option<String> {
         &self.address.building
     }
 
+    fn building_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.building
+    }
+
     fn zip(&self) -> i64 {
         self.address.zip
+    }
+
+    fn zip_mut(&mut self) -> &mut i64 {
+        &mut self.address.zip
     }
 
     fn postal_community(&self) -> &String {
         &self.address.postal_community
     }
 
+    fn postal_community_mut(&mut self) -> &mut String {
+        &mut self.address.postal_community
+    }
+
     fn state(&self) -> &String {
         &self.address.state
     }
 
+    fn state_mut(&mut self) -> &mut String {
+        &mut self.address.state
+    }
+
     fn status(&self) -> &AddressStatus {
         &self.address.status
+    }
+
+    fn status_mut(&mut self) -> &mut AddressStatus {
+        &mut self.address.status
     }
 }
 
@@ -173,6 +226,43 @@ pub struct GeoAddresses {
     pub records: Vec<GeoAddress>,
 }
 
+impl Addresses<GeoAddress> for GeoAddresses {}
+
+impl Vectorized<GeoAddress> for GeoAddresses {
+    fn values(&self) -> &Vec<GeoAddress> {
+        &self.records
+    }
+
+    fn values_mut(&mut self) -> &mut Vec<GeoAddress> {
+        &mut self.records
+    }
+
+    fn into_values(self) -> Vec<GeoAddress> {
+        self.records
+    }
+}
+
+impl Portable<GeoAddresses> for GeoAddresses {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        save(self, path)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = from_csv(path)?;
+        Ok(Self { records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+    }
+}
+
 impl<T: Address + GeoPoint<Num = f64> + Clone + Sized> From<&[T]> for GeoAddresses {
     fn from(addresses: &[T]) -> Self {
         let records = addresses
@@ -195,52 +285,104 @@ impl Address for AddressPoint {
         self.address.number
     }
 
+    fn number_mut(&mut self) -> &mut i64 {
+        &mut self.address.number
+    }
+
     fn number_suffix(&self) -> &Option<String> {
         &self.address.number_suffix
+    }
+
+    fn number_suffix_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.number_suffix
     }
 
     fn directional(&self) -> &Option<StreetNamePreDirectional> {
         &self.address.directional
     }
 
+    fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
+        &mut self.address.directional
+    }
+
     fn street_name(&self) -> &String {
         &self.address.street_name
+    }
+
+    fn street_name_mut(&mut self) -> &mut String {
+        &mut self.address.street_name
     }
 
     fn street_type(&self) -> &Option<StreetNamePostType> {
         &self.address.street_type
     }
 
+    fn street_type_mut(&mut self) -> &mut Option<StreetNamePostType> {
+        &mut self.address.street_type
+    }
+
     fn subaddress_id(&self) -> &Option<String> {
         &self.address.subaddress_id
+    }
+
+    fn subaddress_id_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.subaddress_id
     }
 
     fn subaddress_type(&self) -> &Option<SubaddressType> {
         &self.address.subaddress_type
     }
 
+    fn subaddress_type_mut(&mut self) -> &mut Option<SubaddressType> {
+        &mut self.address.subaddress_type
+    }
+
     fn floor(&self) -> &Option<i64> {
         &self.address.floor
+    }
+
+    fn floor_mut(&mut self) -> &mut Option<i64> {
+        &mut self.address.floor
     }
 
     fn building(&self) -> &Option<String> {
         &self.address.building
     }
 
+    fn building_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.building
+    }
+
     fn zip(&self) -> i64 {
         self.address.zip
+    }
+
+    fn zip_mut(&mut self) -> &mut i64 {
+        &mut self.address.zip
     }
 
     fn postal_community(&self) -> &String {
         &self.address.postal_community
     }
 
+    fn postal_community_mut(&mut self) -> &mut String {
+        &mut self.address.postal_community
+    }
+
     fn state(&self) -> &String {
         &self.address.state
     }
 
+    fn state_mut(&mut self) -> &mut String {
+        &mut self.address.state
+    }
+
     fn status(&self) -> &AddressStatus {
         &self.address.status
+    }
+
+    fn status_mut(&mut self) -> &mut AddressStatus {
+        &mut self.address.status
     }
 }
 
@@ -285,6 +427,43 @@ pub struct AddressPoints {
     pub records: Vec<AddressPoint>,
 }
 
+impl Addresses<AddressPoint> for AddressPoints {}
+
+impl Vectorized<AddressPoint> for AddressPoints {
+    fn values(&self) -> &Vec<AddressPoint> {
+        &self.records
+    }
+
+    fn values_mut(&mut self) -> &mut Vec<AddressPoint> {
+        &mut self.records
+    }
+
+    fn into_values(self) -> Vec<AddressPoint> {
+        self.records
+    }
+}
+
+impl Portable<AddressPoints> for AddressPoints {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        save(self, path)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = from_csv(path)?;
+        Ok(Self { records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+    }
+}
+
 impl<T: Address + Point + Clone + Sized> From<&[T]> for AddressPoints {
     fn from(addresses: &[T]) -> Self {
         let records = addresses
@@ -309,52 +488,104 @@ impl Address for SpatialAddress {
         self.address.number
     }
 
+    fn number_mut(&mut self) -> &mut i64 {
+        &mut self.address.number
+    }
+
     fn number_suffix(&self) -> &Option<String> {
         &self.address.number_suffix
+    }
+
+    fn number_suffix_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.number_suffix
     }
 
     fn directional(&self) -> &Option<StreetNamePreDirectional> {
         &self.address.directional
     }
 
+    fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
+        &mut self.address.directional
+    }
+
     fn street_name(&self) -> &String {
         &self.address.street_name
+    }
+
+    fn street_name_mut(&mut self) -> &mut String {
+        &mut self.address.street_name
     }
 
     fn street_type(&self) -> &Option<StreetNamePostType> {
         &self.address.street_type
     }
 
+    fn street_type_mut(&mut self) -> &mut Option<StreetNamePostType> {
+        &mut self.address.street_type
+    }
+
     fn subaddress_id(&self) -> &Option<String> {
         &self.address.subaddress_id
+    }
+
+    fn subaddress_id_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.subaddress_id
     }
 
     fn subaddress_type(&self) -> &Option<SubaddressType> {
         &self.address.subaddress_type
     }
 
+    fn subaddress_type_mut(&mut self) -> &mut Option<SubaddressType> {
+        &mut self.address.subaddress_type
+    }
+
     fn floor(&self) -> &Option<i64> {
         &self.address.floor
+    }
+
+    fn floor_mut(&mut self) -> &mut Option<i64> {
+        &mut self.address.floor
     }
 
     fn building(&self) -> &Option<String> {
         &self.address.building
     }
 
+    fn building_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.building
+    }
+
     fn zip(&self) -> i64 {
         self.address.zip
+    }
+
+    fn zip_mut(&mut self) -> &mut i64 {
+        &mut self.address.zip
     }
 
     fn postal_community(&self) -> &String {
         &self.address.postal_community
     }
 
+    fn postal_community_mut(&mut self) -> &mut String {
+        &mut self.address.postal_community
+    }
+
     fn state(&self) -> &String {
         &self.address.state
     }
 
+    fn state_mut(&mut self) -> &mut String {
+        &mut self.address.state
+    }
+
     fn status(&self) -> &AddressStatus {
         &self.address.status
+    }
+
+    fn status_mut(&mut self) -> &mut AddressStatus {
+        &mut self.address.status
     }
 }
 
@@ -416,6 +647,22 @@ impl<T: Address + Point + GeoPoint<Num = f64> + Clone> From<&T> for SpatialAddre
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct SpatialAddresses {
     pub records: Vec<SpatialAddress>,
+}
+
+impl Addresses<SpatialAddress> for SpatialAddresses {}
+
+impl Vectorized<SpatialAddress> for SpatialAddresses {
+    fn values(&self) -> &Vec<SpatialAddress> {
+        &self.records
+    }
+
+    fn values_mut(&mut self) -> &mut Vec<SpatialAddress> {
+        &mut self.records
+    }
+
+    fn into_values(self) -> Vec<SpatialAddress> {
+        self.records
+    }
 }
 
 impl Portable<SpatialAddresses> for SpatialAddresses {

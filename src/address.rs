@@ -11,18 +11,31 @@ use tracing::{error, info, trace};
 
 pub trait Address {
     fn number(&self) -> i64;
+    fn number_mut(&mut self) -> &mut i64;
     fn number_suffix(&self) -> &Option<String>;
+    fn number_suffix_mut(&mut self) -> &mut Option<String>;
     fn directional(&self) -> &Option<StreetNamePreDirectional>;
+    fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional>;
     fn street_name(&self) -> &String;
+    fn street_name_mut(&mut self) -> &mut String;
     fn street_type(&self) -> &Option<StreetNamePostType>;
+    fn street_type_mut(&mut self) -> &mut Option<StreetNamePostType>;
     fn subaddress_id(&self) -> &Option<String>;
+    fn subaddress_id_mut(&mut self) -> &mut Option<String>;
     fn subaddress_type(&self) -> &Option<SubaddressType>;
+    fn subaddress_type_mut(&mut self) -> &mut Option<SubaddressType>;
     fn floor(&self) -> &Option<i64>;
+    fn floor_mut(&mut self) -> &mut Option<i64>;
     fn building(&self) -> &Option<String>;
+    fn building_mut(&mut self) -> &mut Option<String>;
     fn zip(&self) -> i64;
+    fn zip_mut(&mut self) -> &mut i64;
     fn postal_community(&self) -> &String;
+    fn postal_community_mut(&mut self) -> &mut String;
     fn state(&self) -> &String;
+    fn state_mut(&mut self) -> &mut String;
     fn status(&self) -> &AddressStatus;
+    fn status_mut(&mut self) -> &mut AddressStatus;
 
     /// An address is coincident when the `other` address refers to the same assignment or
     /// location.  If the addresses are coincident, but details (such as the floor number or
@@ -199,7 +212,164 @@ pub trait Address {
     }
 }
 
-/// The `Address` struct defines the fields of a valid address.
+pub trait Addresses<T: Address + Clone + Send + Sync> 
+where Self: Vectorized<T> + Clone {
+    fn filter(&self, filter: &str) -> Vec<T> {
+        let mut records = Vec::new();
+        let values = self.values();
+        match filter {
+            "duplicate" => {
+                let style = indicatif::ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Checking for duplicate addresses.'}",
+        )
+        .unwrap();
+                let mut seen = HashSet::new();
+                let bar = ProgressBar::new(self.len() as u64);
+                bar.set_style(style);
+                for address in values {
+                    let label = address.label();
+                    if !seen.contains(&label) {
+                        seen.insert(label.clone());
+                        let mut same = self.clone();
+                        same.filter_field("label", &label);
+                        if same.len() > 1 {
+                            records.append(&mut same.into_values());
+                        }
+                    }
+                    bar.inc(1);
+                }
+            }
+            _ => error!("Invalid filter provided."),
+        }
+        records
+    }
+
+    /// The `filter_field` method returns the subset of addresses where the field `filter` is equal
+    /// to the value in `field`.
+    fn filter_field(&mut self, filter: &str, field: &str) {
+        let mut records = Vec::new();
+        match filter {
+            "label" => records.append(
+                &mut self
+                    .values_mut()
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| field == record.label())
+                    .collect(),
+            ),
+            "street_name" => records.append(
+                &mut self
+                    .values_mut()
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| field == record.street_name())
+                    .collect(),
+            ),
+            "pre_directional" => records.append(
+                &mut self
+                    .values_mut()
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| field == format!("{:?}", record.directional()))
+                    .collect(),
+            ),
+            "post_type" => records.append(
+                &mut self
+                    .values_mut()
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| field == format!("{:?}", record.street_type()))
+                    .collect(),
+            ),
+
+            _ => info!("Invalid filter provided."),
+        }
+        self.values_mut().clear();
+        self.values_mut().extend(records);
+    }
+
+    /// Compares the complete street name of an address to the value in `street`, returning true if
+    /// equal.
+    fn contains_street(&self, street: &String) -> bool {
+        let mut contains = false;
+        for address in self.values() {
+            let comp_street = address.complete_street_name();
+            if &comp_street == street {
+                contains = true;
+            }
+        }
+        contains
+    }
+
+    /// The `orphan_streets` method returns the list of complete street names that are contained in
+    /// self but are not present in `other`.
+    fn orphan_streets(&self, other: &CommonAddresses) -> Vec<String> {
+        let mut seen = HashSet::new();
+        let mut orphans = Vec::new();
+        for address in self.values() {
+            let street = address.complete_street_name();
+            if !seen.contains(&street) {
+                seen.insert(street.clone());
+                if !other.contains_street(&street) {
+                    orphans.push(street);
+                }
+            }
+        }
+        orphans
+    }
+
+    /// The `citify` method takes county address naming conventions and converts them to city
+    /// naming conventions.
+    fn citify(&mut self) {
+        trace!("Running Citify");
+        for address in self.values_mut() {
+            let comp_street = address.complete_street_name();
+            if comp_street == "NE BEAVILLA VIEW" {
+                trace!("Fixing Beavilla View");
+                *address.street_name_mut() = "BEAVILLA".to_owned();
+                *address.street_type_mut() = Some(StreetNamePostType::VIEW);
+            }
+            if comp_street == "COLUMBIA CREST" {
+                trace!("Fixing Columbia Crest");
+                *address.street_name_mut() = "COLUMBIA".to_owned();
+                *address.street_type_mut() = Some(StreetNamePostType::CREST);
+            }
+            if comp_street == "SE FORMOSA GARDENS" {
+                trace!("Fixing Formosa Gardens");
+                *address.street_name_mut() = "FORMOSA".to_owned();
+                *address.street_type_mut() = Some(StreetNamePostType::GARDENS);
+            }
+            if comp_street == "SE HILLTOP VIEW" {
+                trace!("Fixing Hilltop View");
+                *address.street_name_mut() = "HILLTOP".to_owned();
+                *address.street_type_mut() = Some(StreetNamePostType::VIEW);
+            }
+            if comp_street == "MARILEE ROW" {
+                trace!("Fixing Marilee Row");
+                *address.street_name_mut() = "MARILEE".to_owned();
+                *address.street_type_mut() = Some(StreetNamePostType::ROW);
+            }
+            if comp_street == "MEADOW GLEN" {
+                trace!("Fixing Meadow Glen");
+                *address.street_name_mut() = "MEADOW".to_owned();
+                *address.street_type_mut() = Some(StreetNamePostType::GLEN);
+            }
+            if comp_street == "ROBERTSON CREST" {
+                trace!("Fixing Robertson Crest");
+                *address.street_name_mut() = "ROBERTSON".to_owned();
+                *address.street_type_mut() = Some(StreetNamePostType::CREST);
+            }
+            if comp_street == "NE QUAIL CROSSING" {
+                trace!("Fixing Quail Crossing");
+                *address.street_name_mut() = "QUAIL".to_owned();
+                *address.street_type_mut() = Some(StreetNamePostType::CROSSING);
+            }
+        }
+    }
+
+}
+
+/// The `CommonAddress` struct defines the fields of a valid address.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CommonAddress {
     /// The `number` field represents the address number component of the complete address
@@ -398,52 +568,118 @@ impl Address for CommonAddress {
         self.number
     }
 
+    fn number_mut(&mut self) -> &mut i64 {
+        &mut self.number
+    }
+
     fn number_suffix(&self) -> &Option<String> {
         &self.number_suffix
+    }
+
+    fn number_suffix_mut(&mut self) -> &mut Option<String> {
+        &mut self.number_suffix
     }
 
     fn directional(&self) -> &Option<StreetNamePreDirectional> {
         &self.directional
     }
 
+    fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
+        &mut self.directional
+    }
+
     fn street_name(&self) -> &String {
         &self.street_name
+    }
+
+    fn street_name_mut(&mut self) -> &mut String {
+        &mut self.street_name
     }
 
     fn street_type(&self) -> &Option<StreetNamePostType> {
         &self.street_type
     }
 
+    fn street_type_mut(&mut self) -> &mut Option<StreetNamePostType> {
+        &mut self.street_type
+    }
+
     fn subaddress_id(&self) -> &Option<String> {
         &self.subaddress_id
+    }
+
+    fn subaddress_id_mut(&mut self) -> &mut Option<String> {
+        &mut self.subaddress_id
     }
 
     fn subaddress_type(&self) -> &Option<SubaddressType> {
         &self.subaddress_type
     }
 
+    fn subaddress_type_mut(&mut self) -> &mut Option<SubaddressType> {
+        &mut self.subaddress_type
+    }
+
     fn floor(&self) -> &Option<i64> {
         &self.floor
+    }
+
+    fn floor_mut(&mut self) -> &mut Option<i64> {
+        &mut self.floor
     }
 
     fn building(&self) -> &Option<String> {
         &self.building
     }
 
+    fn building_mut(&mut self) -> &mut Option<String> {
+        &mut self.building
+    }
+
     fn zip(&self) -> i64 {
         self.zip
+    }
+
+    fn zip_mut(&mut self) -> &mut i64 {
+        &mut self.zip
     }
 
     fn postal_community(&self) -> &String {
         &self.postal_community
     }
 
+    fn postal_community_mut(&mut self) -> &mut String {
+        &mut self.postal_community
+    }
+
     fn state(&self) -> &String {
         &self.state
     }
 
+    fn state_mut(&mut self) -> &mut String {
+        &mut self.state
+    }
+
     fn status(&self) -> &AddressStatus {
         &self.status
+    }
+
+    fn status_mut(&mut self) -> &mut AddressStatus {
+        &mut self.status
+    }
+}
+
+impl Vectorized<CommonAddress> for CommonAddresses {
+    fn values(&self) -> &Vec<CommonAddress> {
+        &self.records
+    }
+
+    fn values_mut(&mut self) -> &mut Vec<CommonAddress> {
+        &mut self.records
+    }
+
+    fn into_values(self) -> Vec<CommonAddress> {
+        self.records
     }
 }
 
@@ -485,6 +721,8 @@ impl<T: Address> From<&T> for CommonAddress {
 pub struct CommonAddresses {
     pub records: Vec<CommonAddress>,
 }
+
+impl Addresses<CommonAddress> for CommonAddresses {}
 
 impl CommonAddresses {
     /// Filter elements of the `records` vector according to the argument specified in `filter`.
@@ -560,13 +798,6 @@ impl CommonAddresses {
             _ => info!("Invalid filter provided."),
         }
         CommonAddresses { records }
-    }
-
-    /// Writes the contents of `CommonAddresses` to a CSV file output to path `title`.  Each element
-    /// of the vector in `records` writes to a row on the CSV file.
-    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        to_csv(&mut self.records(), title)?;
-        Ok(())
     }
 
     /// Compares the complete street name of an address to the value in `street`, returning true if
@@ -868,6 +1099,20 @@ impl PartialAddresses {
     }
 }
 
+impl Vectorized<PartialAddress> for PartialAddresses {
+    fn values(&self) -> &Vec<PartialAddress> {
+        &self.records
+    }
+
+    fn values_mut(&mut self) -> &mut Vec<PartialAddress> {
+        &mut self.records
+    }
+
+    fn into_values(self) -> Vec<PartialAddress> {
+        self.records
+    }
+}
+
 impl From<Vec<PartialAddress>> for PartialAddresses {
     fn from(records: Vec<PartialAddress>) -> Self {
         PartialAddresses { records }
@@ -940,5 +1185,19 @@ impl AddressDeltas {
     /// This functions returns a mutable reference to the vector contained in the `records` field.
     pub fn records_mut(&mut self) -> &mut Vec<AddressDelta> {
         &mut self.records
+    }
+}
+
+impl Vectorized<AddressDelta> for AddressDeltas {
+    fn values(&self) -> &Vec<AddressDelta> {
+        &self.records
+    }
+
+    fn values_mut(&mut self) -> &mut Vec<AddressDelta> {
+        &mut self.records
+    }
+
+    fn into_values(self) -> Vec<AddressDelta> {
+        self.records
     }
 }
