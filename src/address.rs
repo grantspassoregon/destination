@@ -303,7 +303,7 @@ where Self: Vectorized<T> + Clone {
 
     /// The `orphan_streets` method returns the list of complete street names that are contained in
     /// self but are not present in `other`.
-    fn orphan_streets(&self, other: &CommonAddresses) -> Vec<String> {
+    fn orphan_streets<V: Address + Clone + Send + Sync, U: Addresses<V>>(&self, other: &U) -> Vec<String> {
         let mut seen = HashSet::new();
         let mut orphans = Vec::new();
         for address in self.values() {
@@ -324,6 +324,7 @@ where Self: Vectorized<T> + Clone {
         trace!("Running Citify");
         for address in self.values_mut() {
             let comp_street = address.complete_street_name();
+            info!("Street: {}", &comp_street);
             if comp_street == "NE BEAVILLA VIEW" {
                 trace!("Fixing Beavilla View");
                 *address.street_name_mut() = "BEAVILLA".to_owned();
