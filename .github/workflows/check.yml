@@ -16,9 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build
-        run: cargo build --verbose --all
+        run: cargo build --verbose --all --features ci
       - name: Tests
-        run: cargo test --verbose
+        run: cargo test --verbose --features ci
 
   fmt:
     name: Format
