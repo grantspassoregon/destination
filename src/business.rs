@@ -349,8 +349,6 @@ impl BusinessLicense {
             if match_status != MatchStatus::Divergent {
                 match_status = MatchStatus::Matching;
             }
-            let lat = address.lat();
-            let lat = lat;
             business_match = Some(BusinessMatchRecord {
                 match_status,
                 business_address_label: self.label(),

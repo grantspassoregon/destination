@@ -2,9 +2,7 @@ use crate::address_components::*;
 use crate::prelude::{
     from_csv, load_bin, save, to_csv, Address, Addresses, Point, Portable, Vectorized,
 };
-use crate::utils;
 use crate::utils::deserialize_arcgis_data;
-use aid::prelude::*;
 use aid::prelude::*;
 use galileo::galileo_types::geo::GeoPoint;
 use serde::{Deserialize, Serialize};
@@ -738,7 +736,7 @@ pub struct CityAddresses {
 
 impl CityAddresses {
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let records = utils::from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(CityAddresses { records })
     }
 }
@@ -826,7 +824,7 @@ pub struct OldCityAddresses {
 
 impl OldCityAddresses {
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let records = utils::from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(OldCityAddresses { records })
     }
 }
@@ -938,7 +936,7 @@ pub struct GrantsPass2022Addresses {
 
 impl GrantsPass2022Addresses {
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let records = utils::from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(GrantsPass2022Addresses { records })
     }
 }

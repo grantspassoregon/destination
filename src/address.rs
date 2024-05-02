@@ -143,7 +143,7 @@ pub trait Address {
             },
             None => match self.street_type() {
                 Some(post_type) => format!("{} {}", self.street_name(), post_type),
-                None => format!("{}", self.street_name()),
+                None => self.street_name().to_string(),
             },
         }
     }

@@ -9,7 +9,6 @@ use galileo::galileo_types::geo::GeoPoint;
 use galileo::galileo_types::geometry_type::{
     AmbiguousSpace, CartesianSpace2d, GeoSpace2d, GeometryType, PointGeometryType,
 };
-use galileo::layer::feature_layer::{Feature, FeatureLayer};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -29,7 +28,6 @@ pub trait Point {
     /// Iterates through records of `others`, calculates the distance from self
     /// to matching addresses in others, collects the results into a vector and
     /// returns the results in the records field of a new `AddressDeltas` struct.
-    //     pub fn deltas<'a, V: Point + rayon::iter::IntoParallelIterator + rayon::iter::IntoParallelRefIterator<'a>, U: Points<V> + ParallelProgressIterator + rayon::iter::IntoParallelIterator + rayon::iter::IntoParallelRefIterator<'a> + Addres>(&self, others: &U, min: f64) -> AddressDeltas {
     fn delta<T: Address + Clone + Point + Sync + Send>(
         &self,
         others: &[T],
