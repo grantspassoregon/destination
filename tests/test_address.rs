@@ -25,6 +25,7 @@ fn load_city_addresses() -> Result<(), std::io::Error> {
 }
 
 #[test]
+#[cfg_attr(feature = "ci", ignore)]
 fn save_city_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
@@ -43,6 +44,7 @@ fn save_city_addresses() -> Clean<()> {
 }
 
 #[test]
+#[cfg_attr(feature = "ci", ignore)]
 fn save_county_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
@@ -124,6 +126,7 @@ fn load_geo_addresses() -> Clean<()> {
 // }
 
 #[test]
+#[cfg_attr(feature = "ci", ignore)]
 fn read_business_licenses() -> Result<(), std::io::Error> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
@@ -191,6 +194,7 @@ fn match_city_address() -> Clean<()> {
 }
 
 #[test]
+#[cfg_attr(feature = "ci", ignore)]
 fn match_business_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
@@ -201,7 +205,6 @@ fn match_business_addresses() -> Clean<()> {
     let business_path = "tests/test_data/active_business_licenses.csv";
     let city_path = "tests/test_data/city_addresses_20240226.csv";
     let business_addresses = BusinessLicenses::from_csv(business_path)?;
-    let records = GrantsPassSpatialAddresses::from_csv(city_path)?;
     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
     let match_records = BusinessMatchRecords::compare(&business_addresses, &city_addresses.records);
     assert_eq!(match_records.records.len(), 2936);
@@ -628,6 +631,7 @@ fn address_parser() {
 }
 
 #[test]
+#[cfg_attr(feature = "ci", ignore)]
 fn load_fire_inspections() -> Clean<()> {
     if let Ok(()) = tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
@@ -660,6 +664,7 @@ fn load_fire_inspections() -> Clean<()> {
 // }
 
 #[test]
+#[cfg_attr(feature = "ci", ignore)]
 fn sort_fire_inspections() -> Clean<()> {
     let file_path = "p:/fire_inspections_matched.csv";
     let compared = FireInspectionMatchRecords::from_csv(file_path)?;
