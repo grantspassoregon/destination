@@ -1,6 +1,10 @@
 //! The `address` module defines the library data standard for a valid address, and provides
 //! implementation blocks to convert data from import types to the valid address format.
-use crate::prelude::*;
+use crate::prelude::{
+    from_csv, load_bin, save, to_csv, AddressMatch, AddressStatus, FireInspections, LexisNexis,
+    Mismatch, Point, Portable, StreetNamePostType, StreetNamePreDirectional, SubaddressType,
+    Vectorized,
+};
 use aid::prelude::*;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
@@ -373,6 +377,10 @@ where
                 *address.street_type_mut() = Some(StreetNamePostType::CROSSING);
             }
         }
+    }
+
+    fn lexis_nexis(&self, other: &Self) -> Clean<LexisNexis> {
+        LexisNexis::from_addresses(self, other)
     }
 }
 

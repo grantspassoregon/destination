@@ -1,8 +1,9 @@
 //! The `lexisnexis` module produces address range reports for the LexisNexis dispatch service.
-use crate::prelude::*;
+use crate::prelude::{from_csv, load_bin, save, to_csv, Address, Addresses, Portable};
 use aid::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::path::Path;
 use tracing::warn;
 
 /// The `LexisNexisItemBuilder` struct provides a framework to create and modify the required fields in the LexisNexis spreadsheet.
@@ -148,43 +149,39 @@ impl LexisNexis {
     /// The `from_addresses` method creates a [`LexisNexis`] struct from a set of addresses to
     /// include in the range selection `include`, and a set of addresses to exclude from the range
     /// selection `exclude`.
-    pub fn from_addresses(
-        include: &CommonAddresses,
-        exclude: &CommonAddresses,
+    pub fn from_addresses<T: Address + Clone + Send + Sync, U: Addresses<T>>(
+        include: &U,
+        exclude: &U,
     ) -> Clean<LexisNexis> {
         let mut seen = HashSet::new();
         let mut records = Vec::new();
-        for address in include.records_ref() {
+        for address in include.values() {
             let comp_street = address.complete_street_name();
-            let street = address.street_name.clone();
-            let post_type = address.street_type;
+            let street = address.street_name().clone();
+            let post_type = address.street_type();
             if !seen.contains(&comp_street) {
                 seen.insert(comp_street.clone());
-                let mut inc = include.filter_field("street_name", &street);
-                let mut exl = exclude.filter_field("street_name", &street);
-                inc = inc.filter_field("post_type", &format!("{:?}", post_type));
-                exl = exl.filter_field("post_type", &format!("{:?}", post_type));
-                inc = inc.filter_field(
-                    "pre_directional",
-                    &format!("{:?}", address.pre_directional()),
-                );
-                exl = exl.filter_field(
-                    "pre_directional",
-                    &format!("{:?}", address.pre_directional()),
-                );
+                let mut inc = include.clone();
+                inc.filter_field("street_name", &street);
+                let mut exl = exclude.clone();
+                exl.filter_field("street_name", &street);
+                inc.filter_field("post_type", &format!("{:?}", post_type));
+                exl.filter_field("post_type", &format!("{:?}", post_type));
+                inc.filter_field("pre_directional", &format!("{:?}", address.directional()));
+                exl.filter_field("pre_directional", &format!("{:?}", address.directional()));
                 let items = LexisNexisRange::from_addresses(&inc, &exl);
                 let ranges = items.ranges();
                 for rng in ranges {
                     let mut builder = LexisNexisItemBuilder::new();
                     builder.address_number_from = Some(rng.0);
                     builder.address_number_to = Some(rng.1);
-                    builder.street_name_pre_directional = address.pre_directional_abbreviated();
-                    builder.street_name = Some(address.street_name.clone());
-                    if let Some(street_type) = address.street_type {
+                    builder.street_name_pre_directional = address.directional_abbreviated();
+                    builder.street_name = Some(address.street_name().clone());
+                    if let Some(street_type) = address.street_type() {
                         builder.street_name_post_type = Some(street_type.abbreviate());
                     }
-                    builder.postal_community = Some(address.postal_community());
-                    builder.zip_code = Some(address.zip_code());
+                    builder.postal_community = Some(address.postal_community().clone());
+                    builder.zip_code = Some(address.zip());
                     if let Ok(built) = builder.build() {
                         records.push(built);
                     }
@@ -193,18 +190,32 @@ impl LexisNexis {
         }
         Ok(LexisNexis { records })
     }
+}
 
-    /// Writes the contents of `LexisNexis` to a CSV file output to path `title`.  Each element
-    /// of the vector in `records` writes to a row on the CSV file.
-    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        to_csv(&mut self.records, title)?;
-        Ok(())
+impl Portable<LexisNexis> for LexisNexis {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        save(self, path)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = from_csv(path)?;
+        Ok(Self { records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
     }
 }
 
 /// The `LexisNexisRangeItem` represents an address number `num`, and whether to include the number
 /// in the range selection.
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
 pub struct LexisNexisRangeItem {
     /// The `num` field represents an address number observation.
     pub num: i64,
@@ -224,7 +235,7 @@ impl LexisNexisRangeItem {
 /// street name.  The `include` field is *true* for addresses within the city limits or with a public
 /// safety agreement, and *false* for addresses outside of city limits or without a public safety
 /// agreement.  Used to produce valid ranges of addresses in the city service area.
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
 pub struct LexisNexisRange {
     /// The `records` field holds a vector of type [`LexisNexisRangeItem`].
     pub records: Vec<LexisNexisRangeItem>,
@@ -234,17 +245,20 @@ impl LexisNexisRange {
     /// The `from_addresses` method creates a [`LexisNexisRange`] from a set of addresses to
     /// include in the range selection `include`, and a set of addresses to exclude from the range
     /// selection `exclude`.
-    pub fn from_addresses(include: &CommonAddresses, exclude: &CommonAddresses) -> Self {
+    pub fn from_addresses<T: Address + Clone + Send + Sync, U: Addresses<T>>(
+        include: &U,
+        exclude: &U,
+    ) -> Self {
         let mut records = include
-            .records_ref()
+            .values()
             .iter()
-            .map(|v| LexisNexisRangeItem::new(v.number, true))
+            .map(|v| LexisNexisRangeItem::new(v.number(), true))
             .collect::<Vec<LexisNexisRangeItem>>();
         records.extend(
             exclude
-                .records_ref()
+                .values()
                 .iter()
-                .map(|v| LexisNexisRangeItem::new(v.number, false))
+                .map(|v| LexisNexisRangeItem::new(v.number(), false))
                 .collect::<Vec<LexisNexisRangeItem>>(),
         );
         records.sort_by_key(|v| v.num);
