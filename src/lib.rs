@@ -35,7 +35,7 @@ pub mod prelude {
         JosephineCountyAddress, JosephineCountyAddresses, JosephineCountySpatialAddress,
         JosephineCountySpatialAddresses,
     };
-    pub use crate::lexisnexis::LexisNexis;
+    pub use crate::lexisnexis::{LexisNexis, LexisNexisItem};
     pub use crate::parser::{
         multi_word, parse_address, parse_address_number, parse_address_number_suffix,
         parse_complete_street_name, parse_post_type, parse_pre_directional, parse_street_name,
