@@ -108,33 +108,33 @@ impl LexisNexisItemBuilder {
 #[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
 pub struct LexisNexisItem {
     #[serde(rename(serialize = "StNumFrom"))]
-    address_number_from: i64,
+    pub address_number_from: i64,
     #[serde(rename(serialize = "StNumTo"))]
-    address_number_to: i64,
+    pub address_number_to: i64,
     #[serde(rename(serialize = "StPreDirection"))]
-    street_name_pre_directional: Option<String>,
+    pub street_name_pre_directional: Option<String>,
     #[serde(rename(serialize = "StName"))]
-    street_name: String,
+    pub street_name: String,
     #[serde(rename(serialize = "StType"))]
-    street_name_post_type: String,
+    pub street_name_post_type: String,
     #[serde(rename(serialize = "StPostDirection"))]
-    street_name_post_directional: Option<String>,
+    pub street_name_post_directional: Option<String>,
     #[serde(rename(serialize = "City"))]
-    postal_community: String,
+    pub postal_community: String,
     #[serde(rename(serialize = "Beat"))]
-    beat: Option<String>,
+    pub beat: Option<String>,
     #[serde(rename(serialize = "Area"))]
-    area: Option<String>,
+    pub area: Option<String>,
     #[serde(rename(serialize = "District"))]
-    district: Option<String>,
+    pub district: Option<String>,
     #[serde(rename(serialize = "Zone"))]
-    zone: Option<String>,
+    pub zone: Option<String>,
     #[serde(rename(serialize = "Zipcode"))]
-    zip_code: i64,
+    pub zip_code: i64,
     #[serde(rename(serialize = "CommonPlace"))]
-    commonplace: Option<String>,
+    pub commonplace: Option<String>,
     #[serde(rename(serialize = "StNum"))]
-    address_number: Option<i64>,
+    pub address_number: Option<i64>,
 }
 
 /// The `LexisNexis` struct holds a vector of [`LexisNexisItem`] objects, for serialization into a
