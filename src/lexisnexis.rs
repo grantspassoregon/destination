@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use tracing::warn;
 
 /// The `LexisNexisItemBuilder` struct provides a framework to create and modify the required fields in the LexisNexis spreadsheet.
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
 pub struct LexisNexisItemBuilder {
     /// The `address_number_from` field represents the lower bound on the address number range for
     /// the row.
@@ -104,7 +104,7 @@ impl LexisNexisItemBuilder {
 }
 
 /// The `LexisNexisItem` struct contains the required fields in the LexisNexis spreadsheet.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
 pub struct LexisNexisItem {
     #[serde(rename(serialize = "StNumFrom"))]
     address_number_from: i64,
@@ -138,7 +138,7 @@ pub struct LexisNexisItem {
 
 /// The `LexisNexis` struct holds a vector of [`LexisNexisItem`] objects, for serialization into a
 /// .csv file.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
 pub struct LexisNexis {
     /// The `records` field holds a vector of type [`LexisNexisItem`].
     pub records: Vec<LexisNexisItem>,
