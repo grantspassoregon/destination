@@ -21,10 +21,7 @@ pub struct JosephineCountyAddress2024 {
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
     #[serde(rename = "st_name")]
     pub street_name: String,
-    #[serde(
-        deserialize_with = "deserialize_mixed_post_type",
-        rename = "st_postyp"
-    )]
+    #[serde(deserialize_with = "deserialize_mixed_post_type", rename = "st_postyp")]
     pub street_name_post_type: Option<StreetNamePostType>,
     #[serde(
         deserialize_with = "deserialize_mixed_subaddress_type",
@@ -207,10 +204,7 @@ pub struct JosephineCountySpatialAddress2024 {
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
     #[serde(rename = "st_name")]
     pub street_name: String,
-    #[serde(
-        deserialize_with = "deserialize_mixed_post_type",
-        rename = "st_postyp"
-    )]
+    #[serde(deserialize_with = "deserialize_mixed_post_type", rename = "st_postyp")]
     pub street_name_post_type: Option<StreetNamePostType>,
     #[serde(
         deserialize_with = "deserialize_mixed_subaddress_type",
@@ -365,7 +359,6 @@ impl GeoPoint for JosephineCountySpatialAddress2024 {
         self.lon
     }
 }
-
 
 #[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct JosephineCountySpatialAddresses2024 {
