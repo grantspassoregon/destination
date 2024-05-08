@@ -234,9 +234,9 @@ pub struct JosephineCountySpatialAddress {
     #[serde(rename = "state")]
     pub state_name: String,
     pub status: AddressStatus,
-    #[serde(rename = "point_y")]
-    pub x: f64,
     #[serde(rename = "point_x")]
+    pub x: f64,
+    #[serde(rename = "point_y")]
     pub y: f64,
     #[serde(rename = "latitude")]
     pub lat: f64,
