@@ -772,6 +772,7 @@ pub fn match_mixed_post_type(input: &str) -> Option<StreetNamePostType> {
         "HBR" => Some(StreetNamePostType::HARBOR),
         "HBRS" => Some(StreetNamePostType::HARBORS),
         "HVN" => Some(StreetNamePostType::HAVEN),
+        "HEIGHTS" => Some(StreetNamePostType::HEIGHTS),
         "HTS" => Some(StreetNamePostType::HEIGHTS),
         "HWY" => Some(StreetNamePostType::HIGHWAY),
         "Hwy" => Some(StreetNamePostType::HIGHWAY),

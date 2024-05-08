@@ -19,6 +19,9 @@ fn load_ecso_addresses() -> Clean<()> {
         "City addresses loaded: {} entries.",
         addresses.records.len()
     );
+    let spatial = SpatialAddresses::from(&addresses.records[..]);
+    info!("Addresses loaded: {}", spatial.len());
+    spatial.save("tests/test_data/county_addresses.data")?;
     // let addresses = GrantsPassAddresses::from_csv(file)?;
     // assert_eq!(addresses.records.len(), 27437);
     Ok(())
