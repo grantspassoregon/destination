@@ -272,9 +272,9 @@ pub struct GrantsPassSpatialAddress {
     pub incorporated_municipality: Option<String>,
     #[serde(deserialize_with = "deserialize_arcgis_data", rename = "Uninc_Comm")]
     pub unincorporated_community: Option<String>,
-    #[serde(rename = "AddressYCoordinate")]
-    pub x: f64,
     #[serde(rename = "AddressXCoordinate")]
+    pub x: f64,
+    #[serde(rename = "AddressYCoordinate")]
     pub y: f64,
     #[serde(rename = "latitude")]
     pub latitude: f64,

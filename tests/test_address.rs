@@ -35,7 +35,7 @@ fn save_city_addresses() -> Clean<()> {
     info!("Subscriber initialized.");
 
     trace!("Opening city addresses from a csv file.");
-    let file = "c:/users/erose/documents/city_addresses_20240409.csv";
+    let file = "c:/users/erose/geojson/addresses_20240508.csv";
     let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
     let addresses = SpatialAddresses::from(&addresses.records[..]);
     trace!("Saving city addresses to binary.");
