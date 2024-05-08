@@ -3,6 +3,28 @@ use aid::prelude::*;
 use tracing::{info, trace};
 
 #[test]
+fn load_ecso_addresses() -> Clean<()> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+
+    trace!("Deserializing county addresses from a csv file.");
+    let file = "tests/test_data/county_addresses_20240508.csv";
+    let addresses = JosephineCountySpatialAddresses2024::from_csv(file)?;
+    // assert_eq!(addresses.records.len(), 27437);
+    trace!(
+        "City addresses loaded: {} entries.",
+        addresses.records.len()
+    );
+    // let addresses = GrantsPassAddresses::from_csv(file)?;
+    // assert_eq!(addresses.records.len(), 27437);
+    Ok(())
+}
+
+#[test]
 fn load_city_addresses() -> Result<(), std::io::Error> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)

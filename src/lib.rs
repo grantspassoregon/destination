@@ -33,7 +33,8 @@ pub mod prelude {
         FireInspections, GrantsPass2022Address, GrantsPass2022Addresses, GrantsPassAddress,
         GrantsPassAddresses, GrantsPassSpatialAddress, GrantsPassSpatialAddresses,
         JosephineCountyAddress, JosephineCountyAddresses, JosephineCountySpatialAddress,
-        JosephineCountySpatialAddresses,
+        JosephineCountySpatialAddresses, JosephineCountyAddress2024, JosephineCountyAddresses2024,
+        JosephineCountySpatialAddress2024, JosephineCountySpatialAddresses2024,
     };
     pub use crate::lexisnexis::{LexisNexis, LexisNexisItem};
     pub use crate::parser::{
