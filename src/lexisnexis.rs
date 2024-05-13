@@ -156,7 +156,7 @@ impl LexisNexis {
         let mut seen = HashSet::new();
         let mut records = Vec::new();
         for address in include.values() {
-            let comp_street = address.complete_street_name();
+            let comp_street = address.complete_street_name(false);
             let street = address.street_name().clone();
             let post_type = address.street_type();
             if !seen.contains(&comp_street) {

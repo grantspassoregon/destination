@@ -29,13 +29,11 @@ pub mod prelude {
     };
     pub use crate::geo::{GeoAddress, GeoAddresses, Point, SpatialAddress, SpatialAddresses};
     pub use crate::import::{
-        Businesses, CityAddress, CityAddresses, CountyAddress, CountyAddresses, FireInspection,
-        FireInspections, GrantsPass2022Address, GrantsPass2022Addresses, GrantsPassAddress,
-        GrantsPassAddresses, GrantsPassSpatialAddress, GrantsPassSpatialAddresses,
-        JosephineCountyAddress, JosephineCountyAddress2024, JosephineCountyAddresses,
-        JosephineCountyAddresses2024, JosephineCountySpatialAddress,
-        JosephineCountySpatialAddress2024, JosephineCountySpatialAddresses,
-        JosephineCountySpatialAddresses2024,
+        Businesses, FireInspection, FireInspections, GrantsPassAddress, GrantsPassAddresses,
+        GrantsPassSpatialAddress, GrantsPassSpatialAddresses, JosephineCountyAddress,
+        JosephineCountyAddress2024, JosephineCountyAddresses, JosephineCountyAddresses2024,
+        JosephineCountySpatialAddress, JosephineCountySpatialAddress2024,
+        JosephineCountySpatialAddresses, JosephineCountySpatialAddresses2024,
     };
     pub use crate::lexisnexis::{LexisNexis, LexisNexisItem};
     pub use crate::parser::{

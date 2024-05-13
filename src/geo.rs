@@ -70,7 +70,7 @@ pub trait Point {
         let mut records = Vec::new();
         records_raw
             .iter()
-            .map(|v| records.append(&mut v.records()))
+            .map(|v| records.append(&mut v.values().clone()))
             .for_each(drop);
         AddressDeltas { records }
     }
@@ -106,6 +106,30 @@ impl Address for GeoAddress {
 
     fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
         &mut self.address.directional
+    }
+
+    fn street_name_pre_modifier(&self) -> &Option<String> {
+        &self.address.pre_modifier
+    }
+
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.pre_modifier
+    }
+
+    fn street_name_pre_type(&self) -> &Option<String> {
+        &self.address.pre_type
+    }
+
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.pre_type
+    }
+
+    fn street_name_separator(&self) -> &Option<String> {
+        &self.address.separator
+    }
+
+    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.separator
     }
 
     fn street_name(&self) -> &String {
@@ -301,6 +325,30 @@ impl Address for AddressPoint {
 
     fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
         &mut self.address.directional
+    }
+
+    fn street_name_pre_modifier(&self) -> &Option<String> {
+        &self.address.pre_modifier
+    }
+
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.pre_modifier
+    }
+
+    fn street_name_pre_type(&self) -> &Option<String> {
+        &self.address.pre_type
+    }
+
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.pre_type
+    }
+
+    fn street_name_separator(&self) -> &Option<String> {
+        &self.address.separator
+    }
+
+    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.separator
     }
 
     fn street_name(&self) -> &String {
@@ -504,6 +552,30 @@ impl Address for SpatialAddress {
 
     fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
         &mut self.address.directional
+    }
+
+    fn street_name_pre_modifier(&self) -> &Option<String> {
+        &self.address.pre_modifier
+    }
+
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.pre_modifier
+    }
+
+    fn street_name_pre_type(&self) -> &Option<String> {
+        &self.address.pre_type
+    }
+
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.pre_type
+    }
+
+    fn street_name_separator(&self) -> &Option<String> {
+        &self.address.separator
+    }
+
+    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+        &mut self.address.separator
     }
 
     fn street_name(&self) -> &String {

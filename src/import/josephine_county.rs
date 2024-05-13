@@ -19,8 +19,12 @@ pub struct JosephineCountyAddress2024 {
         rename = "st_predir"
     )]
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
-    #[serde(rename = "st_pretyp")]
-    pub street_name_pre_type: String,
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_premod")]
+    pub street_name_pre_modifier: Option<String>,
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_pretyp")]
+    pub street_name_pre_type: Option<String>,
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_presep")]
+    pub street_name_separator: Option<String>,
     #[serde(rename = "st_name")]
     pub street_name: String,
     #[serde(deserialize_with = "deserialize_mixed_post_type", rename = "st_postyp")]
@@ -68,6 +72,30 @@ impl Address for JosephineCountyAddress2024 {
 
     fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
         &mut self.street_name_pre_directional
+    }
+
+    fn street_name_pre_modifier(&self) -> &Option<String> {
+        &self.street_name_pre_modifier
+    }
+
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+        &mut self.street_name_pre_modifier
+    }
+
+    fn street_name_pre_type(&self) -> &Option<String> {
+        &self.street_name_pre_type
+    }
+
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+        &mut self.street_name_pre_type
+    }
+
+    fn street_name_separator(&self) -> &Option<String> {
+        &self.street_name_separator
+    }
+
+    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+        &mut self.street_name_separator
     }
 
     fn street_name(&self) -> &String {
@@ -204,8 +232,12 @@ pub struct JosephineCountySpatialAddress2024 {
         rename = "st_predir"
     )]
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
-    #[serde(rename = "st_pretyp")]
-    pub street_name_pre_type: String,
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_premod")]
+    pub street_name_pre_modifier: Option<String>,
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_pretyp")]
+    pub street_name_pre_type: Option<String>,
+    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_presep")]
+    pub street_name_separator: Option<String>,
     #[serde(rename = "st_name")]
     pub street_name: String,
     #[serde(deserialize_with = "deserialize_mixed_post_type", rename = "st_postyp")]
@@ -259,6 +291,30 @@ impl Address for JosephineCountySpatialAddress2024 {
 
     fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
         &mut self.street_name_pre_directional
+    }
+
+    fn street_name_pre_modifier(&self) -> &Option<String> {
+        &self.street_name_pre_modifier
+    }
+
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+        &mut self.street_name_pre_modifier
+    }
+
+    fn street_name_pre_type(&self) -> &Option<String> {
+        &self.street_name_pre_type
+    }
+
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+        &mut self.street_name_pre_type
+    }
+
+    fn street_name_separator(&self) -> &Option<String> {
+        &self.street_name_separator
+    }
+
+    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+        &mut self.street_name_separator
     }
 
     fn street_name(&self) -> &String {
@@ -471,6 +527,30 @@ impl Address for JosephineCountyAddress {
         &mut self.street_name_pre_directional
     }
 
+    fn street_name_pre_modifier(&self) -> &Option<String> {
+        &None
+    }
+
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+        self.number_suffix_mut()
+    }
+
+    fn street_name_pre_type(&self) -> &Option<String> {
+        &None
+    }
+
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+        self.number_suffix_mut()
+    }
+
+    fn street_name_separator(&self) -> &Option<String> {
+        &None
+    }
+
+    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+        self.number_suffix_mut()
+    }
+
     fn street_name(&self) -> &String {
         &self.street_name
     }
@@ -667,6 +747,30 @@ impl Address for JosephineCountySpatialAddress {
         &mut self.street_name_pre_directional
     }
 
+    fn street_name_pre_modifier(&self) -> &Option<String> {
+        &None
+    }
+
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+        self.number_suffix_mut()
+    }
+
+    fn street_name_pre_type(&self) -> &Option<String> {
+        &None
+    }
+
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+        self.number_suffix_mut()
+    }
+
+    fn street_name_separator(&self) -> &Option<String> {
+        &None
+    }
+
+    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+        self.number_suffix_mut()
+    }
+
     fn street_name(&self) -> &String {
         &self.street_name
     }
@@ -812,258 +916,258 @@ impl Portable<JosephineCountySpatialAddresses> for JosephineCountySpatialAddress
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct CountyAddress {
-    #[serde(deserialize_with = "deserialize_arcgis_data")]
-    taxlot: Option<String>,
-    #[serde(rename(deserialize = "stnum"))]
-    address_number: i64,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename(deserialize = "stnumsuf")
-    )]
-    address_number_suffix: Option<String>,
-    #[serde(
-        deserialize_with = "deserialize_abbreviated_pre_directional",
-        rename(deserialize = "predir")
-    )]
-    street_name_pre_directional: Option<StreetNamePreDirectional>,
-    #[serde(rename(deserialize = "name"))]
-    street_name: String,
-    #[serde(
-        deserialize_with = "deserialize_abbreviated_post_type",
-        rename(deserialize = "type")
-    )]
-    street_name_post_type: Option<StreetNamePostType>,
-    #[serde(
-        deserialize_with = "deserialize_abbreviated_subaddress_type",
-        rename(deserialize = "unit_type")
-    )]
-    subaddress_type: Option<SubaddressType>,
-    #[serde(
-        deserialize_with = "deserialize_arcgis_data",
-        rename(deserialize = "unit")
-    )]
-    subaddress_identifier: Option<String>,
-    #[serde(deserialize_with = "zero_floor")]
-    floor: Option<i64>,
-    #[serde(rename(deserialize = "address"))]
-    complete_street_address: String,
-    #[serde(rename(deserialize = "postcomm"))]
-    postal_community: String,
-    #[serde(rename(deserialize = "zip"))]
-    zip_code: i64,
-    #[serde(rename(deserialize = "state"))]
-    state_name: String,
-    status: AddressStatus,
-    #[serde(rename(deserialize = "point_y"))]
-    address_latitude: f64,
-    #[serde(rename(deserialize = "point_x"))]
-    address_longitude: f64,
-    // #[serde(rename(deserialize = "latitude"))]
-    // address_latitude: f64,
-    // #[serde(rename(deserialize = "longitude"))]
-    // address_longitude: f64,
-}
-
-impl Address for CountyAddress {
-    fn number(&self) -> i64 {
-        self.address_number
-    }
-
-    fn number_mut(&mut self) -> &mut i64 {
-        &mut self.address_number
-    }
-
-    fn number_suffix(&self) -> &Option<String> {
-        &self.address_number_suffix
-    }
-
-    fn number_suffix_mut(&mut self) -> &mut Option<String> {
-        &mut self.address_number_suffix
-    }
-
-    fn directional(&self) -> &Option<StreetNamePreDirectional> {
-        &self.street_name_pre_directional
-    }
-
-    fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
-        &mut self.street_name_pre_directional
-    }
-
-    fn street_name(&self) -> &String {
-        &self.street_name
-    }
-
-    fn street_name_mut(&mut self) -> &mut String {
-        &mut self.street_name
-    }
-
-    fn street_type(&self) -> &Option<StreetNamePostType> {
-        &self.street_name_post_type
-    }
-
-    fn street_type_mut(&mut self) -> &mut Option<StreetNamePostType> {
-        &mut self.street_name_post_type
-    }
-
-    fn subaddress_id(&self) -> &Option<String> {
-        &self.subaddress_identifier
-    }
-
-    fn subaddress_id_mut(&mut self) -> &mut Option<String> {
-        &mut self.subaddress_identifier
-    }
-
-    fn subaddress_type(&self) -> &Option<SubaddressType> {
-        &self.subaddress_type
-    }
-
-    fn subaddress_type_mut(&mut self) -> &mut Option<SubaddressType> {
-        &mut self.subaddress_type
-    }
-
-    fn floor(&self) -> &Option<i64> {
-        &self.floor
-    }
-
-    fn floor_mut(&mut self) -> &mut Option<i64> {
-        &mut self.floor
-    }
-
-    fn building(&self) -> &Option<String> {
-        &None
-    }
-
-    fn building_mut(&mut self) -> &mut Option<String> {
-        &mut self.address_number_suffix
-    }
-
-    fn zip(&self) -> i64 {
-        self.zip_code
-    }
-
-    fn zip_mut(&mut self) -> &mut i64 {
-        &mut self.zip_code
-    }
-
-    fn postal_community(&self) -> &String {
-        &self.postal_community
-    }
-
-    fn postal_community_mut(&mut self) -> &mut String {
-        &mut self.postal_community
-    }
-
-    fn state(&self) -> &String {
-        &self.state_name
-    }
-
-    fn state_mut(&mut self) -> &mut String {
-        &mut self.state_name
-    }
-
-    fn status(&self) -> &AddressStatus {
-        &self.status
-    }
-
-    fn status_mut(&mut self) -> &mut AddressStatus {
-        &mut self.status
-    }
-}
-
-impl GeoPoint for CountyAddress {
-    type Num = f64;
-
-    fn lat(&self) -> Self::Num {
-        self.address_latitude
-    }
-
-    fn lon(&self) -> Self::Num {
-        self.address_longitude
-    }
-}
-
-impl CountyAddress {
-    pub fn address_number(&self) -> i64 {
-        self.address_number
-    }
-
-    pub fn address_number_suffix(&self) -> Option<String> {
-        self.address_number_suffix.to_owned()
-    }
-
-    pub fn street_name(&self) -> String {
-        self.street_name.to_owned()
-    }
-
-    pub fn street_name_pre_directional(&self) -> Option<StreetNamePreDirectional> {
-        self.street_name_pre_directional
-    }
-
-    pub fn street_name_post_type(&self) -> Option<StreetNamePostType> {
-        self.street_name_post_type
-    }
-
-    pub fn subaddress_type(&self) -> Option<SubaddressType> {
-        self.subaddress_type.to_owned()
-    }
-
-    pub fn subaddress_identifier(&self) -> Option<String> {
-        self.subaddress_identifier.to_owned()
-    }
-
-    pub fn floor(&self) -> Option<i64> {
-        self.floor
-    }
-
-    pub fn zip_code(&self) -> i64 {
-        self.zip_code
-    }
-
-    pub fn status(&self) -> AddressStatus {
-        self.status
-    }
-
-    pub fn state_name(&self) -> String {
-        self.state_name.to_owned()
-    }
-
-    pub fn postal_community(&self) -> String {
-        self.postal_community.to_owned()
-    }
-
-    pub fn address_latitude(&self) -> f64 {
-        self.address_latitude
-    }
-
-    pub fn address_longitude(&self) -> f64 {
-        self.address_longitude
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct CountyAddresses {
-    pub records: Vec<CountyAddress>,
-}
-
-impl Portable<CountyAddresses> for CountyAddresses {
-    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = load_bin(path)?;
-        let decode: Self = bincode::deserialize(&records[..])?;
-        Ok(decode)
-    }
-
-    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        save(self, path)
-    }
-
-    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = from_csv(path)?;
-        Ok(Self { records })
-    }
-
-    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
-    }
-}
+// #[derive(Clone, Debug, Deserialize, Serialize)]
+// pub struct CountyAddress {
+//     #[serde(deserialize_with = "deserialize_arcgis_data")]
+//     taxlot: Option<String>,
+//     #[serde(rename(deserialize = "stnum"))]
+//     address_number: i64,
+//     #[serde(
+//         deserialize_with = "deserialize_arcgis_data",
+//         rename(deserialize = "stnumsuf")
+//     )]
+//     address_number_suffix: Option<String>,
+//     #[serde(
+//         deserialize_with = "deserialize_abbreviated_pre_directional",
+//         rename(deserialize = "predir")
+//     )]
+//     street_name_pre_directional: Option<StreetNamePreDirectional>,
+//     #[serde(rename(deserialize = "name"))]
+//     street_name: String,
+//     #[serde(
+//         deserialize_with = "deserialize_abbreviated_post_type",
+//         rename(deserialize = "type")
+//     )]
+//     street_name_post_type: Option<StreetNamePostType>,
+//     #[serde(
+//         deserialize_with = "deserialize_abbreviated_subaddress_type",
+//         rename(deserialize = "unit_type")
+//     )]
+//     subaddress_type: Option<SubaddressType>,
+//     #[serde(
+//         deserialize_with = "deserialize_arcgis_data",
+//         rename(deserialize = "unit")
+//     )]
+//     subaddress_identifier: Option<String>,
+//     #[serde(deserialize_with = "zero_floor")]
+//     floor: Option<i64>,
+//     #[serde(rename(deserialize = "address"))]
+//     complete_street_address: String,
+//     #[serde(rename(deserialize = "postcomm"))]
+//     postal_community: String,
+//     #[serde(rename(deserialize = "zip"))]
+//     zip_code: i64,
+//     #[serde(rename(deserialize = "state"))]
+//     state_name: String,
+//     status: AddressStatus,
+//     #[serde(rename(deserialize = "point_y"))]
+//     address_latitude: f64,
+//     #[serde(rename(deserialize = "point_x"))]
+//     address_longitude: f64,
+//     // #[serde(rename(deserialize = "latitude"))]
+//     // address_latitude: f64,
+//     // #[serde(rename(deserialize = "longitude"))]
+//     // address_longitude: f64,
+// }
+//
+// impl Address for CountyAddress {
+//     fn number(&self) -> i64 {
+//         self.address_number
+//     }
+//
+//     fn number_mut(&mut self) -> &mut i64 {
+//         &mut self.address_number
+//     }
+//
+//     fn number_suffix(&self) -> &Option<String> {
+//         &self.address_number_suffix
+//     }
+//
+//     fn number_suffix_mut(&mut self) -> &mut Option<String> {
+//         &mut self.address_number_suffix
+//     }
+//
+//     fn directional(&self) -> &Option<StreetNamePreDirectional> {
+//         &self.street_name_pre_directional
+//     }
+//
+//     fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
+//         &mut self.street_name_pre_directional
+//     }
+//
+//     fn street_name(&self) -> &String {
+//         &self.street_name
+//     }
+//
+//     fn street_name_mut(&mut self) -> &mut String {
+//         &mut self.street_name
+//     }
+//
+//     fn street_type(&self) -> &Option<StreetNamePostType> {
+//         &self.street_name_post_type
+//     }
+//
+//     fn street_type_mut(&mut self) -> &mut Option<StreetNamePostType> {
+//         &mut self.street_name_post_type
+//     }
+//
+//     fn subaddress_id(&self) -> &Option<String> {
+//         &self.subaddress_identifier
+//     }
+//
+//     fn subaddress_id_mut(&mut self) -> &mut Option<String> {
+//         &mut self.subaddress_identifier
+//     }
+//
+//     fn subaddress_type(&self) -> &Option<SubaddressType> {
+//         &self.subaddress_type
+//     }
+//
+//     fn subaddress_type_mut(&mut self) -> &mut Option<SubaddressType> {
+//         &mut self.subaddress_type
+//     }
+//
+//     fn floor(&self) -> &Option<i64> {
+//         &self.floor
+//     }
+//
+//     fn floor_mut(&mut self) -> &mut Option<i64> {
+//         &mut self.floor
+//     }
+//
+//     fn building(&self) -> &Option<String> {
+//         &None
+//     }
+//
+//     fn building_mut(&mut self) -> &mut Option<String> {
+//         &mut self.address_number_suffix
+//     }
+//
+//     fn zip(&self) -> i64 {
+//         self.zip_code
+//     }
+//
+//     fn zip_mut(&mut self) -> &mut i64 {
+//         &mut self.zip_code
+//     }
+//
+//     fn postal_community(&self) -> &String {
+//         &self.postal_community
+//     }
+//
+//     fn postal_community_mut(&mut self) -> &mut String {
+//         &mut self.postal_community
+//     }
+//
+//     fn state(&self) -> &String {
+//         &self.state_name
+//     }
+//
+//     fn state_mut(&mut self) -> &mut String {
+//         &mut self.state_name
+//     }
+//
+//     fn status(&self) -> &AddressStatus {
+//         &self.status
+//     }
+//
+//     fn status_mut(&mut self) -> &mut AddressStatus {
+//         &mut self.status
+//     }
+// }
+//
+// impl GeoPoint for CountyAddress {
+//     type Num = f64;
+//
+//     fn lat(&self) -> Self::Num {
+//         self.address_latitude
+//     }
+//
+//     fn lon(&self) -> Self::Num {
+//         self.address_longitude
+//     }
+// }
+//
+// impl CountyAddress {
+//     pub fn address_number(&self) -> i64 {
+//         self.address_number
+//     }
+//
+//     pub fn address_number_suffix(&self) -> Option<String> {
+//         self.address_number_suffix.to_owned()
+//     }
+//
+//     pub fn street_name(&self) -> String {
+//         self.street_name.to_owned()
+//     }
+//
+//     pub fn street_name_pre_directional(&self) -> Option<StreetNamePreDirectional> {
+//         self.street_name_pre_directional
+//     }
+//
+//     pub fn street_name_post_type(&self) -> Option<StreetNamePostType> {
+//         self.street_name_post_type
+//     }
+//
+//     pub fn subaddress_type(&self) -> Option<SubaddressType> {
+//         self.subaddress_type.to_owned()
+//     }
+//
+//     pub fn subaddress_identifier(&self) -> Option<String> {
+//         self.subaddress_identifier.to_owned()
+//     }
+//
+//     pub fn floor(&self) -> Option<i64> {
+//         self.floor
+//     }
+//
+//     pub fn zip_code(&self) -> i64 {
+//         self.zip_code
+//     }
+//
+//     pub fn status(&self) -> AddressStatus {
+//         self.status
+//     }
+//
+//     pub fn state_name(&self) -> String {
+//         self.state_name.to_owned()
+//     }
+//
+//     pub fn postal_community(&self) -> String {
+//         self.postal_community.to_owned()
+//     }
+//
+//     pub fn address_latitude(&self) -> f64 {
+//         self.address_latitude
+//     }
+//
+//     pub fn address_longitude(&self) -> f64 {
+//         self.address_longitude
+//     }
+// }
+//
+// #[derive(Debug, Deserialize, Serialize)]
+// pub struct CountyAddresses {
+//     pub records: Vec<CountyAddress>,
+// }
+//
+// impl Portable<CountyAddresses> for CountyAddresses {
+//     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+//         let records = load_bin(path)?;
+//         let decode: Self = bincode::deserialize(&records[..])?;
+//         Ok(decode)
+//     }
+//
+//     fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+//         save(self, path)
+//     }
+//
+//     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+//         let records = from_csv(path)?;
+//         Ok(Self { records })
+//     }
+//
+//     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+//         Ok(to_csv(&mut self.records, path.as_ref().into())?)
+//     }
+// }

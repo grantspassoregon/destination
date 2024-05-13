@@ -20,6 +20,12 @@ pub trait Address {
     fn number_suffix_mut(&mut self) -> &mut Option<String>;
     fn directional(&self) -> &Option<StreetNamePreDirectional>;
     fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional>;
+    fn street_name_pre_modifier(&self) -> &Option<String>;
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String>;
+    fn street_name_pre_type(&self) -> &Option<String>;
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<String>;
+    fn street_name_separator(&self) -> &Option<String>;
+    fn street_name_separator_mut(&mut self) -> &mut Option<String>;
     fn street_name(&self) -> &String;
     fn street_name_mut(&mut self) -> &mut String;
     fn street_type(&self) -> &Option<StreetNamePostType>;
@@ -51,6 +57,9 @@ pub trait Address {
         if self.number() == other.number()
             && self.number_suffix() == other.number_suffix()
             && self.directional() == other.directional()
+            && self.street_name_pre_modifier() == other.street_name_pre_modifier()
+            && self.street_name_pre_type() == other.street_name_pre_type()
+            && self.street_name_separator() == other.street_name_separator()
             && self.street_name() == other.street_name()
             && self.street_type() == other.street_type()
             && self.subaddress_id() == other.subaddress_id()
@@ -89,27 +98,9 @@ pub trait Address {
             None => self.number().to_string(),
         };
 
-        let complete_street_name = match self.directional() {
-            Some(pre_directional) => match self.street_type() {
-                Some(post_type) => format!(
-                    "{} {} {}",
-                    pre_directional,
-                    self.street_name(),
-                    post_type.abbreviate()
-                ),
-                None => format!("{} {}", pre_directional, self.street_name()),
-            },
-            None => match self.street_type() {
-                Some(post_type) => format!("{} {}", self.street_name(), post_type.abbreviate()),
-                None => self.street_name().to_string(),
-            },
-        };
+        let complete_street_name = self.complete_street_name(true);
 
         let accessory = self.building().as_ref().map(|v| format!("BLDG {v}"));
-        // let accessory = match self.building() {
-        //     Some(value) => Some(format!("BLDG {}", value)),
-        //     None => None,
-        // };
 
         let complete_subaddress = match &self.subaddress_id() {
             Some(identifier) => match self.subaddress_type() {
@@ -137,19 +128,36 @@ pub trait Address {
     }
 
     /// The `complete_street_name` method returns the complete street name of the address.
-    fn complete_street_name(&self) -> String {
-        match self.directional() {
-            Some(pre_directional) => match self.street_type() {
-                Some(post_type) => {
-                    format!("{} {} {}", pre_directional, self.street_name(), post_type)
+    fn complete_street_name(&self, abbreviate: bool) -> String {
+        let mut name = String::new();
+        if let Some(directional) = self.directional() {
+            if abbreviate {
+                if let Some(dir) = &self.directional_abbreviated() {
+                    name.push_str(dir);
                 }
-                None => format!("{} {}", pre_directional, self.street_name()),
-            },
-            None => match self.street_type() {
-                Some(post_type) => format!("{} {}", self.street_name(), post_type),
-                None => self.street_name().to_string(),
-            },
+            } else {
+                name.push_str(&directional.to_string());
+            }
+            name.push_str(" ");
         }
+        if let Some(modifier) = self.street_name_pre_modifier() {
+            name.push_str(modifier);
+            name.push_str(" ");
+        }
+        if let Some(pre_type) = self.street_name_pre_type() {
+            name.push_str(pre_type);
+            name.push_str(" ");
+        }
+        if let Some(separator) = self.street_name_separator() {
+            name.push_str(separator);
+            name.push_str(" ");
+        }
+        name.push_str(&self.street_name().to_string());
+        if let Some(post_type) = self.street_type() {
+            name.push_str(" ");
+            name.push_str(&post_type.to_string());
+        }
+        name
     }
 
     /// The `pre_directional` field represents the street name predirectional component of the
@@ -302,7 +310,7 @@ where
     fn contains_street(&self, street: &String) -> bool {
         let mut contains = false;
         for address in self.values() {
-            let comp_street = address.complete_street_name();
+            let comp_street = address.complete_street_name(false);
             if &comp_street == street {
                 contains = true;
             }
@@ -319,7 +327,7 @@ where
         let mut seen = HashSet::new();
         let mut orphans = Vec::new();
         for address in self.values() {
-            let street = address.complete_street_name();
+            let street = address.complete_street_name(false);
             if !seen.contains(&street) {
                 seen.insert(street.clone());
                 if !other.contains_street(&street) {
@@ -335,7 +343,7 @@ where
     fn citify(&mut self) {
         trace!("Running Citify");
         for address in self.values_mut() {
-            let comp_street = address.complete_street_name();
+            let comp_street = address.complete_street_name(false);
             if comp_street == "NE BEAVILLA VIEW" {
                 trace!("Fixing Beavilla View");
                 *address.street_name_mut() = "BEAVILLA".to_owned();
@@ -392,6 +400,9 @@ pub struct CommonAddress {
     pub number: i64,
     pub number_suffix: Option<String>,
     pub directional: Option<StreetNamePreDirectional>,
+    pub pre_modifier: Option<String>,
+    pub pre_type: Option<String>,
+    pub separator: Option<String>,
     /// The `street_name` field represents the street name component of the complete street name.
     pub street_name: String,
     /// The `street_type` field represents the street name post type component of the complete street
@@ -405,177 +416,6 @@ pub struct CommonAddress {
     pub postal_community: String,
     pub state: String,
     pub status: AddressStatus,
-}
-
-impl CommonAddress {
-    /// An address is coincident when the `other` address refers to the same assignment or
-    /// location.  If the addresses are coincident, but details (such as the floor number or
-    /// address status) differ, then the differences are recorded as a vector of type [`Mismatch`].
-    /// The results are converted to type [`AddressMatch`].
-    pub fn coincident(&self, other: &CommonAddress) -> AddressMatch {
-        let mut coincident = false;
-        let mut mismatches = Vec::new();
-        if self.number == other.number
-            && self.number_suffix == other.number_suffix
-            && self.directional == other.directional
-            && self.street_name == other.street_name
-            && self.street_type == other.street_type
-            && self.subaddress_id == other.subaddress_id
-            && self.zip == other.zip
-            && self.postal_community == other.postal_community
-            && self.state == other.state
-        {
-            coincident = true;
-            if self.subaddress_type != other.subaddress_type {
-                mismatches.push(Mismatch::subaddress_type(
-                    self.subaddress_type,
-                    other.subaddress_type,
-                ));
-            }
-            if self.floor != other.floor {
-                mismatches.push(Mismatch::floor(self.floor, other.floor));
-            }
-            if self.building != other.building {
-                mismatches.push(Mismatch::building(
-                    self.building.clone(),
-                    other.building.clone(),
-                ));
-            }
-            if self.status != other.status {
-                mismatches.push(Mismatch::status(self.status, other.status));
-            }
-        }
-        AddressMatch::new(coincident, mismatches)
-    }
-
-    /// Returns a String representing the address label, consisting of the complete address number,
-    /// complete street name and complete subaddress, used to produce map or mailing labels.
-    pub fn label(&self) -> String {
-        let complete_address_number = match &self.number_suffix {
-            Some(suffix) => format!("{} {}", self.number, suffix),
-            None => self.number.to_string(),
-        };
-
-        let complete_street_name = match self.directional {
-            Some(pre_directional) => format!(
-                "{:?} {} {:?}",
-                pre_directional, self.street_name, self.street_type
-            ),
-            None => format!("{} {:?}", self.street_name, self.street_type),
-        };
-
-        let accessory = self.building().as_ref().map(|v| format!("BLDG {v}"));
-
-        let complete_subaddress = match &self.subaddress_id {
-            Some(identifier) => match self.subaddress_type {
-                Some(subaddress_type) => Some(format!("{:?} {}", subaddress_type, identifier)),
-                None => Some(format!("#{}", identifier)),
-            },
-            None => self
-                .subaddress_type
-                .map(|subaddress_type| format!("{:?}", subaddress_type)),
-        };
-
-        match complete_subaddress {
-            Some(subaddress) => format!(
-                "{} {} {}",
-                complete_address_number, complete_street_name, subaddress
-            ),
-            None => match accessory {
-                Some(value) => format!(
-                    "{} {} {}",
-                    complete_address_number, complete_street_name, value
-                ),
-                None => format!("{} {}", complete_address_number, complete_street_name),
-            },
-        }
-    }
-
-    /// The `complete_street_name` method returns the complete street name of the address.
-    pub fn complete_street_name(&self) -> String {
-        match self.directional {
-            Some(pre_directional) => format!(
-                "{:?} {} {:?}",
-                pre_directional, self.street_name, self.street_type
-            ),
-            None => format!("{} {:?}", self.street_name, self.street_type),
-        }
-    }
-
-    /// The `set_street_name` field sets the street name component of the complete street name.
-    pub fn set_street_name(&mut self, name: &str) {
-        self.street_name = name.to_owned();
-    }
-
-    /// The `pre_directional` field represents the street name predirectional component of the
-    /// complete street name.  This function returns the cloned value of the field.
-    pub fn pre_directional(&self) -> Option<StreetNamePreDirectional> {
-        self.directional
-    }
-
-    /// The `pre_directional` field represents the street name predirectional component of the
-    /// complete street name.  This function returns the cloned value of the field.
-    pub fn pre_directional_abbreviated(&self) -> Option<String> {
-        match self.directional {
-            Some(StreetNamePreDirectional::NORTH) => Some("N".to_string()),
-            Some(StreetNamePreDirectional::EAST) => Some("E".to_string()),
-            Some(StreetNamePreDirectional::SOUTH) => Some("S".to_string()),
-            Some(StreetNamePreDirectional::WEST) => Some("W".to_string()),
-            Some(StreetNamePreDirectional::NORTHEAST) => Some("NE".to_string()),
-            Some(StreetNamePreDirectional::NORTHWEST) => Some("NW".to_string()),
-            Some(StreetNamePreDirectional::SOUTHEAST) => Some("SE".to_string()),
-            Some(StreetNamePreDirectional::SOUTHWEST) => Some("SW".to_string()),
-            None => None,
-        }
-    }
-
-    /// The `set post_type` field sets the street name posttype component of the complete street
-    /// name.
-    pub fn set_post_type(&mut self, value: &StreetNamePostType) {
-        self.street_type = Some(value.to_owned());
-    }
-
-    /// The `subaddress_identifier` field represents the subaddress identifier component of the complete
-    /// subaddress.  This function returns the cloned value of the field.
-    pub fn subaddress_identifier(&self) -> Option<String> {
-        self.subaddress_id.to_owned()
-    }
-
-    /// The `floor` field represents the floor of the building on which the address point is located.  This function returns the value of the field.
-    pub fn floor(&self) -> Option<i64> {
-        self.floor
-    }
-
-    /// The `building` field represents the unique identifier for a building.  This function
-    /// returns the cloned value of the field.
-    pub fn building(&self) -> Option<String> {
-        self.building.to_owned()
-    }
-
-    /// The `zip_code` field represents the zip code.  This function returns the value of the
-    /// field.
-    pub fn zip_code(&self) -> i64 {
-        self.zip
-    }
-
-    /// The `status` field represents the status of an address.  This function returns the cloned
-    /// value of the field.
-    pub fn status(&self) -> AddressStatus {
-        self.status
-    }
-
-    /// The `state_name` field contains the postal code for the State in an address.  This
-    /// function returns the cloned value of the field.
-    pub fn state_name(&self) -> String {
-        self.state.to_owned()
-    }
-
-    /// The `postal_community` field represents the incorporated municipality or unincorporated
-    /// community that serves as the postal community (the "City" field in an address).  This
-    /// function returns the cloned value of the field.
-    pub fn postal_community(&self) -> String {
-        self.postal_community.to_owned()
-    }
 }
 
 impl Address for CommonAddress {
@@ -601,6 +441,30 @@ impl Address for CommonAddress {
 
     fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional> {
         &mut self.directional
+    }
+
+    fn street_name_pre_modifier(&self) -> &Option<String> {
+        &self.pre_modifier
+    }
+
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+        &mut self.pre_modifier
+    }
+
+    fn street_name_pre_type(&self) -> &Option<String> {
+        &self.pre_type
+    }
+
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+        &mut self.pre_type
+    }
+
+    fn street_name_separator(&self) -> &Option<String> {
+        &self.separator
+    }
+
+    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+        &mut self.separator
     }
 
     fn street_name(&self) -> &String {
@@ -703,6 +567,9 @@ impl<T: Address> From<&T> for CommonAddress {
         let number = address.number();
         let number_suffix = address.number_suffix().clone();
         let directional = *address.directional();
+        let pre_modifier = address.street_name_pre_modifier().clone();
+        let pre_type = address.street_name_pre_type().clone();
+        let separator = address.street_name_separator().clone();
         let street_name = address.street_name().clone();
         let street_type = *address.street_type();
         let subaddress_type = *address.subaddress_type();
@@ -717,6 +584,9 @@ impl<T: Address> From<&T> for CommonAddress {
             number,
             number_suffix,
             directional,
+            pre_modifier,
+            pre_type,
+            separator,
             street_name,
             street_type,
             subaddress_type,
@@ -738,176 +608,6 @@ pub struct CommonAddresses {
 }
 
 impl Addresses<CommonAddress> for CommonAddresses {}
-
-impl CommonAddresses {
-    /// Filter elements of the `records` vector according to the argument specified in `filter`.
-    /// Currently only the value "duplicate" is supported as an argument to `filter`, which only
-    /// retains duplicate addresses in the vector.  Duplicate addresses are defined as having
-    /// identical address labels using the [`Address::label()`] method.
-    pub fn filter(&self, filter: &str) -> Self {
-        let mut records = Vec::new();
-        match filter {
-            "duplicate" => {
-                let style = indicatif::ProgressStyle::with_template(
-            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {'Checking for duplicate addresses.'}",
-        )
-        .unwrap();
-                let mut seen = HashSet::new();
-                let bar = ProgressBar::new(self.records.len() as u64);
-                bar.set_style(style);
-                for address in &self.records {
-                    let label = address.label();
-                    if !seen.contains(&label) {
-                        seen.insert(label.clone());
-                        let mut same = self.filter_field("label", &label);
-                        if same.records.len() > 1 {
-                            records.append(&mut same.records);
-                        }
-                    }
-                    bar.inc(1);
-                }
-            }
-            _ => error!("Invalid filter provided."),
-        }
-        CommonAddresses { records }
-    }
-
-    /// The `filter_field` method returns the subset of addresses where the field `filter` is equal
-    /// to the value in `field`.
-    pub fn filter_field(&self, filter: &str, field: &str) -> Self {
-        let mut records = Vec::new();
-        match filter {
-            "label" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| field == record.label())
-                    .collect(),
-            ),
-            "street_name" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| field == record.street_name)
-                    .collect(),
-            ),
-            "pre_directional" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| field == format!("{:?}", record.pre_directional()))
-                    .collect(),
-            ),
-            "post_type" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| field == format!("{:?}", record.street_type))
-                    .collect(),
-            ),
-
-            _ => info!("Invalid filter provided."),
-        }
-        CommonAddresses { records }
-    }
-
-    /// Compares the complete street name of an address to the value in `street`, returning true if
-    /// equal.
-    pub fn contains_street(&self, street: &String) -> bool {
-        let mut contains = false;
-        for address in self.records_ref() {
-            let comp_street = address.complete_street_name();
-            if &comp_street == street {
-                contains = true;
-            }
-        }
-        contains
-    }
-
-    /// The `orphan_streets` method returns the list of complete street names that are contained in
-    /// self but are not present in `other`.
-    pub fn orphan_streets(&self, other: &CommonAddresses) -> Vec<String> {
-        let mut seen = HashSet::new();
-        let mut orphans = Vec::new();
-        for address in self.records_ref() {
-            let street = address.complete_street_name();
-            if !seen.contains(&street) {
-                seen.insert(street.clone());
-                if !other.contains_street(&street) {
-                    orphans.push(street);
-                }
-            }
-        }
-        orphans
-    }
-
-    /// The `citify` method takes county address naming conventions and converts them to city
-    /// naming conventions.
-    pub fn citify(&self) -> Self {
-        trace!("Running Citify");
-        let mut records = Vec::new();
-        for mut address in self.records() {
-            let comp_street = address.complete_street_name();
-            if comp_street == "NE BEAVILLA VIEW" {
-                trace!("Fixing Beavilla View");
-                address.set_street_name("BEAVILLA");
-                address.set_post_type(&StreetNamePostType::VIEW);
-            }
-            if comp_street == "COLUMBIA CREST" {
-                trace!("Fixing Beavilla View");
-                address.set_street_name("COLUMBIA");
-                address.set_post_type(&StreetNamePostType::CREST);
-            }
-            if comp_street == "SE FORMOSA GARDENS" {
-                trace!("Fixing Formosa Gardens");
-                address.set_street_name("FORMOSA");
-                address.set_post_type(&StreetNamePostType::GARDENS);
-            }
-            if comp_street == "SE HILLTOP VIEW" {
-                trace!("Fixing Hilltop View");
-                address.set_street_name("HILLTOP");
-                address.set_post_type(&StreetNamePostType::VIEW);
-            }
-            if comp_street == "MARILEE ROW" {
-                trace!("Fixing Marilee Row");
-                address.set_street_name("MARILEE");
-                address.set_post_type(&StreetNamePostType::ROW);
-            }
-            if comp_street == "MEADOW GLEN" {
-                trace!("Fixing Meadow Glen");
-                address.set_street_name("MEADOW");
-                address.set_post_type(&StreetNamePostType::GLEN);
-            }
-            if comp_street == "ROBERTSON CREST" {
-                trace!("Fixing Robertson Crest");
-                address.set_street_name("ROBERTSON");
-                address.set_post_type(&StreetNamePostType::CREST);
-            }
-            if comp_street == "NE QUAIL CROSSING" {
-                trace!("Fixing Quail Crossing");
-                address.set_street_name("QUAIL");
-                address.set_post_type(&StreetNamePostType::CROSSING);
-            }
-            records.push(address)
-        }
-        CommonAddresses { records }
-    }
-
-    /// The `records` field hold a vector of type [`Address`].  This function returns the cloned
-    /// value of the field.
-    pub fn records(&self) -> Vec<CommonAddress> {
-        self.records.to_owned()
-    }
-
-    /// This function returns a reference to the vector in the `records` field.
-    pub fn records_ref(&self) -> &Vec<CommonAddress> {
-        &self.records
-    }
-}
 
 impl Portable<CommonAddresses> for CommonAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -1149,7 +849,7 @@ impl From<&FireInspections> for PartialAddresses {
 /// Deltas - Measuring the distance between points based upon matching values.
 /// The `label` field of `AddressDelta` holds the matching value and the `delta`
 /// field holds the distance between matching points.
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, PartialOrd, Serialize)]
 pub struct AddressDelta {
     /// Addresses match by address label.
     pub label: String,
@@ -1173,7 +873,7 @@ impl AddressDelta {
 
 /// The `AddressDeltas` struct holds a `records` field that contains a vector of type
 /// [`AddressDelta`].
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, PartialOrd, Serialize)]
 pub struct AddressDeltas {
     pub records: Vec<AddressDelta>,
 }
@@ -1182,24 +882,8 @@ impl AddressDeltas {
     /// Writes the contents of `AddressDeltas` to a CSV file output to path `title`.  Each element
     /// of the vector in `records` writes to a row on the CSV file.
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        to_csv(&mut self.records(), title)?;
+        to_csv(&mut self.values_mut(), title)?;
         Ok(())
-    }
-
-    /// The `records` field hold a vector of type [`AddressDelta`].  This function returns the cloned
-    /// value of the field.
-    pub fn records(&self) -> Vec<AddressDelta> {
-        self.records.clone()
-    }
-
-    /// This functions returns a reference to the vector contained in the `records` field.
-    pub fn records_ref(&self) -> &Vec<AddressDelta> {
-        &self.records
-    }
-
-    /// This functions returns a mutable reference to the vector contained in the `records` field.
-    pub fn records_mut(&mut self) -> &mut Vec<AddressDelta> {
-        &mut self.records
     }
 }
 

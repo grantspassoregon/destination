@@ -141,12 +141,12 @@ fn main() -> Clean<()> {
                 match source_type.as_str() {
                     "grants_pass" => {
                         source_addresses = CommonAddresses::from(
-                            &CityAddresses::from_csv(cli.source.clone())?.records[..],
+                            &GrantsPassAddresses::from_csv(cli.source.clone())?.records[..],
                         )
                     }
                     "josephine_county" => {
                         source_addresses = CommonAddresses::from(
-                            &CountyAddresses::from_csv(cli.source.clone())?.records[..],
+                            &JosephineCountyAddresses2024::from_csv(cli.source.clone())?.records[..],
                         )
                     }
                     _ => error!("Unrecognized file format."),
@@ -155,7 +155,7 @@ fn main() -> Clean<()> {
 
             info!(
                 "Source records read: {} entries.",
-                source_addresses.records_ref().len()
+                source_addresses.values().len()
             );
 
             trace!("Reading exclusion addresses.");
@@ -165,7 +165,7 @@ fn main() -> Clean<()> {
                     match target_type.as_str() {
                         "josephine_county" => {
                             target_addresses = CommonAddresses::from(
-                                &CountyAddresses::from_csv(target)?.records[..],
+                                &JosephineCountyAddresses::from_csv(target)?.records[..],
                             )
                         }
                         _ => error!("Invalid target data type."),
@@ -179,7 +179,7 @@ fn main() -> Clean<()> {
             // target_addresses = target_addresses.citify();
             info!(
                 "Exclusion records read: {} entries.",
-                target_addresses.records_ref().len()
+                target_addresses.values().len()
             );
             let mut lx = LexisNexis::from_addresses(&source_addresses, &target_addresses)?;
             lx.to_csv(cli.output)?;
@@ -382,7 +382,8 @@ fn main() -> Clean<()> {
                     }
                     "josephine_county" => {
                         source = GeoAddresses::from(
-                            &CountyAddresses::from_csv(cli.source.clone())?.records[..],
+                            &JosephineCountySpatialAddresses2024::from_csv(cli.source.clone())?
+                                .records[..],
                         )
                     }
                     _ => error!("Unrecognized file format."),
@@ -400,7 +401,8 @@ fn main() -> Clean<()> {
                         }
                         "josephine_county" => {
                             target = GeoAddresses::from(
-                                &CountyAddresses::from_csv(target_path)?.records[..],
+                                &JosephineCountySpatialAddresses2024::from_csv(target_path)?
+                                    .records[..],
                             )
                         }
                         _ => error!("Unrecognized file format."),
