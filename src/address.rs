@@ -138,23 +138,23 @@ pub trait Address {
             } else {
                 name.push_str(&directional.to_string());
             }
-            name.push_str(" ");
+            name.push(' ');
         }
         if let Some(modifier) = self.street_name_pre_modifier() {
             name.push_str(modifier);
-            name.push_str(" ");
+            name.push(' ');
         }
         if let Some(pre_type) = self.street_name_pre_type() {
             name.push_str(pre_type);
-            name.push_str(" ");
+            name.push(' ');
         }
         if let Some(separator) = self.street_name_separator() {
             name.push_str(separator);
-            name.push_str(" ");
+            name.push(' ');
         }
         name.push_str(&self.street_name().to_string());
         if let Some(post_type) = self.street_type() {
-            name.push_str(" ");
+            name.push(' ');
             name.push_str(&post_type.to_string());
         }
         name
@@ -882,7 +882,7 @@ impl AddressDeltas {
     /// Writes the contents of `AddressDeltas` to a CSV file output to path `title`.  Each element
     /// of the vector in `records` writes to a row on the CSV file.
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        to_csv(&mut self.values_mut(), title)?;
+        to_csv(self.values_mut(), title)?;
         Ok(())
     }
 }
