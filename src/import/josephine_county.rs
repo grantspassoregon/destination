@@ -19,6 +19,8 @@ pub struct JosephineCountyAddress2024 {
         rename = "st_predir"
     )]
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
+    #[serde(rename = "st_pretyp")]
+    pub street_name_pre_type: String,
     #[serde(rename = "st_name")]
     pub street_name: String,
     #[serde(deserialize_with = "deserialize_mixed_post_type", rename = "st_postyp")]
@@ -202,6 +204,8 @@ pub struct JosephineCountySpatialAddress2024 {
         rename = "st_predir"
     )]
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
+    #[serde(rename = "st_pretyp")]
+    pub street_name_pre_type: String,
     #[serde(rename = "st_name")]
     pub street_name: String,
     #[serde(deserialize_with = "deserialize_mixed_post_type", rename = "st_postyp")]
