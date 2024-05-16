@@ -391,42 +391,42 @@ where
             let comp_street = address.complete_street_name(false);
             if comp_street == "NE BEAVILLA VIEW" {
                 trace!("Fixing Beavilla View");
-                *address.street_name_mut() = "BEAVILLA".to_owned();
+                *address.street_name_mut() = "BEAVILLA".to_string();
                 *address.street_type_mut() = Some(StreetNamePostType::VIEW);
             }
             if comp_street == "COLUMBIA CREST" {
                 trace!("Fixing Columbia Crest");
-                *address.street_name_mut() = "COLUMBIA".to_owned();
+                *address.street_name_mut() = "COLUMBIA".to_string();
                 *address.street_type_mut() = Some(StreetNamePostType::CREST);
             }
             if comp_street == "SE FORMOSA GARDENS" {
                 trace!("Fixing Formosa Gardens");
-                *address.street_name_mut() = "FORMOSA".to_owned();
+                *address.street_name_mut() = "FORMOSA".to_string();
                 *address.street_type_mut() = Some(StreetNamePostType::GARDENS);
             }
             if comp_street == "SE HILLTOP VIEW" {
                 trace!("Fixing Hilltop View");
-                *address.street_name_mut() = "HILLTOP".to_owned();
+                *address.street_name_mut() = "HILLTOP".to_string();
                 *address.street_type_mut() = Some(StreetNamePostType::VIEW);
             }
             if comp_street == "MARILEE ROW" {
                 trace!("Fixing Marilee Row");
-                *address.street_name_mut() = "MARILEE".to_owned();
+                *address.street_name_mut() = "MARILEE".to_string();
                 *address.street_type_mut() = Some(StreetNamePostType::ROW);
             }
             if comp_street == "MEADOW GLEN" {
                 trace!("Fixing Meadow Glen");
-                *address.street_name_mut() = "MEADOW".to_owned();
+                *address.street_name_mut() = "MEADOW".to_string();
                 *address.street_type_mut() = Some(StreetNamePostType::GLEN);
             }
             if comp_street == "ROBERTSON CREST" {
                 trace!("Fixing Robertson Crest");
-                *address.street_name_mut() = "ROBERTSON".to_owned();
+                *address.street_name_mut() = "ROBERTSON".to_string();
                 *address.street_type_mut() = Some(StreetNamePostType::CREST);
             }
             if comp_street == "NE QUAIL CROSSING" {
                 trace!("Fixing Quail Crossing");
-                *address.street_name_mut() = "QUAIL".to_owned();
+                *address.street_name_mut() = "QUAIL".to_string();
                 *address.street_type_mut() = Some(StreetNamePostType::CROSSING);
             }
         }
