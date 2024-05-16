@@ -7,10 +7,20 @@ use nom::character::is_alphanumeric;
 use nom::combinator::{map_res, opt};
 use nom::IResult;
 
+/// The `parse_address_number` function expects one or more numeric digits, returned as an i64 value.
 pub fn parse_address_number(input: &str) -> IResult<&str, i64> {
     map_res(digit1, str::parse)(input)
 }
 
+/// The `parse_address_number_suffix` function peeks at the next value in the input, checking if
+/// the second character in the string is non-alphanumeric.  Since address number suffixes in Grants Pass
+/// take values of either `1/2` or `3/4`, the second character will be `/`, which is not a valid
+/// character for any components of the street name.  So if a `/` is present, it must be an address
+/// number suffix, and this function will parse and return it.  If no address number suffix is
+/// present, the function returns `None`.
+///
+/// Note this approach is not valid for address number suffixes that do not conform to the
+/// indicated pattern.
 pub fn parse_address_number_suffix(input: &str) -> IResult<&str, Option<&str>> {
     let (remaining, _) = space0(input)?;
     let (rem, suffix) = take_until(" ")(remaining)?;
@@ -24,6 +34,10 @@ pub fn parse_address_number_suffix(input: &str) -> IResult<&str, Option<&str>> {
     }
 }
 
+/// The `parse_pre_directional` function attempts to parse the next word in the input to a
+/// [`StreetNamePreDirectional`].  If a [`StreetNamePreDirectional`] is present, the function
+/// returns the value and the remainder of the input.  If not present, the function returns `None`
+/// as the directional and gives the full input back.
 pub fn parse_pre_directional(input: &str) -> IResult<&str, Option<StreetNamePreDirectional>> {
     let (rem, _) = space0(input)?;
     let (rem, result) = alpha1(rem)?;
@@ -34,6 +48,12 @@ pub fn parse_pre_directional(input: &str) -> IResult<&str, Option<StreetNamePreD
     }
 }
 
+/// The `parse_post_type` function attempts to parse the next word in the input as a
+/// [`StreetNamePostType`] value.  Since the street name post type is a required field for Grants
+/// Pass addresses, there is no need to peek and conditionally return.  If the street name post
+/// type evaluates to None, this is not a hard error, because the post type is not a required field
+/// according to the FGDC standard, and partner agencies such as ECSO may have valid addresses
+/// without a street name post type (e.g. "Broadway").
 pub fn parse_post_type(input: &str) -> IResult<&str, Option<StreetNamePostType>> {
     let (rem, _) = space0(input)?;
     let (rem, result) = alpha1(rem)?;
@@ -42,27 +62,15 @@ pub fn parse_post_type(input: &str) -> IResult<&str, Option<StreetNamePostType>>
     Ok((rem, post_type))
 }
 
-pub fn parse_street_name(input: &str) -> IResult<&str, (Option<StreetNamePreDirectional>, &str)> {
-    let (remaining, predir) = parse_pre_directional(input)?;
-    match predir {
-        Some(dir) => {
-            let (rem, _) = space0(remaining)?;
-            let (post, name) = alphanumeric1(rem)?;
-            Ok((post, (Some(dir), name)))
-        }
-        None => {
-            let (rem, _) = space0(input)?;
-            let (post, name) = alphanumeric1(rem)?;
-            Ok((post, (None, name)))
-        }
-    }
-}
-
+/// The `single_word` function removes any preceding whitespace and parses the first group of
+/// alphanumeric characters, returning the result as a "single word".
 pub fn single_word(input: &str) -> IResult<&str, &str> {
     let (rem, _) = space0(input)?;
     alphanumeric1(rem)
 }
 
+/// The `is_post_type` function returns true if the input parses to a valid [`StreetNamePostType`].
+/// Peeks at the data without consuming it.
 pub fn is_post_type(input: &str) -> IResult<&str, bool> {
     tracing::trace!("Calling is_post_type");
     let (rem, post) = parse_post_type(input)?;
@@ -70,6 +78,10 @@ pub fn is_post_type(input: &str) -> IResult<&str, bool> {
     Ok((rem, post.is_some()))
 }
 
+/// The `multi_word` function expect at least one word, and then tests the remainder for the
+/// presence of a street name post type.  If a street name post type is not present, the function will
+/// continue iterating over words in the input until the next word parses as a street name
+/// post type, when it will stop and return.  Josephine County has a couple instances of streets with multiple post type values (e.g. Azalea Drive Cutoff).  According to FGDC guidelines, multiple post type values can either be parsed as part of the street name component or as multiple values of the street name post type, and we have chosen the latter strategy.
 pub fn multi_word(input: &str) -> IResult<&str, Vec<&str>> {
     let (rem, start) = single_word(input)?;
     let (_, test) = is_post_type(rem)?;
@@ -90,6 +102,12 @@ pub fn multi_word(input: &str) -> IResult<&str, Vec<&str>> {
     Ok((remaining, name))
 }
 
+/// The `recursive_post_type` function expects one or more [`StreetNamePostType`] designations.
+/// 
+/// Originally I meant this function to call [`is_post_type`] and [`parse_post_type`] recursively.
+/// Instead, there is no recursion here, we use a while loop to continue parsing street name post
+/// types until failure, at which point the function returns the vector of parsed post types and
+/// the remainder of the input.
 pub fn recursive_post_type(input: &str) -> IResult<&str, Vec<StreetNamePostType>> {
     let mut post_type = Vec::new();
     let mut cond = true;
@@ -113,6 +131,13 @@ pub fn recursive_post_type(input: &str) -> IResult<&str, Vec<StreetNamePostType>
     Ok((remaining, post_type))
 }
 
+/// The `parse_complete_street_name` function attempts to parse a complete street name from the
+/// input.  First it tries to read the pre directional, then one or more street names.  If it
+/// parses more than one post type, it returns the last post type in the post type field, and
+/// appends the remainder to the street name.
+///
+/// TODO:  For streets with multiple post type values, such as Azalea Dr Cutoff, this will
+/// incorrectly classify the post type and street name.
 pub fn parse_complete_street_name(
     input: &str,
 ) -> IResult<
@@ -147,6 +172,10 @@ pub fn parse_complete_street_name(
     Ok((rem, (predir, name, post)))
 }
 
+/// The `parse_subaddress_type` function attempts to find a word following the street name post
+/// type and preceding the postal community.  If a word is present, and parses to a subaddress
+/// type, the function will return the type and the remainder.  If no subaddress type is present,
+/// the function will return the full input.
 pub fn parse_subaddress_type(input: &str) -> IResult<&str, Option<SubaddressType>> {
     let (rem, next) = opt(single_word)(input)?;
     let subtype = if let Some(word) = next {

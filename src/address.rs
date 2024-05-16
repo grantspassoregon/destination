@@ -13,38 +13,80 @@ use std::collections::HashSet;
 use std::path::Path;
 use tracing::{error, info, trace};
 
+/// The `Address` trait enables the data to function as well-formed address.  The methods of the
+/// trait define values for constituent components of an address.  The address components follow
+/// the FGDC classification.
 pub trait Address {
+    /// The `number` method returns the address number component.
     fn number(&self) -> i64;
+    /// The `number_mut` method returns a mutable reference to the address number component.
     fn number_mut(&mut self) -> &mut i64;
+    /// The `number_suffix` method returns the address number suffix component.
     fn number_suffix(&self) -> &Option<String>;
+    /// The `number_suffix_mut` method returns a mutable reference to the address number suffix component.
     fn number_suffix_mut(&mut self) -> &mut Option<String>;
+    /// The `directional` method returns the [`StreetNamePreDirectional`] component, if any.
     fn directional(&self) -> &Option<StreetNamePreDirectional>;
+    /// The `directional` method returns a mutable reference to the [`StreetNamePreDirectional`] value.
     fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional>;
+    /// The `street_name_pre_modifier` method returns the street name pre modifier component.
     fn street_name_pre_modifier(&self) -> &Option<String>;
+    /// The `street_name_pre_modifier_mut` method returns a mutable reference to the street name pre modifier component.
     fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String>;
+    /// The `street_name_pre_type` method returns the street name pre type component.
     fn street_name_pre_type(&self) -> &Option<String>;
+    /// The `street_name_pre_type_mut` method returns a mutable reference to the street name pre type component.
     fn street_name_pre_type_mut(&mut self) -> &mut Option<String>;
+    /// The `street_name_separator` method returns the separator element component.
     fn street_name_separator(&self) -> &Option<String>;
+    /// The `street_name_separator_mut` method returns a mutable reference to the separator element component.
     fn street_name_separator_mut(&mut self) -> &mut Option<String>;
+    /// The `street_name` method returns the street name component.
     fn street_name(&self) -> &String;
+    /// The `street_name_mut` method returns a mutable reference to the street name component.
     fn street_name_mut(&mut self) -> &mut String;
+    /// The `street_type` method returns the street name post type component.
     fn street_type(&self) -> &Option<StreetNamePostType>;
+    /// The `street_type_mut` method returns a mutable reference to the street name post type component.
     fn street_type_mut(&mut self) -> &mut Option<StreetNamePostType>;
+    /// The `subaddress_id` method returns the subaddress identifier component, if any.
     fn subaddress_id(&self) -> &Option<String>;
+    /// The `subaddress_id_mut` method returns a mutable reference to the vale of the subaddress identifier component.
     fn subaddress_id_mut(&mut self) -> &mut Option<String>;
+    /// The `subaddress_type` method returns the subaddress type component, if any.
     fn subaddress_type(&self) -> &Option<SubaddressType>;
+    /// The `subaddress_type_mut` method returns a mutable reference to the value of the subaddress type component.
     fn subaddress_type_mut(&mut self) -> &mut Option<SubaddressType>;
+    /// The `floor` method returns the floor identifier corresponding to the `Floor` field in the
+    /// NENA standard, required for emergency response.
     fn floor(&self) -> &Option<i64>;
+    /// The `floor_mut` method returns a mutable reference to the value of the floor identifier.
     fn floor_mut(&mut self) -> &mut Option<i64>;
+    /// The `building` method returns the building identifier corresponing to the `Building` field
+    /// in the NENA standard, required for emergency response.
     fn building(&self) -> &Option<String>;
+    /// The `building_mut` method returns a mutable reference to the value of the building
+    /// identifier.
     fn building_mut(&mut self) -> &mut Option<String>;
+    /// The `zip` method returns the zip code component of the address.
     fn zip(&self) -> i64;
+    /// The `zip_mut` method returns a mutable reference to the value of the zip code component.
     fn zip_mut(&mut self) -> &mut i64;
+    /// The `postal_community` method returns the postal community component of the address, being
+    /// the unincorporated or incorporated municipality name.
     fn postal_community(&self) -> &String;
+    /// The `postal_community_mut` method returns a mutable reference to the value of the postal
+    /// community component.
     fn postal_community_mut(&mut self) -> &mut String;
+    /// The `state` method returns the state name component of the address.
     fn state(&self) -> &String;
+    /// The `state_mut` method returns a mutable reference to the value of the state name
+    /// component.
     fn state_mut(&mut self) -> &mut String;
+    /// The `status` method returns the local status of the address, as determined by the
+    /// relevant address authority.
     fn status(&self) -> &AddressStatus;
+    /// The `status_mut` method returns a mutable reference to the value of the address status.
     fn status_mut(&mut self) -> &mut AddressStatus;
 
     /// An address is coincident when the `other` address refers to the same assignment or
@@ -227,10 +269,13 @@ pub trait Address {
     }
 }
 
+/// The `Addresses` trait enables methods that act on vectors of type [`Address`].
 pub trait Addresses<T: Address + Clone + Send + Sync>
 where
     Self: Vectorized<T> + Clone,
 {
+    /// The `filter` method returns the subset of addresses that match the filter.  Current values
+    /// include "duplicate", which retains addresses that contain a duplicate in the set.
     fn filter(&self, filter: &str) -> Vec<T> {
         let mut records = Vec::new();
         let values = self.values();
@@ -387,34 +432,59 @@ where
         }
     }
 
+    /// The `LexisNexis` method produces the LexisNexis table showing dispatch jurisdiction for
+    /// address ranges within the City of Grants Pass.
     fn lexis_nexis(&self, other: &Self) -> Clean<LexisNexis> {
         LexisNexis::from_addresses(self, other)
     }
 }
 
-/// The `CommonAddress` struct defines the fields of a valid address.
+/// The `CommonAddress` struct defines the fields of a valid address, following the FGDC standard,
+/// with the inclusion of NENA-required fields for emergency response.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CommonAddress {
     /// The `number` field represents the address number component of the complete address
     /// number.
     pub number: i64,
+    /// The `number_suffix` field represents the address number suffix component of the complete
+    /// address number.
     pub number_suffix: Option<String>,
+    /// The `directional` field represents the street name pre directional component of the
+    /// complete street name.
     pub directional: Option<StreetNamePreDirectional>,
+    /// The `pre_modifier` field represents the street name pre modifier component of the complete
+    /// street name.
     pub pre_modifier: Option<String>,
+    /// The `pre_type` field represents the street name pre type component of the complete street
+    /// name.
     pub pre_type: Option<String>,
+    /// The `separator` field represents the separator element component of the complete street
+    /// name.
     pub separator: Option<String>,
     /// The `street_name` field represents the street name component of the complete street name.
     pub street_name: String,
     /// The `street_type` field represents the street name post type component of the complete street
     /// name.
     pub street_type: Option<StreetNamePostType>,
+    /// The `subaddress_type` field represents the subaddress type component of the complete
+    /// subaddress.
     pub subaddress_type: Option<SubaddressType>,
+    /// The `subaddress_id` field represents the subaddress identifier component of the complete
+    /// subaddress.
     pub subaddress_id: Option<String>,
+    /// The `floor` field represents the floor identifier, corresponding to the `Floor` field from the NENA standard.
     pub floor: Option<i64>,
+    /// The `building` field represents the building identifier, corresponding to the `Building` field from the NENA standard.
     pub building: Option<String>,
+    /// The `zip` field represents the postal zip code of the address.
     pub zip: i64,
+    /// The `postal_community` field represents the postal community component of the address,
+    /// being either the unincorporated or incorporated municipality name.
     pub postal_community: String,
+    /// The `state` field represents the state name component of the address.
     pub state: String,
+    /// The `status` field represents the local status of the address as determined by the relevant
+    /// addressing authority.
     pub status: AddressStatus,
 }
 
@@ -604,6 +674,7 @@ impl<T: Address> From<&T> for CommonAddress {
 /// The `CommonAddresses` struct holds a vector of type [`CommonAddress`].
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct CommonAddresses {
+    /// The `records` field contains a vector of type [`CommonAddress`].
     pub records: Vec<CommonAddress>,
 }
 
@@ -643,7 +714,10 @@ impl<T: Address + Clone> From<&[T]> for CommonAddresses {
 /// The `PartialAddress` struct contains optional fields so that incomplete or missing data can be
 /// compared against [`Addresses`] or [`PartialAddresses`] for potential matches.  Used to help
 /// match address information that does not parse into a full valid address.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+///
+/// TODO: Expand the data fields to include street name pre modifier, street name pre type, and
+/// separator element.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PartialAddress {
     /// The `address_number` field represents the address number component of the complete address
     /// number.
@@ -797,6 +871,7 @@ impl PartialAddress {
 
 /// The `PartialAddresses` struct holds a `records` field that contains a vector of type
 /// [`PartialAddress`].
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PartialAddresses {
     records: Vec<PartialAddress>,
 }
@@ -807,10 +882,26 @@ impl PartialAddresses {
     pub fn new(records: Vec<PartialAddress>) -> Self {
         Self { records }
     }
-    /// The `records` field holds a vector of type [`PartialAddress`].  This function returns the
-    /// cloned value of the field.
-    pub fn records(&self) -> Vec<PartialAddress> {
-        self.records.clone()
+}
+
+impl Portable<PartialAddresses> for PartialAddresses {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        save(self, path)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = from_csv(path)?;
+        Ok(Self { records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
     }
 }
 
@@ -849,13 +940,15 @@ impl From<&FireInspections> for PartialAddresses {
 /// Deltas - Measuring the distance between points based upon matching values.
 /// The `label` field of `AddressDelta` holds the matching value and the `delta`
 /// field holds the distance between matching points.
-#[derive(Debug, Clone, Default, PartialEq, PartialOrd, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct AddressDelta {
     /// Addresses match by address label.
     pub label: String,
     /// Distance between points representing the same address.
     pub delta: f64,
+    /// Reference latitude from the subject address.
     pub latitude: f64,
+    /// Reference longitude from the subject address.
     pub longitude: f64,
 }
 
@@ -873,18 +966,10 @@ impl AddressDelta {
 
 /// The `AddressDeltas` struct holds a `records` field that contains a vector of type
 /// [`AddressDelta`].
-#[derive(Debug, Clone, Default, PartialEq, PartialOrd, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct AddressDeltas {
+    /// The `records` field holds a vector of type [`AddressDelta`].
     pub records: Vec<AddressDelta>,
-}
-
-impl AddressDeltas {
-    /// Writes the contents of `AddressDeltas` to a CSV file output to path `title`.  Each element
-    /// of the vector in `records` writes to a row on the CSV file.
-    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        to_csv(self.values_mut(), title)?;
-        Ok(())
-    }
 }
 
 impl Vectorized<AddressDelta> for AddressDeltas {
@@ -898,5 +983,26 @@ impl Vectorized<AddressDelta> for AddressDeltas {
 
     fn into_values(self) -> Vec<AddressDelta> {
         self.records
+    }
+}
+
+impl Portable<AddressDeltas> for AddressDeltas {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        save(self, path)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = from_csv(path)?;
+        Ok(Self { records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
     }
 }

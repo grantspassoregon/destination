@@ -63,7 +63,7 @@ impl FireInspectionMatches {
                     .records()
                     .par_iter()
                     .cloned()
-                    .filter(|r| r.record().records()[0].match_status() == MatchStatus::Missing)
+                    .filter(|r| r.record().values()[0].match_status() == MatchStatus::Missing)
                     .collect(),
             ),
             "divergent" => records.append(
@@ -71,7 +71,7 @@ impl FireInspectionMatches {
                     .records()
                     .par_iter()
                     .cloned()
-                    .filter(|r| r.record().records()[0].match_status() == MatchStatus::Divergent)
+                    .filter(|r| r.record().values()[0].match_status() == MatchStatus::Divergent)
                     .collect(),
             ),
             "matching" => records.append(
@@ -79,7 +79,7 @@ impl FireInspectionMatches {
                     .records()
                     .par_iter()
                     .cloned()
-                    .filter(|r| r.record().records()[0].match_status() == MatchStatus::Matching)
+                    .filter(|r| r.record().values()[0].match_status() == MatchStatus::Matching)
                     .collect(),
             ),
             _ => info!("Invalid filter provided."),
@@ -170,7 +170,7 @@ impl From<&FireInspectionMatch> for FireInspectionMatchRecords {
         let mut records = Vec::new();
         let name = inspection.inspection().name();
         let address_label = inspection.inspection().address().label();
-        for record in inspection.record().records() {
+        for record in inspection.record().values() {
             records.push(FireInspectionMatchRecord {
                 status: record.match_status(),
                 name: name.to_owned(),

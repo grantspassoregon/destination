@@ -1,9 +1,11 @@
 use crate::prelude::*;
+use aid::prelude::Clean;
 use galileo::galileo_types::geo::GeoPoint;
 use galileo::galileo_types::geometry_type::{GeoSpace2d, GeometryType, PointGeometryType};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use tracing::info;
 
 /// The `Mismatch` enum tracks the fields of an address that can diverge while still potentially
@@ -47,28 +49,39 @@ impl Mismatch {
     }
 }
 
+/// The `Mismatches` struct holds a vector of type [`Mismatch`].
 #[derive(Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 pub struct Mismatches {
+    /// The `fields` field holds a vector of type ['Mismatch'].
     pub fields: Vec<Mismatch>,
 }
 
 impl Mismatches {
+    /// Creates a new 'Mismatches' from a vector of type ['Mismatch'].
     pub fn new(fields: Vec<Mismatch>) -> Self {
         Mismatches { fields }
     }
 }
 
+/// The `AddressMatch` is an intermediary data structure used internally to aggregate match information from
+/// comparing types that implement [`Addresses`], for the purpose of producing ['MatchRecords'].
 #[derive(Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 pub struct AddressMatch {
+    /// The `coincident` field indicates the compared addresses refer to the same location, or are
+    /// coincidental.
     pub coincident: bool,
+    /// The `mismatches` field holds [`Mismatch`] information for each field that differs between
+    /// the compared addresses.  If no coincident address is present, this field is `None`.
     pub mismatches: Option<Mismatches>,
 }
 
 impl AddressMatch {
+    /// Constructor for creating an `AddressMatch` from its constituent fields.
     pub fn new(coincident: bool, fields: Vec<Mismatch>) -> Self {
-        let mismatches = match fields.len() {
-            0 => None,
-            _ => Some(Mismatches::new(fields)),
+        let mismatches = if fields.is_empty() {
+            None
+        } else {
+            Some(Mismatches::new(fields))
         };
         AddressMatch {
             coincident,
@@ -77,23 +90,50 @@ impl AddressMatch {
     }
 }
 
+/// The `MatchStatus` enum delineates whether a given address has a match (the `Matching` variant),
+/// has a match but differs in some descriptive fields (the `Divergent` variant), or does not have
+/// a match in the comparison set (the `Missing` variant).
+///
+/// We have derived Default using the Missing variant, mostly so structs that take a `MatchStatus`
+/// as a field can also derive default.  Properly speaking, there is no meaningful default for this
+/// struct, but if you need to create one first and fill it in later, you can.
 #[derive(Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 pub enum MatchStatus {
+    /// The `Matching` variant indicates an address has an exact match in the comparison set.
     Matching,
+    /// The `Divergent` variant indicates an address has a match in the comparison set, but
+    /// the address contains fields with different values than in the comparison (e.g. the
+    /// address has status 'Retired' compared to 'Current').
     Divergent,
     #[default]
+    /// The `Missing` variant indicates the address does not have a match in the comparison set.
     Missing,
 }
 
+/// A `MatchRecord` reports the match results for a single address compared against a set of
+/// addresses.  Designed to plot and diagnose missing and divergent addresses.
 #[derive(Debug, Default, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct MatchRecord {
+    /// The `match_status` field represents the match status of the address.
     pub match_status: MatchStatus,
+    /// The `address_label` field is the text representation of the subject address.
     pub address_label: String,
+    /// The `subaddress_type` field indicates a difference in subaddress type between a subject
+    /// address and its match, if present.  E.g. "SUITE" does not match "APARTMENT".
     pub subaddress_type: Option<String>,
+    /// The `floor` field indicates the subject address and its match, if present, have different floor numbers.
     pub floor: Option<String>,
+    /// The `building` field indicates the subject address and its match, if present, have
+    /// different building identifiers.
     pub building: Option<String>,
+    /// The `status` field indicates the subject address and its match, if present, have different
+    /// values for the address status. E.g. "Current" does not match "Other".
     pub status: Option<String>,
+    /// The `longitude` field represents the 'x' value of the address point.  Depending on the
+    /// input from the caller, the value may be in decimal degrees, meters or feet.
     pub longitude: f64,
+    /// The `latitude` field represents the 'y' value of the address point.  Depending on the
+    /// input from the caller, the value may be in decimal degrees, meters or feet.
     pub latitude: f64,
 }
 
@@ -114,12 +154,19 @@ impl GeometryType for MatchRecord {
     type Space = GeoSpace2d;
 }
 
+/// The `MatchRecords` struct holds a vector of type [`MatchRecord`].
 #[derive(Debug, Default, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct MatchRecords {
+    /// The `records` field holds a vector of type [`MatchRecord`]
     pub records: Vec<MatchRecord>,
 }
 
 impl MatchRecords {
+    /// The constructor for `MatchRecords` compares a single subject address against a set of
+    /// addresses, and returns the `MatchRecords` for the subject address.  A subject address can
+    /// match against multiple candidates (e.g. a parent address will match against all
+    /// subaddresses associated with the parent), so the result type must potentially accommodate
+    /// multiple records.
     pub fn new<T: Address + GeoPoint<Num = f64>, U: Address + GeoPoint<Num = f64>>(
         self_address: &T,
         other_addresses: &[U],
@@ -190,6 +237,9 @@ impl MatchRecords {
         }
     }
 
+    /// For each address in `self_addresses`, the `compare` method calculates the match record for
+    /// the subject address compared against the addresses in `other_addresses`, and returns the
+    /// results in a [`MatchRecords`] struct.
     pub fn compare<
         T: Address + GeoPoint<Num = f64> + Send + Sync,
         U: Address + GeoPoint<Num = f64> + Send + Sync,
@@ -213,6 +263,12 @@ impl MatchRecords {
         MatchRecords { records }
     }
 
+    /// The `filter` method returns the subset of `MatchRecords` that meet the filter requirement.
+    /// The `filter` parameter takes a string reference that can take the values "matching",
+    /// "missing", "divergent", "subaddress", "floor", "building" and "status".  When filtering by
+    /// match status, the return records contain those records where the match status equals the
+    /// filter value.  For the mismatch fields, the return records contain values where a mismatch
+    /// is present in the provided field.
     pub fn filter(self, filter: &str) -> Self {
         let mut records = Vec::new();
         match filter {
@@ -285,36 +341,62 @@ impl MatchRecords {
         }
         MatchRecords { records }
     }
+}
 
-    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        to_csv(self.records_mut(), title)?;
-        Ok(())
-    }
-
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let records = from_csv(path)?;
-        Ok(MatchRecords { records })
-    }
-
-    pub fn records_ref(&self) -> &Vec<MatchRecord> {
+impl Vectorized<MatchRecord> for MatchRecords {
+    fn values(&self) -> &Vec<MatchRecord> {
         &self.records
     }
 
-    pub fn records_mut(&mut self) -> &mut Vec<MatchRecord> {
+    fn values_mut(&mut self) -> &mut Vec<MatchRecord> {
         &mut self.records
+    }
+
+    fn into_values(self) -> Vec<MatchRecord> {
+        self.records
     }
 }
 
+impl Portable<MatchRecords> for MatchRecords {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        save(self, path)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = from_csv(path)?;
+        Ok(Self { records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+    }
+}
+
+/// The `MatchPartialRecord` struct contains match data for a ['PartialAddress'].
 #[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct MatchPartialRecord {
+    /// The `match_status` field represents the match status of the partial address.
     match_status: MatchStatus,
+    /// The `address_label` field is the text representation of the partial address.
     address_label: String,
+    /// The `other_label` field is the text representation of the matching address.
     other_label: Option<String>,
+    /// The `longitude` field represents the 'x' value of the matching address, if present.
     longitude: Option<f64>,
+    /// The `latitude` field represents the 'y' value of the matching address, if present.
     latitude: Option<f64>,
 }
 
 impl MatchPartialRecord {
+    /// The `coincident` method attempts to match fields present in the partial address against the
+    /// comparison address, returning a `MatchPartialRecord` if successful.  Returns `None` if
+    /// the match status is "missing".
     pub fn coincident<T: Address + GeoPoint<Num = f64>>(
         partial: &PartialAddress,
         address: &T,
@@ -381,6 +463,8 @@ impl MatchPartialRecord {
         }
     }
 
+    /// The `compare` method attempts to match fields present in the partial address against a set
+    /// of comparison addresses, returning a [`MatchPartialRecords`].
     pub fn compare<T: Address + GeoPoint<Num = f64>>(
         partial: &PartialAddress,
         addresses: &[T],
@@ -403,40 +487,49 @@ impl MatchPartialRecord {
         }
         let compared = MatchPartialRecords { records };
         let matching = compared.clone().filter("matching");
-        if matching.records().is_empty() {
+        if matching.values().is_empty() {
             compared
         } else {
             matching
         }
     }
 
+    /// The `match_status` method returns the cloned value of the `match_status` field.
     pub fn match_status(&self) -> MatchStatus {
         self.match_status.to_owned()
     }
 
+    /// The `address_label` method returns the cloned value of the `address_label` field.
     pub fn address_label(&self) -> String {
         self.address_label.to_owned()
     }
 
+    /// The `other_label` method returns the cloned value of the `other_label` field.
     pub fn other_label(&self) -> Option<String> {
         self.other_label.clone()
     }
 
+    /// The `longitude` method returns the value of the `longitude` field.
     pub fn longitude(&self) -> Option<f64> {
         self.longitude
     }
 
+    /// The `latitude` method returns the value of the `latitude` field.
     pub fn latitude(&self) -> Option<f64> {
         self.latitude
     }
 }
 
+/// The `MatchPartialRecords` struct holds a vector of type [`MatchPartialRecord`].
 #[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct MatchPartialRecords {
     records: Vec<MatchPartialRecord>,
 }
 
 impl MatchPartialRecords {
+    /// For each partial address in `self_addresses`, the `compare` method attempts to match the
+    /// fields present in the partial address against the addresses in `other_addresses`, returning
+    /// a `MatchPartialRecords`.
     pub fn compare<T: Address + GeoPoint<Num = f64> + Send + Sync>(
         self_addresses: &PartialAddresses,
         other_addresses: &[T],
@@ -446,7 +539,7 @@ impl MatchPartialRecords {
         )
         .unwrap();
         let record = self_addresses
-            .records()
+            .values()
             .par_iter()
             .map(|address| MatchPartialRecord::compare(address, other_addresses))
             .progress_with_style(style)
@@ -458,6 +551,10 @@ impl MatchPartialRecords {
         MatchPartialRecords { records }
     }
 
+    /// The `filter` method returns the subset of `PartialMatchRecords` that meet the filter requirement.
+    /// The `filter` parameter takes a string reference that can take the values "matching",
+    /// "missing", or "divergent".  The return records contain those records where the match status equals the
+    /// filter value.
     pub fn filter(self, filter: &str) -> Self {
         let mut records = Vec::new();
         match filter {
@@ -489,26 +586,39 @@ impl MatchPartialRecords {
         }
         MatchPartialRecords { records }
     }
+}
 
-    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        to_csv(&mut self.records(), title)?;
-        Ok(())
+impl Vectorized<MatchPartialRecord> for MatchPartialRecords {
+    fn values(&self) -> &Vec<MatchPartialRecord> {
+        &self.records
     }
 
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let mut records = Vec::new();
-        let file = std::fs::File::open(path)?;
-        let mut rdr = csv::Reader::from_reader(file);
-
-        for result in rdr.deserialize() {
-            let record: MatchPartialRecord = result?;
-            records.push(record);
-        }
-
-        Ok(MatchPartialRecords { records })
+    fn values_mut(&mut self) -> &mut Vec<MatchPartialRecord> {
+        &mut self.records
     }
 
-    pub fn records(&self) -> Vec<MatchPartialRecord> {
-        self.records.clone()
+    fn into_values(self) -> Vec<MatchPartialRecord> {
+        self.records
+    }
+}
+
+impl Portable<MatchPartialRecords> for MatchPartialRecords {
+    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = load_bin(path)?;
+        let decode: Self = bincode::deserialize(&records[..])?;
+        Ok(decode)
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
+        save(self, path)
+    }
+
+    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
+        let records = from_csv(path)?;
+        Ok(Self { records })
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
+        Ok(to_csv(&mut self.records, path.as_ref().into())?)
     }
 }

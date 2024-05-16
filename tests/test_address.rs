@@ -386,25 +386,25 @@ fn pre_directional_parser() {
         Ok((" 6TH ST", Some(StreetNamePreDirectional::NORTHWEST)))
     );
 }
-
-#[test]
-fn street_name_parser() {
-    let a1 = "LEWIS AVE, Grants Pass";
-    let a2 = "NW 6TH ST, Grants Pass";
-    let a3 = " CENTURYLINK DR";
-    assert_eq!(
-        parse_street_name(a1),
-        Ok((" AVE, Grants Pass", (None, "LEWIS")))
-    );
-    assert_eq!(
-        parse_street_name(a2),
-        Ok((
-            " ST, Grants Pass",
-            (Some(StreetNamePreDirectional::NORTHWEST), "6TH")
-        ))
-    );
-    assert_eq!(parse_street_name(a3), Ok((" DR", (None, "CENTURYLINK"))));
-}
+//
+// #[test]
+// fn street_name_parser() {
+//     let a1 = "LEWIS AVE, Grants Pass";
+//     let a2 = "NW 6TH ST, Grants Pass";
+//     let a3 = " CENTURYLINK DR";
+//     assert_eq!(
+//         parse_street_name(a1),
+//         Ok((" AVE, Grants Pass", (None, "LEWIS")))
+//     );
+//     assert_eq!(
+//         parse_street_name(a2),
+//         Ok((
+//             " ST, Grants Pass",
+//             (Some(StreetNamePreDirectional::NORTHWEST), "6TH")
+//         ))
+//     );
+//     assert_eq!(parse_street_name(a3), Ok((" DR", (None, "CENTURYLINK"))));
+// }
 
 #[test]
 fn street_type_parser() {

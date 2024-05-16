@@ -413,7 +413,7 @@ fn main() -> Clean<()> {
             let mut match_records = MatchRecords::compare(&source.records, &target.records);
             info!(
                 "{:?} records categorized.",
-                match_records.records_ref().len()
+                match_records.values().len()
             );
             info!("Output file: {:?}", cli.output);
             match_records.to_csv(cli.output)?;

@@ -1,4 +1,4 @@
-// #![warn(missing_docs)]
+#![warn(missing_docs)]
 #![doc(
     html_logo_url = "https://www.grantspassoregon.gov/DocumentCenter/View/31368/GPLogo_450W-PNG"
 )]
@@ -13,6 +13,8 @@ pub mod lexisnexis;
 pub mod parser;
 pub mod utils;
 
+/// The `prelude` module exposes the user-facing data structures and functions that make up the
+/// library.
 pub mod prelude {
     pub use crate::address::{
         Address, AddressDelta, AddressDeltas, Addresses, CommonAddress, CommonAddresses,
@@ -38,7 +40,7 @@ pub mod prelude {
     pub use crate::lexisnexis::{LexisNexis, LexisNexisItem};
     pub use crate::parser::{
         multi_word, parse_address, parse_address_number, parse_address_number_suffix,
-        parse_complete_street_name, parse_post_type, parse_pre_directional, parse_street_name,
+        parse_complete_street_name, parse_post_type, parse_pre_directional,
         parse_subaddress_element, parse_subaddress_elements, parse_subaddress_identifiers,
         parse_subaddress_type, recursive_post_type,
     };
