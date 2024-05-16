@@ -103,7 +103,7 @@ pub fn multi_word(input: &str) -> IResult<&str, Vec<&str>> {
 }
 
 /// The `recursive_post_type` function expects one or more [`StreetNamePostType`] designations.
-/// 
+///
 /// Originally I meant this function to call [`is_post_type`] and [`parse_post_type`] recursively.
 /// Instead, there is no recursion here, we use a while loop to continue parsing street name post
 /// types until failure, at which point the function returns the vector of parsed post types and
