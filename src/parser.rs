@@ -189,29 +189,43 @@ pub fn parse_subaddress_type(input: &str) -> IResult<&str, Option<SubaddressType
     }
 }
 
+/// The `parse_subaddress_element` function attempts to pull a single subaddress identifier from
+/// the input string, removing any preceding pound or ampersand.
 pub fn parse_subaddress_element(input: &str) -> IResult<&str, Option<&str>> {
+    // strip preceding whitespace
     let (next, _) = space0(input)?;
     let mut element = next;
     let mut remaining = "";
+    // if the input contains a space
+    // take the word before the space (element)
     let (rem, next) = opt(take_until(" "))(next)?;
     if let Some(value) = next {
         element = value;
+        // update the remaining input
         remaining = rem;
     }
+    // strip any preceding pound or ampersand
     let (element, _) = opt(alt((tag("#"), tag("&"))))(element)?;
     match element {
+        // if nothing is left, return remaining
         "" => Ok((remaining, None)),
+        // return the identifier (value)
         value => Ok((remaining, Some(value))),
     }
 }
 
+/// The `parse_subaddress_elements` functions attempts to take one or more subaddress identifiers
+/// from the input, removing any preceding pound or ampersand.
 pub fn parse_subaddress_elements(input: &str) -> IResult<&str, Vec<&str>> {
+    // vector of subadress ids
     let mut elements = Vec::new();
     let (rem, next) = parse_subaddress_element(input)?;
     let mut remaining = rem;
+    // if a subaddress id is present, push it to id vector
     if let Some(value) = next {
         elements.push(value);
     }
+    // repeat until remainder is empty
     while !remaining.is_empty() {
         let (rem, next) = parse_subaddress_element(remaining)?;
         if let Some(value) = next {
@@ -222,20 +236,27 @@ pub fn parse_subaddress_elements(input: &str) -> IResult<&str, Vec<&str>> {
     Ok((remaining, elements))
 }
 
+/// The `parse_subaddress_identifiers` functions attempts to find one or more subaddress
+/// identifiers using the [`parse_subaddress_elements`] function.
 pub fn parse_subaddress_identifiers(input: &str) -> IResult<&str, Option<Vec<&str>>> {
     let mut subaddress = None;
+    // Here we assume a comma delimits the street address from the postal community.
+    // TODO: Make robust against cases where multiple subaddress ids are comma delimited.
     let (rem, next) = opt(take_until(","))(input)?;
     let mut remaining = rem;
     match next {
+        // Try parsing the input before the comma as subaddress ids.
         Some(value) => {
             let (_, elements) = parse_subaddress_elements(value)?;
             if !elements.is_empty() {
                 subaddress = Some(elements);
             }
         }
+        // If there are no ids before the comma, try the input after
         None => {
             let (rem, elements) = parse_subaddress_elements(remaining)?;
             if !elements.is_empty() {
+                // return input that does not parse as ids
                 remaining = rem;
                 subaddress = Some(elements);
             }
@@ -244,15 +265,22 @@ pub fn parse_subaddress_identifiers(input: &str) -> IResult<&str, Option<Vec<&st
     Ok((remaining, subaddress))
 }
 
+/// The `parse_address` function attempts to read the complete address and parse it into its
+/// constituent components.
 pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
+    // this struct will hold the values of the parsed address components
     let mut address = PartialAddress::default();
+    // attempt to read the complete address number
     let (rem, address_number) = parse_address_number(input)?;
     tracing::trace!("Address number: {}", &address_number);
+    // we avoid an if let clause because address_number is none if not present.
     address.set_address_number(address_number);
     let (rem, suffix) = parse_address_number_suffix(rem)?;
     tracing::trace!("Address number suffix: {:#?}", &suffix);
     address.set_address_number_suffix(suffix);
+    // attempt to read the complete street name
     let (rem, (predir, name, post_type)) = parse_complete_street_name(rem)?;
+    // can't we remove this if let like above?
     if let Some(value) = predir {
         address.set_pre_directional(&value)
     }
@@ -268,6 +296,7 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
     tracing::trace!("Street post type: {:#?}", &post_type);
     address.set_post_type(&post_type);
     let (rem, subtype) = parse_subaddress_type(rem)?;
+    // can't we remove this if let like above?
     if let Some(value) = subtype {
         tracing::trace!("Subaddress type: {:#?}", &value);
         address.set_subaddress_type(&value);
@@ -286,11 +315,3 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
     }
     Ok((rem, address))
 }
-
-// pub fn deserialize_address<'de, D: Deserializer<'de>>(
-//     de: D,
-// ) -> Result<PartialAddress, D::Error> {
-//     let intermediate = Deserialize::deserialize(de)?;
-//     let (_, result) = parse_address(intermediate)?;
-//     Ok(result)
-// }

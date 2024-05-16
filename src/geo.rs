@@ -1,3 +1,4 @@
+//! The `geo` module defines spatial address types, and implements traits from the `galileo` crate for these types.
 use crate::prelude::{
     from_csv, load_bin, save, to_csv, Address, AddressDelta, AddressDeltas, AddressStatus,
     Addresses, CommonAddress, Portable, StreetNamePostType, StreetNamePreDirectional,
@@ -14,8 +15,15 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
+/// The `Point` trait is designed to facilitate working with spatial libraries in rust.  This is an
+/// intermediary step to implementing traits from geo_types directly, and intended to be replaced
+/// by direct impls of types in other crates.  Methods like [`distance`] have more robust
+/// implementations in these core spatial libraries, and we should be leaning on those rather than
+/// rolling our own.
 pub trait Point {
+    /// The `x` method returns the cartesian X portion of the projected coordinates of the address.
     fn x(&self) -> f64;
+    /// The `y` method returns the cartesian Y portion of the projected coordinates of the address.
     fn y(&self) -> f64;
 
     /// The `distance` function returns the distance between a point `self` and another point
@@ -76,10 +84,15 @@ pub trait Point {
     }
 }
 
+/// The `GeoAddress` struct defines a common address that has associated geographic coordinates.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct GeoAddress {
+    /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
+    /// with the inclusion of NENA-required fields for emergency response.
     pub address: CommonAddress,
+    /// The `latitude` field represents the latitude of the geographic coordinates for the address.
     pub latitude: f64,
+    /// The `longitude` field represents the longitude of the geographic coordinates for the address.
     pub longitude: f64,
 }
 
@@ -243,8 +256,10 @@ impl<T: Address + GeoPoint<Num = f64> + Clone> From<&T> for GeoAddress {
     }
 }
 
+/// The `GeoAddresses` struct holds a vector of type [`GeoAddress`].
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct GeoAddresses {
+    /// The `records` field contains a vector of type [`GeoAddress`].
     pub records: Vec<GeoAddress>,
 }
 
@@ -295,10 +310,17 @@ impl<T: Address + GeoPoint<Num = f64> + Clone + Sized> From<&[T]> for GeoAddress
     }
 }
 
+/// The `AddressPoint` struct defines a common address that has associated projected cartesian coordinates.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct AddressPoint {
+    /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
+    /// with the inclusion of NENA-required fields for emergency response.
     pub address: CommonAddress,
+    /// The `x` field represents the cartesian X portion of the projected coordinates of the
+    /// address.
     pub x: f64,
+    /// The `y` field represents the cartesian Y portion of the projected coordinates of the
+    /// address.
     pub y: f64,
 }
 
@@ -468,8 +490,10 @@ impl<T: Address + Point + Clone> From<&T> for AddressPoint {
     }
 }
 
+/// The `AddressPoints` struct holds a vector of type [`AddressPoint`].
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct AddressPoints {
+    /// The `records` field contains a vector of type [`AddressPoint`].
     pub records: Vec<AddressPoint>,
 }
 
@@ -520,12 +544,21 @@ impl<T: Address + Point + Clone + Sized> From<&[T]> for AddressPoints {
     }
 }
 
+/// The `SpatialAddress` struct defines a common address that has both associated geographic coordinates and projected cartesian coordinates.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct SpatialAddress {
+    /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
+    /// with the inclusion of NENA-required fields for emergency response.
     pub address: CommonAddress,
+    /// The `latitude` field represents the latitude of the geographic coordinates for the address.
     pub latitude: f64,
+    /// The `longitude` field represents the longitude of the geographic coordinates for the address.
     pub longitude: f64,
+    /// The `x` field represents the cartesian X portion of the projected coordinates of the
+    /// address.
     pub x: f64,
+    /// The `y` field represents the cartesian Y portion of the projected coordinates of the
+    /// address.
     pub y: f64,
 }
 
@@ -714,8 +747,10 @@ impl<T: Address + Point + GeoPoint<Num = f64> + Clone> From<&T> for SpatialAddre
     }
 }
 
+/// The `SpatialAddresses` struct holds a vector of type [`SpatialAddress`].
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct SpatialAddresses {
+    /// The `records` field contains a vector of type [`SpatialAddress`].
     pub records: Vec<SpatialAddress>,
 }
 

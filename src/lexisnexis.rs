@@ -107,32 +107,68 @@ impl LexisNexisItemBuilder {
 /// The `LexisNexisItem` struct contains the required fields in the LexisNexis spreadsheet.
 #[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
 pub struct LexisNexisItem {
+    /// The `address_number_from` field represents the lower range of address numbers associated
+    /// with the service area.
     #[serde(rename(serialize = "StNumFrom"))]
     pub address_number_from: i64,
+    /// The `address_number_to` field represents the upper range of address numbers associated
+    /// with the service area.
     #[serde(rename(serialize = "StNumTo"))]
     pub address_number_to: i64,
+    /// The `street_name_pre_directional` field represents the street name pre directional
+    /// associated with the service area.
     #[serde(rename(serialize = "StPreDirection"))]
     pub street_name_pre_directional: Option<String>,
+    /// The `street_name` field represents the street name component of the complete street name
+    /// associated with the service area.
     #[serde(rename(serialize = "StName"))]
     pub street_name: String,
+    /// The `street_name_post_type` field represents the street name post type component of the
+    /// complete street name associated with the service area.
     #[serde(rename(serialize = "StType"))]
     pub street_name_post_type: String,
+    /// The `street_name_post_directional` field represents the street name post directional component of
+    /// the complete street name.  The City of Grants Pass does not issue addresses using a street
+    /// name post directional component, but Josephine County does have some examples in their
+    /// records.
     #[serde(rename(serialize = "StPostDirection"))]
     pub street_name_post_directional: Option<String>,
+    /// The `postal_community` field represents either the unincorporated or incorporated
+    /// municipality name associated with the service area.
     #[serde(rename(serialize = "City"))]
     pub postal_community: String,
+    /// The `beat` field represents the police response jurisdiction associated with the service
+    /// area.  The City of Grants Pass does not use this field directly, but its presence is a
+    /// requirement of the LexisNexis schema.
     #[serde(rename(serialize = "Beat"))]
     pub beat: Option<String>,
+    /// The `area` field represents the service
+    /// area.  The City of Grants Pass does not use this field directly, but its presence is a
+    /// requirement of the LexisNexis schema.
     #[serde(rename(serialize = "Area"))]
     pub area: Option<String>,
+    /// The `district` field represents the service
+    /// district.  The City of Grants Pass does not use this field directly, but its presence is a
+    /// requirement of the LexisNexis schema.
     #[serde(rename(serialize = "District"))]
     pub district: Option<String>,
+    /// The `zone` field represents the service
+    /// zone.  The City of Grants Pass does not use this field directly, but its presence is a
+    /// requirement of the LexisNexis schema.
     #[serde(rename(serialize = "Zone"))]
     pub zone: Option<String>,
+    /// The `zip_code` field represents the postal zip code associated with the service area.
     #[serde(rename(serialize = "Zipcode"))]
     pub zip_code: i64,
+    /// The `commonplace` field represents a common name associated with the service area.  The
+    /// City of Grants Pass does not use this field directly, but its presence is a requirement of
+    /// the LexisNexis schema.
     #[serde(rename(serialize = "CommonPlace"))]
     pub commonplace: Option<String>,
+    /// The `address_number` field may possibly serve to represent a service area with an address
+    /// range of one, but the City of Grants Pass reports these ranges using a single value for the
+    /// _from and _to fields, so this field is currently unused.  Its presence is a requirement of
+    /// the LexisNexis schema.
     #[serde(rename(serialize = "StNum"))]
     pub address_number: Option<i64>,
 }

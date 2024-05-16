@@ -714,25 +714,50 @@ impl<T: Address + Clone> From<&[T]> for CommonAddresses {
 /// The `PartialAddress` struct contains optional fields so that incomplete or missing data can be
 /// compared against [`Addresses`] or [`PartialAddresses`] for potential matches.  Used to help
 /// match address information that does not parse into a full valid address.
-///
-/// TODO: Expand the data fields to include street name pre modifier, street name pre type, and
-/// separator element.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PartialAddress {
     /// The `address_number` field represents the address number component of the complete address
     /// number.
     pub address_number: Option<i64>,
+    /// The `number_suffix` field represents the address number suffix component of the complete
+    /// address number.
     pub address_number_suffix: Option<String>,
+    /// The `directional` field represents the street name pre directional component of the
+    /// complete street name.
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
+    /// The `pre_modifier` field represents the street name pre modifier component of the complete
+    /// street name.
+    pub pre_modifier: Option<String>,
+    /// The `pre_type` field represents the street name pre type component of the complete street
+    /// name.
+    pub pre_type: Option<String>,
+    /// The `separator` field represents the separator element component of the complete street
+    /// name.
+    pub separator: Option<String>,
+    /// The `street_name` field represents the street name component of the complete street name.
     pub street_name: Option<String>,
+    /// The `street_type` field represents the street name post type component of the complete street
+    /// name.
     pub street_name_post_type: Option<StreetNamePostType>,
+    /// The `subaddress_type` field represents the subaddress type component of the complete
+    /// subaddress.
     pub subaddress_type: Option<SubaddressType>,
+    /// The `subaddress_id` field represents the subaddress identifier component of the complete
+    /// subaddress.
     pub subaddress_identifier: Option<String>,
+    /// The `floor` field represents the floor identifier, corresponding to the `Floor` field from the NENA standard.
     pub floor: Option<i64>,
+    /// The `building` field represents the building identifier, corresponding to the `Building` field from the NENA standard.
     pub building: Option<String>,
+    /// The `zip` field represents the postal zip code of the address.
     pub zip_code: Option<i64>,
+    /// The `postal_community` field represents the postal community component of the address,
+    /// being either the unincorporated or incorporated municipality name.
     pub postal_community: Option<String>,
+    /// The `state` field represents the state name component of the address.
     pub state_name: Option<String>,
+    /// The `status` field represents the local status of the address as determined by the relevant
+    /// addressing authority.
     pub status: Option<AddressStatus>,
 }
 
