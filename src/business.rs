@@ -19,6 +19,8 @@ pub struct BusinessMatchRecord {
     dba: Option<String>,
     license: String,
     expires: String,
+    industry_code: i64,
+    community: String,
     other_address_label: Option<String>,
     address_latitude: Option<f64>,
     address_longitude: Option<f64>,
@@ -63,6 +65,8 @@ impl BusinessMatchRecords {
                 dba: business.dba(),
                 license: business.license(),
                 expires: business.expires(),
+                industry_code: business.industry_code(),
+                community: business.community(),
                 other_address_label: None,
                 address_latitude: None,
                 address_longitude: None,
@@ -169,7 +173,8 @@ impl BusinessMatchRecords {
     /// based upon the match status of the record.  The `filter` field accepts the values
     /// "missing", "nonmissing", "divergent", "matching", "unique" and "multiple". The "unique"
     /// option returns records where the business name is unique.  The "multiple" options returns
-    /// records where multiple licenses exist registered under the same business name.
+    /// records where multiple licenses exist registered under the same business name. The "local"
+    /// option returns records within Grants Pass or Merlin.
     pub fn filter(&self, filter: &str) -> Self {
         let mut records = Vec::new();
         match filter {
@@ -233,6 +238,16 @@ impl BusinessMatchRecords {
                     }
                 }
             }
+            "local" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| {
+                        record.community == "GRANTS PASS" || record.community == "MERLIN"
+                    })
+                    .collect(),
+            ),
             _ => info!("Invalid filter provided."),
         }
         BusinessMatchRecords { records }
@@ -296,8 +311,10 @@ pub struct BusinessLicense {
     license: String,
     #[serde(rename(deserialize = "EXPIRATIONDATE"))]
     expires: String,
+    #[serde(rename = "CodeNumber")]
+    industry_code: i64,
     #[serde(rename(deserialize = "ADDRESSLINE1"))]
-    address_number: i64,
+    address_number: String,
     #[serde(rename(deserialize = "ADDRESSLINE2"))]
     street_name: String,
     #[serde(
@@ -332,15 +349,26 @@ impl BusinessLicense {
     ) -> Option<BusinessMatchRecord> {
         let mut match_status = MatchStatus::Missing;
         let mut business_match = None;
+        let mut subaddress_id = None;
+        if let Some(val) = self.subaddress_identifier.clone() {
+            if !val.is_empty() {
+                // info!("Subaddress not empty: {}", &val);
+                let trim_val = val.trim();
+                if !trim_val.is_empty() {
+                    // info!("Writing subaddress: {}", trim_val);
+                    subaddress_id = Some(trim_val.to_string());
+                }
+            }
+        }
         let street_name = self.street_name.trim().to_string();
-        if self.address_number == address.number()
+        if self.address_number == address.complete_address_number()
             && self.street_name_pre_directional == *address.directional()
             && street_name == *address.street_name()
             && self.street_name_post_type == *address.street_type()
         // && self.postal_community == address.postal_community()
         // && self.state_name == address.state_name()
         {
-            if self.subaddress_identifier != *address.subaddress_id() {
+            if subaddress_id != *address.subaddress_id() {
                 match_status = MatchStatus::Divergent;
             }
             if self.zip_code != address.zip() {
@@ -358,12 +386,19 @@ impl BusinessLicense {
                 dba: self.dba(),
                 license: self.license(),
                 expires: self.expires(),
+                industry_code: self.industry_code(),
+                community: self.community(),
                 other_address_label: Some(address.label()),
                 address_latitude: Some(address.lat()),
                 address_longitude: Some(address.lon()),
             });
         }
         business_match
+    }
+
+    /// The `community` method returns the postal community name from the `postal_community` field.
+    pub fn community(&self) -> String {
+        self.postal_community.to_owned()
     }
 
     /// The `company_name` field represents the registered name of the business.  This method
@@ -405,6 +440,11 @@ impl BusinessLicense {
         self.expires.to_owned()
     }
 
+    /// The `industry_code` method returns the value of the `industry_code` field.
+    pub fn industry_code(&self) -> i64 {
+        self.industry_code
+    }
+
     /// The `pre_directional` field represents the street pre-directional designation associated
     /// with a business license.  This method clones the value of the field.
     pub fn pre_directional(&self) -> Option<StreetNamePreDirectional> {
@@ -427,11 +467,11 @@ impl BusinessLicense {
     /// associated with a business license.
     fn label(&self) -> String {
         let street_name = match self.post_type() {
-            Some(post_type) => format!("{} {:?}", self.street_name, post_type),
+            Some(post_type) => format!("{} {}", self.street_name, post_type),
             None => self.street_name.to_string(),
         };
         let complete_street_name = match self.street_name_pre_directional {
-            Some(pre_directional) => format!("{:?} {}", pre_directional, street_name),
+            Some(pre_directional) => format!("{} {}", pre_directional, street_name),
             None => street_name,
         };
         match self.subaddress_identifier() {

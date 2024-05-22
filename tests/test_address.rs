@@ -153,7 +153,49 @@ fn load_geo_addresses() -> Clean<()> {
 
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
-fn read_business_licenses() -> Result<(), std::io::Error> {
+fn business_licenses() -> Clean<()> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+
+    let file = "tests/test_data/business_licenses_20240520.csv";
+    let licenses = BusinessLicenses::from_csv(file)?;
+    info!(
+        "Business licenses loaded: {} entries.",
+        licenses.records.len()
+    );
+    let licenses = licenses.deduplicate();
+    info!(
+        "Business licenses deduplicated: {} entries.",
+        licenses.records.len()
+    );
+    let city_path = "tests/test_data/city_addresses_20240513.csv";
+    let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
+    let mut match_records = BusinessMatchRecords::compare(&licenses, &city_addresses.records);
+    info!("Match records: {}", match_records.records.len());
+    // info!("{:?}", match_records.records[0]);
+    match_records.to_csv("c:/users/erose/geojson/business_match.csv".into())?;
+    let points = Businesses::from_csv("tests/test_data/business_points.csv")?;
+    info!("Business points: {}", points.records().len());
+
+    info!("{:?}", licenses.records[0]);
+    let mut matching = match_records.filter("matching");
+    matching.to_csv("c:/users/erose/documents/business_matching.csv".into())?;
+    let mut divergent = match_records.filter("divergent");
+    divergent.to_csv("c:/users/erose/documents/business_divergent.csv".into())?;
+    let mut missing = match_records.filter("missing");
+    missing = missing.filter("local");
+    missing.to_csv("c:/users/erose/documents/business_missing.csv".into())?;
+
+    Ok(())
+}
+
+#[test]
+#[cfg_attr(feature = "ci", ignore)]
+fn read_bus_licenses() -> Result<(), std::io::Error> {
     if tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
@@ -232,7 +274,8 @@ fn match_business_addresses() -> Clean<()> {
         .is_ok()
     {};
     info!("Subscriber initialized.");
-    let business_path = "tests/test_data/active_business_licenses.csv";
+    // let business_path = "tests/test_data/active_business_licenses.csv";
+    let business_path = "tests/test_data/business_licenses_20240520.csv";
     let city_path = "tests/test_data/city_addresses_20240513.csv";
     let business_addresses = BusinessLicenses::from_csv(business_path)?;
     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;

@@ -202,6 +202,15 @@ pub trait Address {
         name
     }
 
+    /// The `complete_address_number` method returns the address number and address number suffix,
+    /// if any, as a String.
+    fn complete_address_number(&self) -> String {
+        match self.number_suffix() {
+            Some(suf) => format!("{} {}", self.number(), suf),
+            None => self.number().to_string(),
+        }
+    }
+
     /// The `pre_directional` field represents the street name predirectional component of the
     /// complete street name.  This function returns the cloned value of the field.
     fn directional_abbreviated(&self) -> Option<String> {

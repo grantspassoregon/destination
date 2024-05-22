@@ -24,7 +24,7 @@ pub mod prelude {
         deserialize_mixed_post_type, deserialize_mixed_pre_directional, AddressStatus,
         StreetNamePostType, StreetNamePreDirectional, SubaddressType,
     };
-    pub use crate::business::{BusinessLicenses, BusinessMatchRecords};
+    pub use crate::business::{BusinessLicenses, BusinessMatchRecord, BusinessMatchRecords};
     pub use crate::compare::{
         AddressMatch, FireInspectionMatchRecords, FireInspectionMatches, MatchPartialRecord,
         MatchPartialRecords, MatchRecord, MatchRecords, MatchStatus, Mismatch,
