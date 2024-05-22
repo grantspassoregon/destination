@@ -32,6 +32,48 @@ impl BusinessMatchRecord {
     pub fn company_name(&self) -> Option<String> {
         self.company_name.clone()
     }
+
+    /// The `contact_name` field represents the contact name associated with the
+    /// active business license.
+    pub fn contact_name(&self) -> Option<String> {
+        self.contact_name.clone()
+    }
+
+    /// The `dba` field represents the business name alias associated with the
+    /// active business license.
+    pub fn dba(&self) -> Option<String> {
+        self.dba.clone()
+    }
+
+    /// The `business_address_label` field represents the address associated with the
+    /// active business license.
+    pub fn business_address_label(&self) -> String {
+        self.business_address_label.clone()
+    }
+
+    /// The `license` field represents the business license number associated with the
+    /// active business license.
+    pub fn license(&self) -> String {
+        self.license.clone()
+    }
+
+    /// The `industry_code` field represents the tax code associated with the
+    /// active business license.
+    pub fn industry_code(&self) -> i64 {
+        self.industry_code
+    }
+
+    /// The `latitude` method returns the latitude of the address for the
+    /// active business license.
+    pub fn latitude(&self) -> Option<f64> {
+        self.address_latitude
+    }
+
+    /// The `longitude` method returns the longitude of the address for the
+    /// active business license.
+    pub fn longitude(&self) -> Option<f64> {
+        self.address_longitude
+    }
 }
 
 /// The `BusinessMatchRecords` struct holds a vector of [`BusinessMatchRecord`] objects.
