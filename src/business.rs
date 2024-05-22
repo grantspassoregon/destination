@@ -45,10 +45,16 @@ impl BusinessMatchRecord {
         self.dba.clone()
     }
 
-    /// The `business_address_label` field represents the address associated with the
+    /// The `business_address_label` field represents the submitted address associated with the
     /// active business license.
     pub fn business_address_label(&self) -> String {
         self.business_address_label.clone()
+    }
+
+    /// The `other_address_label` field represents the City address associated with the
+    /// active business license.
+    pub fn other_address_label(&self) -> Option<String> {
+        self.other_address_label.clone()
     }
 
     /// The `license` field represents the business license number associated with the
