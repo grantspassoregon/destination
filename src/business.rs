@@ -1,6 +1,7 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
 use crate::prelude::*;
+use aid::prelude::Clean;
 use galileo::galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
@@ -419,9 +420,10 @@ impl BusinessLicense {
             if subaddress_id != *address.subaddress_id() {
                 match_status = MatchStatus::Divergent;
             }
-            if self.zip_code != address.zip() {
-                match_status = MatchStatus::Divergent;
-            }
+            // robust against +4 codes?
+            // if self.zip_code != address.zip() {
+            //     match_status = MatchStatus::Divergent;
+            // }
             if match_status != MatchStatus::Divergent {
                 match_status = MatchStatus::Matching;
             }
@@ -530,6 +532,20 @@ impl BusinessLicense {
             None => format!("{} {}", self.address_number, complete_street_name),
         }
     }
+
+    /// EnerGov has a single field for entering a subaddress id, and staff sometimes include the
+    /// subaddress type.  This method strips the type information from the id, so we can compare
+    /// the id to addresses in the city.
+    pub fn detype_subaddress(&mut self) -> Clean<()> {
+        if let Some(val) = &self.subaddress_identifier {
+            let (rem, _) = parse_subaddress_type(val)?;
+            let (_, element) = parse_subaddress_element(rem)?;
+            if let Some(id) = element {
+                self.subaddress_identifier = Some(id.to_string());
+            }
+        }
+        Ok(())
+    }
 }
 
 /// The `BusinessLicenses` struct holds a `records` field containing a vector of type
@@ -579,5 +595,15 @@ impl BusinessLicenses {
             }
         }
         BusinessLicenses { records }
+    }
+
+    /// The `detype_subaddresses` method calls the [`detype_subadress`] method on each record in
+    /// `records`.
+    pub fn detype_subaddresses(&mut self) -> Clean<()> {
+        self.records
+            .iter_mut()
+            .map(BusinessLicense::detype_subaddress)
+            .for_each(drop);
+        Ok(())
     }
 }

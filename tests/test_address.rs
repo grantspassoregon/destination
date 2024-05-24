@@ -167,7 +167,8 @@ fn business_licenses() -> Clean<()> {
         "Business licenses loaded: {} entries.",
         licenses.records.len()
     );
-    let licenses = licenses.deduplicate();
+    let mut licenses = licenses.deduplicate();
+    licenses.detype_subaddresses()?;
     info!(
         "Business licenses deduplicated: {} entries.",
         licenses.records.len()

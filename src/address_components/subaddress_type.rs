@@ -124,7 +124,7 @@ pub fn deserialize_mixed_subaddress_type<'de, D: Deserializer<'de>>(
 /// Matches the target data against novel spellings of valid subaddress types.  Add any missing spelling
 /// variants to the match statement.  Called by [`crate::parser::parse_subaddress_type()`].
 pub fn match_mixed_subaddress_type(input: &str) -> Option<SubaddressType> {
-    match input {
+    match input.to_uppercase().as_ref() {
         "APT" => Some(SubaddressType::Apartment),
         "APARTMENT" => Some(SubaddressType::Apartment),
         "BSMT" => Some(SubaddressType::Basement),
