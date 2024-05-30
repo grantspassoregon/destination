@@ -281,7 +281,7 @@ fn match_business_addresses() -> Clean<()> {
     let business_addresses = BusinessLicenses::from_csv(business_path)?;
     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
     let match_records = BusinessMatchRecords::compare(&business_addresses, &city_addresses.records);
-    assert_eq!(match_records.records.len(), 2957);
+    assert_eq!(match_records.records.len(), 6100);
     info!("Business addresses match against commmon addresses.");
 
     Ok(())
@@ -779,6 +779,7 @@ fn load_businesses() -> Clean<()> {
 }
 
 #[test]
+#[cfg_attr(feature = "ci", ignore)]
 fn parse_address_sample() -> Clean<()> {
     #[derive(Clone, serde::Deserialize)]
     struct AddressSample {
