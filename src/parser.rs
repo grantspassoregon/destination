@@ -6,6 +6,7 @@ use nom::character::complete::{alpha1, alphanumeric1, digit1, space0};
 use nom::character::is_alphanumeric;
 use nom::combinator::{map_res, opt};
 use nom::IResult;
+use serde::de::{Deserialize, Deserializer};
 
 /// The `parse_address_number` function expects one or more numeric digits, returned as an i64 value.
 pub fn parse_address_number(input: &str) -> IResult<&str, i64> {
@@ -242,7 +243,8 @@ pub fn parse_subaddress_identifiers(input: &str) -> IResult<&str, Option<Vec<&st
     let mut subaddress = None;
     // Here we assume a comma delimits the street address from the postal community.
     // TODO: Make robust against cases where multiple subaddress ids are comma delimited.
-    let (rem, next) = opt(take_until(","))(input)?;
+    let (rem, _) = opt(tag("."))(input)?;
+    let (rem, next) = opt(take_until(","))(rem)?;
     let mut remaining = rem;
     match next {
         // Try parsing the input before the comma as subaddress ids.
@@ -292,11 +294,10 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
         }
     }
     tracing::trace!("Street name: {:#?}", &street_name);
-    address.set_street_name(&street_name);
+    address.set_street_name(&street_name.to_uppercase());
     tracing::trace!("Street post type: {:#?}", &post_type);
     address.set_post_type(&post_type);
     let (rem, subtype) = parse_subaddress_type(rem)?;
-    // can't we remove this if let like above?
     if let Some(value) = subtype {
         tracing::trace!("Subaddress type: {:#?}", &value);
         address.set_subaddress_type(&value);
@@ -314,4 +315,35 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
         address.set_subaddress_identifier(&subaddress_identifier);
     }
     Ok((rem, address))
+}
+
+pub fn parse_phone_number(input: &str) -> IResult<&str, String> {
+    let (rem, _) = opt(tag("("))(input)?;
+    let (rem, prefix) = nom::character::complete::digit1(rem)?;
+    let (rem, _) = opt(alt((tag(")"), tag("."))))(rem)?;
+    let (rem, _) = space0(rem)?;
+    let (rem, first) = nom::character::complete::digit1(rem)?;
+    let (rem, _) = space0(rem)?;
+    let (rem, _) = opt(alt((tag("-"), tag("."))))(rem)?;
+    let (rem, _) = space0(rem)?;
+    let (rem, second) = nom::character::complete::digit1(rem)?;
+    let mut phone = String::new();
+    phone.push_str(prefix);
+    phone.push_str(first);
+    phone.push_str(second);
+    Ok((rem, phone))
+}
+
+/// Deserialization function for street name predirectionals.  This works if all the predirectionals in the
+/// data observe the official postal contraction.  For predirectionals with a mix of abbreviations and
+/// alternative spellings, [`deserialize_mixed_pre_directional()`] will work better.
+pub fn deserialize_phone_number<'de, D: Deserializer<'de>>(de: D) -> Result<Option<i64>, D::Error> {
+    let intermediate = Deserialize::deserialize(de)?;
+    let mut res = None;
+    if let Ok((_, text)) = parse_phone_number(intermediate) {
+        if let Ok(num) = text.parse::<i64>() {
+            res = Some(num);
+        }
+    }
+    Ok(res)
 }

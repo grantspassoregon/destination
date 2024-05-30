@@ -50,7 +50,7 @@ pub fn deserialize_abbreviated_pre_directional<'de, D: Deserializer<'de>>(
 /// Maps the string representation of a street pre-directional designation to the appropriate
 /// [`StreetNamePreDirectional`] enum variant.
 pub fn match_mixed_pre_directional(input: &str) -> Option<StreetNamePreDirectional> {
-    match input {
+    match input.to_uppercase().as_str() {
         "NE" => Some(StreetNamePreDirectional::NORTHEAST),
         "NORTHEAST" => Some(StreetNamePreDirectional::NORTHEAST),
         "NW" => Some(StreetNamePreDirectional::NORTHWEST),

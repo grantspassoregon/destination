@@ -777,3 +777,73 @@ fn load_businesses() -> Clean<()> {
     info!("Parses subaddress type STE.");
     Ok(())
 }
+
+#[test]
+fn parse_address_sample() -> Clean<()> {
+    #[derive(Clone, serde::Deserialize)]
+    struct AddressSample {
+        address: String,
+        zip: String,
+    }
+    if let Ok(()) = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+    {};
+    let path = std::env::current_dir()?;
+    let file_path = path.join("tests/test_data/address_sample.csv");
+    let samples: Vec<AddressSample> = address::prelude::from_csv(file_path)?;
+    let city_path = "./tests/test_data/addresses.data";
+    let city_addresses = SpatialAddresses::load(city_path)?;
+    for sample in samples {
+        let (rem, address) = parse_address(&sample.address)?;
+        tracing::info!("{}", address.label());
+    }
+    // let match_records = MatchRecords::compare(
+    //     &city_addresses.records[0..10].to_vec(),
+    //     &county_addresses.records,
+    // );
+    Ok(())
+}
+
+#[test]
+#[cfg_attr(feature = "ci", ignore)]
+fn business_mailing() -> Clean<()> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+
+    let situs = "tests/test_data/business_licenses_20240520.csv";
+    let situs = BusinessLicenses::from_csv(situs)?;
+    info!("Business licenses loaded: {} entries.", situs.records.len());
+    let mut situs = situs.deduplicate();
+    situs.detype_subaddresses()?;
+    info!(
+        "Business licenses deduplicated: {} entries.",
+        situs.records.len()
+    );
+    let mailing = "c:/users/erose/documents/business_licenses_mailing_20240530.csv";
+    let mailing = BusinessLicenses::from_csv(mailing)?;
+    info!(
+        "Business licenses loaded: {} entries.",
+        mailing.records.len()
+    );
+    let mut mailing = mailing.deduplicate();
+    mailing.detype_subaddresses()?;
+    info!(
+        "Business licenses deduplicated: {} entries.",
+        mailing.records.len()
+    );
+
+    let mut mail = Vec::new();
+    for site in situs.records {
+        let matching = mailing.clone().filter("license", &site.license());
+        if !matching.records.is_empty() {
+            mail.push(matching.records[0].clone());
+        }
+    }
+    tracing::info!("Mailing list: {} records", mail.len());
+    Ok(())
+}

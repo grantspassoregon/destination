@@ -355,6 +355,7 @@ pub struct BusinessLicense {
     business_type: String,
     #[serde(rename(deserialize = "dba"))]
     dba: Option<String>,
+    #[serde(deserialize_with = "deserialize_phone_number")]
     business_phone: Option<i64>,
     #[serde(rename(deserialize = "LICENSENUMBER"))]
     license: String,
@@ -575,6 +576,14 @@ impl BusinessLicenses {
                     .par_iter()
                     .cloned()
                     .filter(|record| record.company_name() == Some(field.to_string()))
+                    .collect(),
+            ),
+            "license" => records.append(
+                &mut self
+                    .records
+                    .par_iter()
+                    .cloned()
+                    .filter(|record| record.license() == *field)
                     .collect(),
             ),
             _ => info!("Invalid filter provided."),
