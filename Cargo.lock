@@ -1201,7 +1201,7 @@ dependencies = [
 [[package]]
 name = "galileo"
 version = "0.1.1"
-source = "git+https://github.com/Maximkaaa/galileo#9c80deba628fa311514132d72a6c9fc30e330a18"
+source = "git+https://github.com/Maximkaaa/galileo#d9d4368f35af85672f8a64f0967dc51873f1aa23"
 dependencies = [
  "async-trait",
  "bincode",
@@ -1243,7 +1243,7 @@ dependencies = [
 [[package]]
 name = "galileo-mvt"
 version = "0.1.1"
-source = "git+https://github.com/Maximkaaa/galileo#9c80deba628fa311514132d72a6c9fc30e330a18"
+source = "git+https://github.com/Maximkaaa/galileo#d9d4368f35af85672f8a64f0967dc51873f1aa23"
 dependencies = [
  "bytes",
  "galileo-types",
@@ -1258,7 +1258,7 @@ dependencies = [
 [[package]]
 name = "galileo-types"
 version = "0.1.1"
-source = "git+https://github.com/Maximkaaa/galileo#9c80deba628fa311514132d72a6c9fc30e330a18"
+source = "git+https://github.com/Maximkaaa/galileo#d9d4368f35af85672f8a64f0967dc51873f1aa23"
 dependencies = [
  "geo-types",
  "geodesy",
