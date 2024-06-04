@@ -108,37 +108,3 @@ pub trait Portable<T> {
     /// The `to_csv` method attempts to serialize the data to a `csv` file at location `path`.
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()>;
 }
-
-/// The `Vectorized` trait enables access to a vector stored as a field in a data structure, as
-/// well as querying its length.
-///
-/// A common pattern that has emerged in my code is one data type to hold fields related to an
-/// individual observation, and a second data type holds a vector containing values of the first
-/// type (e.g. [`CommonAddress`] vs. [`CommonAddresses`]).  The type containing the vector
-/// functions as a newtype wrapper around a Vec<T>, and helps to organize methods that operate on
-/// Vec<T> data (e.g. the [`Addresses::compare`]) method).
-///
-/// The methods in the `Vectorized` trait are methods that I was implementing on each occurrence of
-/// this pattern, pretty much every time it occurred.  Formalizing these methods into a trait
-/// encourages consistent behavior between these data types.
-pub trait Vectorized<T> {
-    /// The `values` method returns a reference to the underlying vector.
-    fn values(&self) -> &Vec<T>;
-    /// The `values_mut` method returns a mutable reference to the underlying vector.
-    fn values_mut(&mut self) -> &mut Vec<T>;
-    /// The `into_values` method returns ownership of the underlying data (probably through
-    /// cloning).
-    fn into_values(self) -> Vec<T>;
-
-    /// The `len` method returns the length of the underlying vector.
-    fn len(&self) -> usize {
-        self.values().len()
-    }
-
-    /// The `is_empty` method returns a boolean indicating if the underlying vector is empty.
-    /// Since I implemented `len`, the compiler emits a warning if `is_empty` is not also
-    /// implemented.
-    fn is_empty(&self) -> bool {
-        self.values().is_empty()
-    }
-}

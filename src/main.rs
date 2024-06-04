@@ -153,10 +153,7 @@ fn main() -> Clean<()> {
                 }
             }
 
-            info!(
-                "Source records read: {} entries.",
-                source_addresses.values().len()
-            );
+            info!("Source records read: {} entries.", source_addresses.len());
 
             trace!("Reading exclusion addresses.");
             let mut target_addresses = CommonAddresses::default();
@@ -179,7 +176,7 @@ fn main() -> Clean<()> {
             // target_addresses = target_addresses.citify();
             info!(
                 "Exclusion records read: {} entries.",
-                target_addresses.values().len()
+                target_addresses.len()
             );
             let mut lx = LexisNexis::from_addresses(&source_addresses, &target_addresses)?;
             lx.to_csv(cli.output)?;
@@ -411,7 +408,7 @@ fn main() -> Clean<()> {
             }
             info!("Comparing records.");
             let mut match_records = MatchRecords::compare(&source.records, &target.records);
-            info!("{:?} records categorized.", match_records.values().len());
+            info!("{:?} records categorized.", match_records.len());
             info!("Output file: {:?}", cli.output);
             match_records.to_csv(cli.output)?;
         }

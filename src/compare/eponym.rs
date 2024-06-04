@@ -7,6 +7,7 @@ use galileo::galileo_types::geometry_type::{GeoSpace2d, GeometryType, PointGeome
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::ops;
 use std::path::Path;
 use tracing::info;
 
@@ -345,17 +346,17 @@ impl MatchRecords {
     }
 }
 
-impl Vectorized<MatchRecord> for MatchRecords {
-    fn values(&self) -> &Vec<MatchRecord> {
+impl ops::Deref for MatchRecords {
+    type Target = Vec<MatchRecord>;
+
+    fn deref(&self) -> &Self::Target {
         &self.records
     }
+}
 
-    fn values_mut(&mut self) -> &mut Vec<MatchRecord> {
+impl ops::DerefMut for MatchRecords {
+    fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.records
-    }
-
-    fn into_values(self) -> Vec<MatchRecord> {
-        self.records
     }
 }
 
@@ -489,7 +490,7 @@ impl MatchPartialRecord {
         }
         let compared = MatchPartialRecords { records };
         let matching = compared.clone().filter("matching");
-        if matching.values().is_empty() {
+        if matching.is_empty() {
             compared
         } else {
             matching
@@ -541,7 +542,6 @@ impl MatchPartialRecords {
         )
         .unwrap();
         let record = self_addresses
-            .values()
             .par_iter()
             .map(|address| MatchPartialRecord::compare(address, other_addresses))
             .progress_with_style(style)
@@ -590,17 +590,17 @@ impl MatchPartialRecords {
     }
 }
 
-impl Vectorized<MatchPartialRecord> for MatchPartialRecords {
-    fn values(&self) -> &Vec<MatchPartialRecord> {
+impl ops::Deref for MatchPartialRecords {
+    type Target = Vec<MatchPartialRecord>;
+
+    fn deref(&self) -> &Self::Target {
         &self.records
     }
+}
 
-    fn values_mut(&mut self) -> &mut Vec<MatchPartialRecord> {
+impl ops::DerefMut for MatchPartialRecords {
+    fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.records
-    }
-
-    fn into_values(self) -> Vec<MatchPartialRecord> {
-        self.records
     }
 }
 

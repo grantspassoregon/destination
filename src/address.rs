@@ -3,7 +3,6 @@
 use crate::prelude::{
     from_csv, load_bin, save, to_csv, AddressMatch, AddressStatus, FireInspections, LexisNexis,
     Mismatch, Point, Portable, StreetNamePostType, StreetNamePreDirectional, SubaddressType,
-    Vectorized,
 };
 use aid::prelude::*;
 use indicatif::ProgressBar;
@@ -596,20 +595,6 @@ impl Address for CommonAddress {
     }
 }
 
-impl Vectorized<CommonAddress> for CommonAddresses {
-    fn values(&self) -> &Vec<CommonAddress> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<CommonAddress> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<CommonAddress> {
-        self.records
-    }
-}
-
 impl<T: Address> From<&T> for CommonAddress {
     fn from(address: &T) -> Self {
         let number = address.number();
@@ -922,20 +907,6 @@ impl Portable<PartialAddresses> for PartialAddresses {
     }
 }
 
-impl Vectorized<PartialAddress> for PartialAddresses {
-    fn values(&self) -> &Vec<PartialAddress> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<PartialAddress> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<PartialAddress> {
-        self.records
-    }
-}
-
 impl ops::Deref for PartialAddresses {
     type Target = Vec<PartialAddress>;
 
@@ -1000,20 +971,6 @@ impl AddressDelta {
 pub struct AddressDeltas {
     /// The `records` field holds a vector of type [`AddressDelta`].
     pub records: Vec<AddressDelta>,
-}
-
-impl Vectorized<AddressDelta> for AddressDeltas {
-    fn values(&self) -> &Vec<AddressDelta> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<AddressDelta> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<AddressDelta> {
-        self.records
-    }
 }
 
 impl ops::Deref for AddressDeltas {

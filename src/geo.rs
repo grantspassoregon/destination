@@ -2,7 +2,7 @@
 use crate::prelude::{
     from_csv, load_bin, save, to_csv, Address, AddressDelta, AddressDeltas, AddressStatus,
     Addresses, CommonAddress, Portable, StreetNamePostType, StreetNamePreDirectional,
-    SubaddressType, Vectorized,
+    SubaddressType,
 };
 use aid::prelude::Clean;
 use galileo::galileo_types::cartesian::CartesianPoint2d;
@@ -79,7 +79,7 @@ pub trait Point {
         let mut records = Vec::new();
         records_raw
             .iter()
-            .map(|v| records.append(&mut v.values().clone()))
+            .map(|v| records.append(&mut v.clone()))
             .for_each(drop);
         AddressDeltas { records }
     }
@@ -265,20 +265,6 @@ pub struct GeoAddresses {
 }
 
 impl Addresses<GeoAddress> for GeoAddresses {}
-
-impl Vectorized<GeoAddress> for GeoAddresses {
-    fn values(&self) -> &Vec<GeoAddress> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<GeoAddress> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<GeoAddress> {
-        self.records
-    }
-}
 
 impl ops::Deref for GeoAddresses {
     type Target = Vec<GeoAddress>;
@@ -513,20 +499,6 @@ pub struct AddressPoints {
 }
 
 impl Addresses<AddressPoint> for AddressPoints {}
-
-impl Vectorized<AddressPoint> for AddressPoints {
-    fn values(&self) -> &Vec<AddressPoint> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<AddressPoint> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<AddressPoint> {
-        self.records
-    }
-}
 
 impl ops::Deref for AddressPoints {
     type Target = Vec<AddressPoint>;
@@ -784,20 +756,6 @@ pub struct SpatialAddresses {
 }
 
 impl Addresses<SpatialAddress> for SpatialAddresses {}
-
-impl Vectorized<SpatialAddress> for SpatialAddresses {
-    fn values(&self) -> &Vec<SpatialAddress> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<SpatialAddress> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<SpatialAddress> {
-        self.records
-    }
-}
 
 impl ops::Deref for SpatialAddresses {
     type Target = Vec<SpatialAddress>;

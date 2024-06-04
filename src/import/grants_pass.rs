@@ -1,9 +1,7 @@
 //! The `grants_pass` module contains data types for importing addresses from the City of Grants
 //! Pass.
 use crate::address_components::*;
-use crate::prelude::{
-    from_csv, load_bin, save, to_csv, Address, Addresses, Point, Portable, Vectorized,
-};
+use crate::prelude::{from_csv, load_bin, save, to_csv, Address, Addresses, Point, Portable};
 use crate::utils::deserialize_arcgis_data;
 use aid::prelude::*;
 use galileo::galileo_types::geo::GeoPoint;
@@ -276,20 +274,6 @@ pub struct GrantsPassAddresses {
 }
 
 impl Addresses<GrantsPassAddress> for GrantsPassAddresses {}
-
-impl Vectorized<GrantsPassAddress> for GrantsPassAddresses {
-    fn values(&self) -> &Vec<GrantsPassAddress> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<GrantsPassAddress> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<GrantsPassAddress> {
-        self.records
-    }
-}
 
 impl ops::Deref for GrantsPassAddresses {
     type Target = Vec<GrantsPassAddress>;
@@ -627,20 +611,6 @@ pub struct GrantsPassSpatialAddresses {
 }
 
 impl Addresses<GrantsPassSpatialAddress> for GrantsPassSpatialAddresses {}
-
-impl Vectorized<GrantsPassSpatialAddress> for GrantsPassSpatialAddresses {
-    fn values(&self) -> &Vec<GrantsPassSpatialAddress> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<GrantsPassSpatialAddress> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<GrantsPassSpatialAddress> {
-        self.records
-    }
-}
 
 impl ops::Deref for GrantsPassSpatialAddresses {
     type Target = Vec<GrantsPassSpatialAddress>;

@@ -48,5 +48,5 @@ pub mod prelude {
         parse_subaddress_elements, parse_subaddress_identifiers, parse_subaddress_type,
         recursive_post_type,
     };
-    pub use crate::utils::{from_csv, load_bin, save, to_csv, Portable, Vectorized};
+    pub use crate::utils::{from_csv, load_bin, save, to_csv, Portable};
 }

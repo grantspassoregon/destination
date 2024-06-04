@@ -1,9 +1,7 @@
 //! The `josephine_county` module contains data types for importing addresses from ECSO and
 //! Josephine County.
 use crate::address_components::*;
-use crate::prelude::{
-    from_csv, load_bin, save, to_csv, Address, Addresses, Point, Portable, Vectorized,
-};
+use crate::prelude::{from_csv, load_bin, save, to_csv, Address, Addresses, Point, Portable};
 use crate::utils::deserialize_arcgis_data;
 use aid::prelude::*;
 use galileo::galileo_types::geo::GeoPoint;
@@ -220,20 +218,6 @@ pub struct JosephineCountyAddresses2024 {
 }
 
 impl Addresses<JosephineCountyAddress2024> for JosephineCountyAddresses2024 {}
-
-impl Vectorized<JosephineCountyAddress2024> for JosephineCountyAddresses2024 {
-    fn values(&self) -> &Vec<JosephineCountyAddress2024> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<JosephineCountyAddress2024> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<JosephineCountyAddress2024> {
-        self.records
-    }
-}
 
 impl ops::Deref for JosephineCountyAddresses2024 {
     type Target = Vec<JosephineCountyAddress2024>;
@@ -514,20 +498,6 @@ pub struct JosephineCountySpatialAddresses2024 {
 
 impl Addresses<JosephineCountySpatialAddress2024> for JosephineCountySpatialAddresses2024 {}
 
-impl Vectorized<JosephineCountySpatialAddress2024> for JosephineCountySpatialAddresses2024 {
-    fn values(&self) -> &Vec<JosephineCountySpatialAddress2024> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<JosephineCountySpatialAddress2024> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<JosephineCountySpatialAddress2024> {
-        self.records
-    }
-}
-
 impl ops::Deref for JosephineCountySpatialAddresses2024 {
     type Target = Vec<JosephineCountySpatialAddress2024>;
 
@@ -767,20 +737,6 @@ pub struct JosephineCountyAddresses {
 }
 
 impl Addresses<JosephineCountyAddress> for JosephineCountyAddresses {}
-
-impl Vectorized<JosephineCountyAddress> for JosephineCountyAddresses {
-    fn values(&self) -> &Vec<JosephineCountyAddress> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<JosephineCountyAddress> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<JosephineCountyAddress> {
-        self.records
-    }
-}
 
 impl ops::Deref for JosephineCountyAddresses {
     type Target = Vec<JosephineCountyAddress>;
@@ -1057,20 +1013,6 @@ pub struct JosephineCountySpatialAddresses {
 }
 
 impl Addresses<JosephineCountySpatialAddress> for JosephineCountySpatialAddresses {}
-
-impl Vectorized<JosephineCountySpatialAddress> for JosephineCountySpatialAddresses {
-    fn values(&self) -> &Vec<JosephineCountySpatialAddress> {
-        &self.records
-    }
-
-    fn values_mut(&mut self) -> &mut Vec<JosephineCountySpatialAddress> {
-        &mut self.records
-    }
-
-    fn into_values(self) -> Vec<JosephineCountySpatialAddress> {
-        self.records
-    }
-}
 
 impl ops::Deref for JosephineCountySpatialAddresses {
     type Target = Vec<JosephineCountySpatialAddress>;

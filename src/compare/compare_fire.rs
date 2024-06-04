@@ -4,6 +4,7 @@ use galileo::galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::ops;
 use tracing::info;
 
 /// The `FireInspectionmatch` struct holds a [`FireInspection`] in the `inspection` field, and a
@@ -74,33 +75,26 @@ impl FireInspectionMatches {
     /// The `filter` method filters records from Self.  Currently accepts values "missing",
     /// "divergent" and "matching", which filter based on the match status [`MatchStatus`].
     pub fn filter(&mut self, filter: &str) {
-        let values = self.values_mut();
         match filter {
-            "missing" => {
-                values.retain(|r| r.record().values()[0].match_status() == MatchStatus::Missing)
-            }
-            "divergent" => {
-                values.retain(|r| r.record().values()[0].match_status() == MatchStatus::Divergent)
-            }
-            "matching" => {
-                values.retain(|r| r.record().values()[0].match_status() == MatchStatus::Matching)
-            }
+            "missing" => self.retain(|r| r.record()[0].match_status() == MatchStatus::Missing),
+            "divergent" => self.retain(|r| r.record()[0].match_status() == MatchStatus::Divergent),
+            "matching" => self.retain(|r| r.record()[0].match_status() == MatchStatus::Matching),
             _ => info!("Invalid filter provided."),
         }
     }
 }
 
-impl Vectorized<FireInspectionMatch> for FireInspectionMatches {
-    fn values(&self) -> &Vec<FireInspectionMatch> {
+impl ops::Deref for FireInspectionMatches {
+    type Target = Vec<FireInspectionMatch>;
+
+    fn deref(&self) -> &Self::Target {
         &self.records
     }
+}
 
-    fn values_mut(&mut self) -> &mut Vec<FireInspectionMatch> {
+impl ops::DerefMut for FireInspectionMatches {
+    fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.records
-    }
-
-    fn into_values(self) -> Vec<FireInspectionMatch> {
-        self.records
     }
 }
 
@@ -141,7 +135,7 @@ pub struct FireInspectionMatchRecords {
 impl FireInspectionMatchRecords {
     /// Writes the contents of the struct to a csv file at location `title`.
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        to_csv(self.values_mut(), title)?;
+        to_csv(self, title)?;
         Ok(())
     }
 
@@ -155,27 +149,26 @@ impl FireInspectionMatchRecords {
     /// for the `filter` field include "missing", "divergent", "matching", which filter by address
     /// match status.
     pub fn filter(&mut self, filter: &str) {
-        let values = self.values_mut();
         match filter {
-            "missing" => values.retain(|r| r.status() == MatchStatus::Missing),
-            "divergent" => values.retain(|r| r.status() == MatchStatus::Divergent),
-            "matching" => values.retain(|r| r.status() == MatchStatus::Matching),
+            "missing" => self.retain(|r| r.status() == MatchStatus::Missing),
+            "divergent" => self.retain(|r| r.status() == MatchStatus::Divergent),
+            "matching" => self.retain(|r| r.status() == MatchStatus::Matching),
             _ => info!("Invalid filter provided."),
         }
     }
 }
 
-impl Vectorized<FireInspectionMatchRecord> for FireInspectionMatchRecords {
-    fn values(&self) -> &Vec<FireInspectionMatchRecord> {
+impl ops::Deref for FireInspectionMatchRecords {
+    type Target = Vec<FireInspectionMatchRecord>;
+
+    fn deref(&self) -> &Self::Target {
         &self.records
     }
+}
 
-    fn values_mut(&mut self) -> &mut Vec<FireInspectionMatchRecord> {
+impl ops::DerefMut for FireInspectionMatchRecords {
+    fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.records
-    }
-
-    fn into_values(self) -> Vec<FireInspectionMatchRecord> {
-        self.records
     }
 }
 
@@ -184,7 +177,7 @@ impl From<&FireInspectionMatch> for FireInspectionMatchRecords {
         let mut records = Vec::new();
         let name = inspection.inspection().name();
         let address_label = inspection.inspection().address().label();
-        for record in inspection.record().values() {
+        for record in inspection.record().iter() {
             records.push(FireInspectionMatchRecord {
                 status: record.match_status(),
                 name: name.to_owned(),
@@ -202,10 +195,10 @@ impl From<&FireInspectionMatch> for FireInspectionMatchRecords {
 impl From<&FireInspectionMatches> for FireInspectionMatchRecords {
     fn from(inspections: &FireInspectionMatches) -> Self {
         let mut records = Vec::new();
-        for record in inspections.values() {
+        for record in inspections.iter() {
             let matches = FireInspectionMatchRecords::from(record);
-            for item in matches.into_values() {
-                records.push(item);
+            for item in matches.iter() {
+                records.push(item.clone());
             }
         }
         FireInspectionMatchRecords { records }
