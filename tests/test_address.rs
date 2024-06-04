@@ -180,7 +180,7 @@ fn business_licenses() -> Clean<()> {
     // info!("{:?}", match_records.records[0]);
     match_records.to_csv("c:/users/erose/geojson/business_match.csv".into())?;
     let points = Businesses::from_csv("tests/test_data/business_points.csv")?;
-    info!("Business points: {}", points.records().len());
+    info!("Business points: {}", points.len());
 
     info!("{:?}", licenses.records[0]);
     let mut matching = match_records.filter("matching");
@@ -713,7 +713,7 @@ fn load_fire_inspections() -> Clean<()> {
     {};
     let file_path = "p:/fire_inspection.csv";
     let fire = FireInspections::from_csv(file_path)?;
-    info!("First address: {:?}", fire.records()[0]);
+    info!("First address: {:?}", fire[0]);
     Ok(())
 }
 
@@ -742,9 +742,12 @@ fn load_fire_inspections() -> Clean<()> {
 fn sort_fire_inspections() -> Clean<()> {
     let file_path = "p:/fire_inspections_matched.csv";
     let compared = FireInspectionMatchRecords::from_csv(file_path)?;
-    let mut matching = compared.filter("matching");
-    let mut divergent = compared.filter("divergent");
-    let mut missing = compared.filter("missing");
+    let mut matching = compared.clone();
+    matching.filter("matching");
+    let mut divergent = compared.clone();
+    divergent.filter("divergent");
+    let mut missing = compared.clone();
+    missing.filter("missing");
     matching.to_csv("p:/fire_inspections_matching.csv".into())?;
     divergent.to_csv("p:/fire_inspections_divergent.csv".into())?;
     missing.to_csv("p:/fire_inspections_missing.csv".into())?;
@@ -762,17 +765,17 @@ fn load_businesses() -> Clean<()> {
     let data = Businesses::from_csv(file_path)?;
     assert_eq!(
         Some("C".to_owned()),
-        data.records()[18].address().subaddress_identifier()
+        data[18].address().subaddress_identifier()
     );
     info!("Parses subaddress identifier with #.");
     assert_eq!(
         Some("1/2".to_owned()),
-        data.records()[167].address().address_number_suffix()
+        data[167].address().address_number_suffix()
     );
     info!("Parses address number suffix 1/2.");
     assert_eq!(
         Some(SubaddressType::Suite),
-        data.records()[216].address().subaddress_type()
+        data[216].address().subaddress_type()
     );
     info!("Parses subaddress type STE.");
     Ok(())

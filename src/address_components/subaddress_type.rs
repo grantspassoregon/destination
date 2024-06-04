@@ -113,6 +113,8 @@ pub fn deserialize_abbreviated_subaddress_type<'de, D: Deserializer<'de>>(
     }
 }
 
+/// The `deserialize_mixed_subaddress_type` function attempts to deserialize the input data into a
+/// [`SubaddressType`].
 pub fn deserialize_mixed_subaddress_type<'de, D: Deserializer<'de>>(
     de: D,
 ) -> Result<Option<SubaddressType>, D::Error> {
@@ -123,6 +125,7 @@ pub fn deserialize_mixed_subaddress_type<'de, D: Deserializer<'de>>(
 
 /// Matches the target data against novel spellings of valid subaddress types.  Add any missing spelling
 /// variants to the match statement.  Called by [`crate::parser::parse_subaddress_type()`].
+/// Add additional variants to accommodate alternative abbreviations as needed.
 pub fn match_mixed_subaddress_type(input: &str) -> Option<SubaddressType> {
     match input.to_uppercase().as_ref() {
         "APT" => Some(SubaddressType::Apartment),

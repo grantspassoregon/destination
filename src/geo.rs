@@ -13,6 +13,7 @@ use galileo::galileo_types::geometry_type::{
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::ops;
 use std::path::Path;
 
 /// The `Point` trait is designed to facilitate working with spatial libraries in rust.  This is an
@@ -279,6 +280,20 @@ impl Vectorized<GeoAddress> for GeoAddresses {
     }
 }
 
+impl ops::Deref for GeoAddresses {
+    type Target = Vec<GeoAddress>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for GeoAddresses {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
+    }
+}
+
 impl Portable<GeoAddresses> for GeoAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = load_bin(path)?;
@@ -510,6 +525,20 @@ impl Vectorized<AddressPoint> for AddressPoints {
 
     fn into_values(self) -> Vec<AddressPoint> {
         self.records
+    }
+}
+
+impl ops::Deref for AddressPoints {
+    type Target = Vec<AddressPoint>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for AddressPoints {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
     }
 }
 
@@ -767,6 +796,20 @@ impl Vectorized<SpatialAddress> for SpatialAddresses {
 
     fn into_values(self) -> Vec<SpatialAddress> {
         self.records
+    }
+}
+
+impl ops::Deref for SpatialAddresses {
+    type Target = Vec<SpatialAddress>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for SpatialAddresses {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
     }
 }
 

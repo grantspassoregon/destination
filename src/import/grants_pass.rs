@@ -1,3 +1,5 @@
+//! The `grants_pass` module contains data types for importing addresses from the City of Grants
+//! Pass.
 use crate::address_components::*;
 use crate::prelude::{
     from_csv, load_bin, save, to_csv, Address, Addresses, Point, Portable, Vectorized,
@@ -6,6 +8,7 @@ use crate::utils::deserialize_arcgis_data;
 use aid::prelude::*;
 use galileo::galileo_types::geo::GeoPoint;
 use serde::{Deserialize, Serialize};
+use std::ops;
 use std::path::Path;
 
 /// The `GrantsPassSpatialAddress` struct represents an address site point for the City of Grants Pass.
@@ -285,6 +288,20 @@ impl Vectorized<GrantsPassAddress> for GrantsPassAddresses {
 
     fn into_values(self) -> Vec<GrantsPassAddress> {
         self.records
+    }
+}
+
+impl ops::Deref for GrantsPassAddresses {
+    type Target = Vec<GrantsPassAddress>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for GrantsPassAddresses {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
     }
 }
 
@@ -622,6 +639,20 @@ impl Vectorized<GrantsPassSpatialAddress> for GrantsPassSpatialAddresses {
 
     fn into_values(self) -> Vec<GrantsPassSpatialAddress> {
         self.records
+    }
+}
+
+impl ops::Deref for GrantsPassSpatialAddresses {
+    type Target = Vec<GrantsPassSpatialAddress>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for GrantsPassSpatialAddresses {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
     }
 }
 

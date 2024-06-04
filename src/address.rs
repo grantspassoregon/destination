@@ -10,6 +10,7 @@ use indicatif::ProgressBar;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::ops;
 use std::path::Path;
 use tracing::{error, info, trace};
 
@@ -281,13 +282,13 @@ pub trait Address {
 /// The `Addresses` trait enables methods that act on vectors of type [`Address`].
 pub trait Addresses<T: Address + Clone + Send + Sync>
 where
-    Self: Vectorized<T> + Clone,
+    Self: ops::Deref<Target = Vec<T>> + ops::DerefMut<Target = Vec<T>> + Clone,
 {
     /// The `filter` method returns the subset of addresses that match the filter.  Current values
     /// include "duplicate", which retains addresses that contain a duplicate in the set.
     fn filter(&self, filter: &str) -> Vec<T> {
         let mut records = Vec::new();
-        let values = self.values();
+        // let values = self.values();
         match filter {
             "duplicate" => {
                 let style = indicatif::ProgressStyle::with_template(
@@ -297,14 +298,14 @@ where
                 let mut seen = HashSet::new();
                 let bar = ProgressBar::new(self.len() as u64);
                 bar.set_style(style);
-                for address in values {
+                for address in self.iter() {
                     let label = address.label();
                     if !seen.contains(&label) {
                         seen.insert(label.clone());
                         let mut same = self.clone();
                         same.filter_field("label", &label);
                         if same.len() > 1 {
-                            records.append(&mut same.into_values());
+                            records.append(&mut same);
                         }
                     }
                     bar.inc(1);
@@ -318,52 +319,20 @@ where
     /// The `filter_field` method returns the subset of addresses where the field `filter` is equal
     /// to the value in `field`.
     fn filter_field(&mut self, filter: &str, field: &str) {
-        let mut records = Vec::new();
         match filter {
-            "label" => records.append(
-                &mut self
-                    .values_mut()
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| field == record.label())
-                    .collect(),
-            ),
-            "street_name" => records.append(
-                &mut self
-                    .values_mut()
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| field == record.street_name())
-                    .collect(),
-            ),
-            "pre_directional" => records.append(
-                &mut self
-                    .values_mut()
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| field == format!("{:?}", record.directional()))
-                    .collect(),
-            ),
-            "post_type" => records.append(
-                &mut self
-                    .values_mut()
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| field == format!("{:?}", record.street_type()))
-                    .collect(),
-            ),
-
+            "label" => self.retain(|r| r.label() == field),
+            "street_name" => self.retain(|r| r.street_name() == field),
+            "pre_directional" => self.retain(|r| format!("{:?}", r.street_name()) == field),
+            "post_type" => self.retain(|r| format!("{:?}", r.street_type()) == field),
             _ => info!("Invalid filter provided."),
         }
-        self.values_mut().clear();
-        self.values_mut().extend(records);
     }
 
     /// Compares the complete street name of an address to the value in `street`, returning true if
     /// equal.
     fn contains_street(&self, street: &String) -> bool {
         let mut contains = false;
-        for address in self.values() {
+        for address in self.iter() {
             let comp_street = address.complete_street_name(false);
             if &comp_street == street {
                 contains = true;
@@ -380,7 +349,7 @@ where
     ) -> Vec<String> {
         let mut seen = HashSet::new();
         let mut orphans = Vec::new();
-        for address in self.values() {
+        for address in self.iter() {
             let street = address.complete_street_name(false);
             if !seen.contains(&street) {
                 seen.insert(street.clone());
@@ -396,7 +365,7 @@ where
     /// naming conventions.
     fn citify(&mut self) {
         trace!("Running Citify");
-        for address in self.values_mut() {
+        for address in self.iter_mut() {
             let comp_street = address.complete_street_name(false);
             if comp_street == "NE BEAVILLA VIEW" {
                 trace!("Fixing Beavilla View");
@@ -689,6 +658,20 @@ pub struct CommonAddresses {
 
 impl Addresses<CommonAddress> for CommonAddresses {}
 
+impl ops::Deref for CommonAddresses {
+    type Target = Vec<CommonAddress>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for CommonAddresses {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
+    }
+}
+
 impl Portable<CommonAddresses> for CommonAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = load_bin(path)?;
@@ -953,6 +936,20 @@ impl Vectorized<PartialAddress> for PartialAddresses {
     }
 }
 
+impl ops::Deref for PartialAddresses {
+    type Target = Vec<PartialAddress>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for PartialAddresses {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
+    }
+}
+
 impl From<Vec<PartialAddress>> for PartialAddresses {
     fn from(records: Vec<PartialAddress>) -> Self {
         PartialAddresses { records }
@@ -963,7 +960,6 @@ impl From<&FireInspections> for PartialAddresses {
     fn from(fire_inspections: &FireInspections) -> Self {
         PartialAddresses::from(
             fire_inspections
-                .records()
                 .iter()
                 .map(|r| r.address())
                 .collect::<Vec<PartialAddress>>(),
@@ -1017,6 +1013,20 @@ impl Vectorized<AddressDelta> for AddressDeltas {
 
     fn into_values(self) -> Vec<AddressDelta> {
         self.records
+    }
+}
+
+impl ops::Deref for AddressDeltas {
+    type Target = Vec<AddressDelta>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for AddressDeltas {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
     }
 }
 

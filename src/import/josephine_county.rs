@@ -1,3 +1,5 @@
+//! The `josephine_county` module contains data types for importing addresses from ECSO and
+//! Josephine County.
 use crate::address_components::*;
 use crate::prelude::{
     from_csv, load_bin, save, to_csv, Address, Addresses, Point, Portable, Vectorized,
@@ -6,6 +8,7 @@ use crate::utils::deserialize_arcgis_data;
 use aid::prelude::*;
 use galileo::galileo_types::geo::GeoPoint;
 use serde::{Deserialize, Serialize};
+use std::ops;
 use std::path::Path;
 
 /// The `JosephineCountyAddress2024` struct represents an address site point for Josephine County,
@@ -229,6 +232,20 @@ impl Vectorized<JosephineCountyAddress2024> for JosephineCountyAddresses2024 {
 
     fn into_values(self) -> Vec<JosephineCountyAddress2024> {
         self.records
+    }
+}
+
+impl ops::Deref for JosephineCountyAddresses2024 {
+    type Target = Vec<JosephineCountyAddress2024>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for JosephineCountyAddresses2024 {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
     }
 }
 
@@ -511,6 +528,20 @@ impl Vectorized<JosephineCountySpatialAddress2024> for JosephineCountySpatialAdd
     }
 }
 
+impl ops::Deref for JosephineCountySpatialAddresses2024 {
+    type Target = Vec<JosephineCountySpatialAddress2024>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for JosephineCountySpatialAddresses2024 {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
+    }
+}
+
 impl Portable<JosephineCountySpatialAddresses2024> for JosephineCountySpatialAddresses2024 {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = load_bin(path)?;
@@ -748,6 +779,20 @@ impl Vectorized<JosephineCountyAddress> for JosephineCountyAddresses {
 
     fn into_values(self) -> Vec<JosephineCountyAddress> {
         self.records
+    }
+}
+
+impl ops::Deref for JosephineCountyAddresses {
+    type Target = Vec<JosephineCountyAddress>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for JosephineCountyAddresses {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
     }
 }
 
@@ -1024,6 +1069,20 @@ impl Vectorized<JosephineCountySpatialAddress> for JosephineCountySpatialAddress
 
     fn into_values(self) -> Vec<JosephineCountySpatialAddress> {
         self.records
+    }
+}
+
+impl ops::Deref for JosephineCountySpatialAddresses {
+    type Target = Vec<JosephineCountySpatialAddress>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.records
+    }
+}
+
+impl ops::DerefMut for JosephineCountySpatialAddresses {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.records
     }
 }
 

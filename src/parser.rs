@@ -1,3 +1,4 @@
+//! The `parser` module contains functions for parsing unstructured text into address components.
 use crate::address::*;
 use crate::address_components::*;
 use nom::branch::alt;
@@ -317,30 +318,45 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
     Ok((rem, address))
 }
 
+/// The parse_phone_number function expects a phone number that may optionally include parenthesis
+/// around the area code, and the use of periods or a hyphen as a separator.
 pub fn parse_phone_number(input: &str) -> IResult<&str, String> {
+    // Strip a leading parenthesis if present.
     let (rem, _) = opt(tag("("))(input)?;
+    // Takes one or more numbers, either the prefix or the whole sequence.
     let (rem, prefix) = nom::character::complete::digit1(rem)?;
+    // Strip the closing parenthesis or a period if present.
     let (rem, _) = opt(alt((tag(")"), tag("."))))(rem)?;
+    // Strip any whitespace.
     let (rem, _) = space0(rem)?;
+    // Takes one or more numbers, targeting the first three of the primary seven.
     let (rem, first) = nom::character::complete::digit1(rem)?;
+    // Strip any whitespace used before the separator.
     let (rem, _) = space0(rem)?;
+    // Remove a hyphen or dot separator.
     let (rem, _) = opt(alt((tag("-"), tag("."))))(rem)?;
+    // Strip any whitespace used after the separator.
     let (rem, _) = space0(rem)?;
+    // Takes one or more numbers, targeting the last four of the primary seven.
     let (rem, second) = nom::character::complete::digit1(rem)?;
+    // Empty string to receive digits pulled from input.
     let mut phone = String::new();
+    // Push digits to the string.
     phone.push_str(prefix);
     phone.push_str(first);
     phone.push_str(second);
     Ok((rem, phone))
 }
 
-/// Deserialization function for street name predirectionals.  This works if all the predirectionals in the
-/// data observe the official postal contraction.  For predirectionals with a mix of abbreviations and
-/// alternative spellings, [`deserialize_mixed_pre_directional()`] will work better.
+/// The `deserialize_phone_number` function deserializes text input into an integer representation
+/// of a phone number.  Strips parentheses around the area code, as well as periods or a hyphen
+/// used as a separator.
 pub fn deserialize_phone_number<'de, D: Deserializer<'de>>(de: D) -> Result<Option<i64>, D::Error> {
     let intermediate = Deserialize::deserialize(de)?;
     let mut res = None;
+    // First we make sure the string contains only digits.
     if let Ok((_, text)) = parse_phone_number(intermediate) {
+        // Then we parse the string to an integer.
         if let Ok(num) = text.parse::<i64>() {
             res = Some(num);
         }

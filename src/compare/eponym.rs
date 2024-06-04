@@ -1,3 +1,5 @@
+//! The `eponym` module is the eponymous module for `compare`.  Contains types and methods for
+//! comparing addresses.
 use crate::prelude::*;
 use aid::prelude::Clean;
 use galileo::galileo_types::geo::GeoPoint;

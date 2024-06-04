@@ -191,7 +191,7 @@ impl LexisNexis {
     ) -> Clean<LexisNexis> {
         let mut seen = HashSet::new();
         let mut records = Vec::new();
-        for address in include.values() {
+        for address in include.iter() {
             let comp_street = address.complete_street_name(false);
             let street = address.street_name().clone();
             let post_type = address.street_type();
@@ -286,13 +286,11 @@ impl LexisNexisRange {
         exclude: &U,
     ) -> Self {
         let mut records = include
-            .values()
             .iter()
             .map(|v| LexisNexisRangeItem::new(v.number(), true))
             .collect::<Vec<LexisNexisRangeItem>>();
         records.extend(
             exclude
-                .values()
                 .iter()
                 .map(|v| LexisNexisRangeItem::new(v.number(), false))
                 .collect::<Vec<LexisNexisRangeItem>>(),
