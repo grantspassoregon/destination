@@ -79,7 +79,7 @@ dependencies = [
 [[package]]
 name = "aid"
 version = "0.1.0"
-source = "git+https://github.com/grantspassoregon/aid.git#e5675784b0293f5eb7060c5991b2e924db3060c4"
+source = "git+https://github.com/grantspassoregon/aid.git#c9366ba5d25e3a667e8cd8cef06909b34558c3b2"
 dependencies = [
  "bincode",
  "hyper-util",
@@ -1607,9 +1607,9 @@ dependencies = [
 
 [[package]]
 name = "hyper-util"
-version = "0.1.3"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca38ef113da30126bbff9cd1705f9273e15d45498615d138b0c20279ac7a76aa"
+checksum = "7b875924a60b96e5d7b9ae7b066540b1dd1cbd90d1828f54c92e02a283351c56"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1618,6 +1618,8 @@ dependencies = [
  "http-body 1.0.0",
  "hyper 1.3.1",
  "pin-project-lite",
+ "socket2",
+ "tokio",
  "tower",
  "tower-service",
  "tracing",
@@ -3443,7 +3445,6 @@ dependencies = [
  "tokio",
  "tower-layer",
  "tower-service",
- "tracing",
 ]
 
 [[package]]
@@ -3464,7 +3465,6 @@ version = "0.1.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3523ab5a71916ccf420eebdf5521fcef02141234bbc0b8a49f2fdc4544364ef"
 dependencies = [
- "log",
  "pin-project-lite",
  "tracing-attributes",
  "tracing-core",
