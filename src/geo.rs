@@ -5,6 +5,7 @@ use crate::prelude::{
     SubaddressType,
 };
 use aid::prelude::Clean;
+use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::cartesian::CartesianPoint2d;
 use galileo::galileo_types::geo::GeoPoint;
 use galileo::galileo_types::geometry_type::{
@@ -13,7 +14,6 @@ use galileo::galileo_types::geometry_type::{
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::ops;
 use std::path::Path;
 
 /// The `Point` trait is designed to facilitate working with spatial libraries in rust.  This is an
@@ -51,7 +51,7 @@ pub trait Point {
             .map(|v| AddressDelta::new(v, v.distance(self)))
             .filter(|d| d.delta > min)
             .collect::<Vec<AddressDelta>>();
-        AddressDeltas { records }
+        AddressDeltas::new(records)
     }
 
     /// Distance between addresses and other addresses with matching label.
@@ -81,7 +81,7 @@ pub trait Point {
             .iter()
             .map(|v| records.append(&mut v.clone()))
             .for_each(drop);
-        AddressDeltas { records }
+        AddressDeltas::new(records)
     }
 }
 
@@ -258,27 +258,10 @@ impl<T: Address + GeoPoint<Num = f64> + Clone> From<&T> for GeoAddress {
 }
 
 /// The `GeoAddresses` struct holds a vector of type [`GeoAddress`].
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
-pub struct GeoAddresses {
-    /// The `records` field contains a vector of type [`GeoAddress`].
-    pub records: Vec<GeoAddress>,
-}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd, Deref, DerefMut)]
+pub struct GeoAddresses(Vec<GeoAddress>);
 
 impl Addresses<GeoAddress> for GeoAddresses {}
-
-impl ops::Deref for GeoAddresses {
-    type Target = Vec<GeoAddress>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for GeoAddresses {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
-    }
-}
 
 impl Portable<GeoAddresses> for GeoAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -293,11 +276,11 @@ impl Portable<GeoAddresses> for GeoAddresses {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
@@ -307,7 +290,7 @@ impl<T: Address + GeoPoint<Num = f64> + Clone + Sized> From<&[T]> for GeoAddress
             .iter()
             .map(GeoAddress::from)
             .collect::<Vec<GeoAddress>>();
-        Self { records }
+        Self(records)
     }
 }
 
@@ -492,27 +475,10 @@ impl<T: Address + Point + Clone> From<&T> for AddressPoint {
 }
 
 /// The `AddressPoints` struct holds a vector of type [`AddressPoint`].
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
-pub struct AddressPoints {
-    /// The `records` field contains a vector of type [`AddressPoint`].
-    pub records: Vec<AddressPoint>,
-}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd, Deref, DerefMut)]
+pub struct AddressPoints(Vec<AddressPoint>);
 
 impl Addresses<AddressPoint> for AddressPoints {}
-
-impl ops::Deref for AddressPoints {
-    type Target = Vec<AddressPoint>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for AddressPoints {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
-    }
-}
 
 impl Portable<AddressPoints> for AddressPoints {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -527,11 +493,11 @@ impl Portable<AddressPoints> for AddressPoints {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
@@ -541,7 +507,7 @@ impl<T: Address + Point + Clone + Sized> From<&[T]> for AddressPoints {
             .iter()
             .map(AddressPoint::from)
             .collect::<Vec<AddressPoint>>();
-        Self { records }
+        Self(records)
     }
 }
 
@@ -749,27 +715,10 @@ impl<T: Address + Point + GeoPoint<Num = f64> + Clone> From<&T> for SpatialAddre
 }
 
 /// The `SpatialAddresses` struct holds a vector of type [`SpatialAddress`].
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
-pub struct SpatialAddresses {
-    /// The `records` field contains a vector of type [`SpatialAddress`].
-    pub records: Vec<SpatialAddress>,
-}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd, Deref, DerefMut)]
+pub struct SpatialAddresses(Vec<SpatialAddress>);
 
 impl Addresses<SpatialAddress> for SpatialAddresses {}
-
-impl ops::Deref for SpatialAddresses {
-    type Target = Vec<SpatialAddress>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for SpatialAddresses {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
-    }
-}
 
 impl Portable<SpatialAddresses> for SpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -784,11 +733,11 @@ impl Portable<SpatialAddresses> for SpatialAddresses {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
@@ -798,6 +747,6 @@ impl<T: Address + Point + GeoPoint<Num = f64> + Clone + Sized> From<&[T]> for Sp
             .iter()
             .map(SpatialAddress::from)
             .collect::<Vec<SpatialAddress>>();
-        Self { records }
+        Self(records)
     }
 }

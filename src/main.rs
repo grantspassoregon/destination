@@ -70,21 +70,15 @@ fn main() -> Clean<()> {
                 info!("Filtering records.");
                 if cli.business {
                     let match_records = BusinessMatchRecords::from_csv(cli.source.clone())?;
-                    info!(
-                        "Source records read: {} entries.",
-                        match_records.records.len()
-                    );
+                    info!("Source records read: {} entries.", match_records.len());
                     let mut filtered = match_records.filter(&filter);
-                    info!("Records remaining: {} entries.", filtered.records.len());
+                    info!("Records remaining: {} entries.", filtered.len());
                     filtered.to_csv(cli.output)?;
                 } else {
                     let match_records = MatchRecords::from_csv(cli.source.clone())?;
-                    info!(
-                        "Source records read: {} entries.",
-                        match_records.records.len()
-                    );
-                    let mut filtered = match_records.filter(&filter);
-                    info!("Records remaining: {} entries.", filtered.records.len());
+                    info!("Source records read: {} entries.", match_records.len());
+                    let mut filtered = match_records.clone().filter(&filter);
+                    info!("Records remaining: {} entries.", filtered.len());
                     filtered.to_csv(cli.output)?;
                 }
             } else {
@@ -141,12 +135,12 @@ fn main() -> Clean<()> {
                 match source_type.as_str() {
                     "grants_pass" => {
                         source_addresses = CommonAddresses::from(
-                            &GrantsPassAddresses::from_csv(cli.source.clone())?.records[..],
+                            &GrantsPassAddresses::from_csv(cli.source.clone())?[..],
                         )
                     }
                     "josephine_county" => {
                         source_addresses = CommonAddresses::from(
-                            &JosephineCountyAddresses2024::from_csv(cli.source.clone())?.records[..],
+                            &JosephineCountyAddresses2024::from_csv(cli.source.clone())?[..],
                         )
                     }
                     _ => error!("Unrecognized file format."),
@@ -162,7 +156,7 @@ fn main() -> Clean<()> {
                     match target_type.as_str() {
                         "josephine_county" => {
                             target_addresses = CommonAddresses::from(
-                                &JosephineCountyAddresses::from_csv(target)?.records[..],
+                                &JosephineCountyAddresses::from_csv(target)?[..],
                             )
                         }
                         _ => error!("Invalid target data type."),
@@ -374,13 +368,12 @@ fn main() -> Clean<()> {
                 match source_type.as_str() {
                     "grants_pass" => {
                         source = GeoAddresses::from(
-                            &GrantsPassSpatialAddresses::from_csv(cli.source.clone())?.records[..],
+                            &GrantsPassSpatialAddresses::from_csv(cli.source.clone())?[..],
                         )
                     }
                     "josephine_county" => {
                         source = GeoAddresses::from(
-                            &JosephineCountySpatialAddresses2024::from_csv(cli.source.clone())?
-                                .records[..],
+                            &JosephineCountySpatialAddresses2024::from_csv(cli.source.clone())?[..],
                         )
                     }
                     _ => error!("Unrecognized file format."),
@@ -393,13 +386,12 @@ fn main() -> Clean<()> {
                     match target_type.as_str() {
                         "grants_pass" => {
                             target = GeoAddresses::from(
-                                &GrantsPassSpatialAddresses::from_csv(target_path)?.records[..],
+                                &GrantsPassSpatialAddresses::from_csv(target_path)?[..],
                             )
                         }
                         "josephine_county" => {
                             target = GeoAddresses::from(
-                                &JosephineCountySpatialAddresses2024::from_csv(target_path)?
-                                    .records[..],
+                                &JosephineCountySpatialAddresses2024::from_csv(target_path)?[..],
                             )
                         }
                         _ => error!("Unrecognized file format."),
@@ -407,7 +399,7 @@ fn main() -> Clean<()> {
                 }
             }
             info!("Comparing records.");
-            let mut match_records = MatchRecords::compare(&source.records, &target.records);
+            let mut match_records = MatchRecords::compare(&source, &target);
             info!("{:?} records categorized.", match_records.len());
             info!("Output file: {:?}", cli.output);
             match_records.to_csv(cli.output)?;

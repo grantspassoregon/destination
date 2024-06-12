@@ -1,8 +1,8 @@
 //! The `import` module contains data types for importing addresses from different agencies.
-pub mod fire_inspection;
-pub mod grants_pass;
-pub mod grants_pass_business;
-pub mod josephine_county;
+mod fire_inspection;
+mod grants_pass;
+mod grants_pass_business;
+mod josephine_county;
 
 pub use fire_inspection::*;
 pub use grants_pass::*;

@@ -1,13 +1,24 @@
+use derive_more::Display;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 /// The `SubaddressType` enum represents the subaddress type of an address.  Valid type
 /// designations include the list of secondary unit designators in Appendix C2 of the United States
 /// Postal Service (USPS) Publication 28 - Postal Addressing Standards.
 #[allow(missing_docs)]
 #[derive(
-    Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Default, Hash,
+    Copy,
+    Clone,
+    Debug,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Default,
+    Hash,
+    Display,
 )]
 pub enum SubaddressType {
     Apartment,
@@ -41,38 +52,38 @@ pub enum SubaddressType {
     Laundry,
 }
 
-impl fmt::Display for SubaddressType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Apartment => write!(f, "Apartment"),
-            Self::Basement => write!(f, "Basement"),
-            Self::Building => write!(f, "Building"),
-            Self::Department => write!(f, "Department"),
-            Self::Floor => write!(f, "Floor"),
-            Self::Front => write!(f, "Front"),
-            Self::Hanger => write!(f, "Hanger"),
-            Self::Key => write!(f, "Key"),
-            Self::Lobby => write!(f, "Lobby"),
-            Self::Lot => write!(f, "Lot"),
-            Self::Lower => write!(f, "Lower"),
-            Self::Office => write!(f, "Office"),
-            Self::Penthouse => write!(f, "Penthouse"),
-            Self::Pier => write!(f, "Pier"),
-            Self::Rear => write!(f, "Rear"),
-            Self::Room => write!(f, "Room"),
-            Self::Side => write!(f, "Side"),
-            Self::Slip => write!(f, "Slip"),
-            Self::Space => write!(f, "Space"),
-            Self::Stop => write!(f, "Stop"),
-            Self::Suite => write!(f, "Suite"),
-            Self::Trailer => write!(f, "Trailer"),
-            Self::Unit => write!(f, "Unit"),
-            Self::Upper => write!(f, "Upper"),
-            Self::Rec => write!(f, "Rec"),
-            Self::Laundry => write!(f, "Laundry"),
-        }
-    }
-}
+// impl fmt::Display for SubaddressType {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         match self {
+//             Self::Apartment => write!(f, "Apartment"),
+//             Self::Basement => write!(f, "Basement"),
+//             Self::Building => write!(f, "Building"),
+//             Self::Department => write!(f, "Department"),
+//             Self::Floor => write!(f, "Floor"),
+//             Self::Front => write!(f, "Front"),
+//             Self::Hanger => write!(f, "Hanger"),
+//             Self::Key => write!(f, "Key"),
+//             Self::Lobby => write!(f, "Lobby"),
+//             Self::Lot => write!(f, "Lot"),
+//             Self::Lower => write!(f, "Lower"),
+//             Self::Office => write!(f, "Office"),
+//             Self::Penthouse => write!(f, "Penthouse"),
+//             Self::Pier => write!(f, "Pier"),
+//             Self::Rear => write!(f, "Rear"),
+//             Self::Room => write!(f, "Room"),
+//             Self::Side => write!(f, "Side"),
+//             Self::Slip => write!(f, "Slip"),
+//             Self::Space => write!(f, "Space"),
+//             Self::Stop => write!(f, "Stop"),
+//             Self::Suite => write!(f, "Suite"),
+//             Self::Trailer => write!(f, "Trailer"),
+//             Self::Unit => write!(f, "Unit"),
+//             Self::Upper => write!(f, "Upper"),
+//             Self::Rec => write!(f, "Rec"),
+//             Self::Laundry => write!(f, "Laundry"),
+//         }
+//     }
+// }
 
 /// Deserialization function for subaddress types.  This works if all the subaddress types in the
 /// data observe the official postal contraction.  For subaddress types with a mix of abbreviations and

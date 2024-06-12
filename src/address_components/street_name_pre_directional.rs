@@ -1,3 +1,4 @@
+use derive_more::Display;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +7,18 @@ use serde::{Deserialize, Serialize};
 /// roads annexed by the City can contain N, E, S and W.
 #[allow(missing_docs)]
 #[derive(
-    Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Default, Hash,
+    Copy,
+    Clone,
+    Debug,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Default,
+    Hash,
+    Display,
 )]
 pub enum StreetNamePreDirectional {
     NORTHEAST,
@@ -18,6 +30,23 @@ pub enum StreetNamePreDirectional {
     SOUTH,
     EAST,
     WEST,
+}
+
+impl StreetNamePreDirectional {
+    /// The `abbreviate` method converts the variant to an abbreviated string for labeling.
+    pub fn abbreviate(&self) -> String {
+        let abbr = match self {
+            StreetNamePreDirectional::NORTH => "N",
+            StreetNamePreDirectional::SOUTH => "S",
+            StreetNamePreDirectional::EAST => "E",
+            StreetNamePreDirectional::WEST => "W",
+            StreetNamePreDirectional::NORTHEAST => "NE",
+            StreetNamePreDirectional::NORTHWEST => "NW",
+            StreetNamePreDirectional::SOUTHEAST => "SE",
+            StreetNamePreDirectional::SOUTHWEST => "SW",
+        };
+        abbr.to_string()
+    }
 }
 
 /// Matches the target data against the official postal abbreviation for street name
@@ -82,19 +111,19 @@ pub fn deserialize_mixed_pre_directional<'de, D: Deserializer<'de>>(
     Ok(result)
 }
 
-impl std::fmt::Display for StreetNamePreDirectional {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let mut out = "".to_owned();
-        match self {
-            StreetNamePreDirectional::NORTH => out.push('N'),
-            StreetNamePreDirectional::SOUTH => out.push('S'),
-            StreetNamePreDirectional::EAST => out.push('E'),
-            StreetNamePreDirectional::WEST => out.push('W'),
-            StreetNamePreDirectional::NORTHEAST => out.push_str("NE"),
-            StreetNamePreDirectional::NORTHWEST => out.push_str("NW"),
-            StreetNamePreDirectional::SOUTHEAST => out.push_str("SE"),
-            StreetNamePreDirectional::SOUTHWEST => out.push_str("SW"),
-        }
-        write!(f, "{}", out)
-    }
-}
+// impl std::fmt::Display for StreetNamePreDirectional {
+//     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+//         let mut out = "".to_owned();
+//         match self {
+//             StreetNamePreDirectional::NORTH => out.push('N'),
+//             StreetNamePreDirectional::SOUTH => out.push('S'),
+//             StreetNamePreDirectional::EAST => out.push('E'),
+//             StreetNamePreDirectional::WEST => out.push('W'),
+//             StreetNamePreDirectional::NORTHEAST => out.push_str("NE"),
+//             StreetNamePreDirectional::NORTHWEST => out.push_str("NW"),
+//             StreetNamePreDirectional::SOUTHEAST => out.push_str("SE"),
+//             StreetNamePreDirectional::SOUTHWEST => out.push_str("SW"),
+//         }
+//         write!(f, "{}", out)
+//     }
+// }

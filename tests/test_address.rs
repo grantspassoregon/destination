@@ -15,12 +15,9 @@ fn load_ecso_addresses() -> Clean<()> {
     trace!("Deserializing county addresses from a csv file.");
     let file = "tests/test_data/county_addresses_20240508.csv";
     let addresses = JosephineCountySpatialAddresses2024::from_csv(file)?;
-    assert_eq!(addresses.records.len(), 45205);
-    trace!(
-        "City addresses loaded: {} entries.",
-        addresses.records.len()
-    );
-    let mut spatial = SpatialAddresses::from(&addresses.records[..]);
+    assert_eq!(addresses.len(), 45205);
+    trace!("City addresses loaded: {} entries.", addresses.len());
+    let mut spatial = SpatialAddresses::from(&addresses[..]);
     info!("Addresses loaded: {}", spatial.len());
     spatial.citify();
     spatial.save("tests/test_data/county_addresses.data")?;
@@ -42,11 +39,8 @@ fn load_city_addresses() -> Clean<()> {
     trace!("Deserializing city addresses from a csv file.");
     let file = "tests/test_data/city_addresses_20240513.csv";
     let addresses = GrantsPassAddresses::from_csv(file)?;
-    assert_eq!(addresses.records.len(), 27509);
-    trace!(
-        "City addresses loaded: {} entries.",
-        addresses.records.len()
-    );
+    assert_eq!(addresses.len(), 27509);
+    trace!("City addresses loaded: {} entries.", addresses.len());
     Ok(())
 }
 
@@ -63,7 +57,7 @@ fn save_city_addresses() -> Clean<()> {
     trace!("Opening city addresses from a csv file.");
     let file = "tests/test_data/city_addresses_20240513.csv";
     let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
-    let addresses = SpatialAddresses::from(&addresses.records[..]);
+    let addresses = SpatialAddresses::from(&addresses[..]);
     trace!("Saving city addresses to binary.");
     addresses.save("tests/test_data/addresses.data")?;
     Ok(())
@@ -100,11 +94,8 @@ fn load_county_addresses() -> Clean<()> {
     trace!("Deserializing county addresses from a csv file.");
     let file = "tests/test_data/county_addresses_20240226.csv";
     let addresses = JosephineCountyAddresses::from_csv(file)?;
-    assert_eq!(addresses.records.len(), 45134);
-    trace!(
-        "County addresses loaded: {} entries.",
-        addresses.records.len()
-    );
+    assert_eq!(addresses.len(), 45134);
+    trace!("County addresses loaded: {} entries.", addresses.len());
     Ok(())
 }
 
@@ -119,12 +110,9 @@ fn load_geo_addresses() -> Clean<()> {
 
     let file = "tests/test_data/city_addresses_20240513.csv";
     let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
-    let geo_addresses = GeoAddresses::from(&addresses.records[..]);
-    assert_eq!(addresses.records.len(), geo_addresses.records.len());
-    info!(
-        "Geo addresses loaded: {} entries.",
-        geo_addresses.records.len()
-    );
+    let geo_addresses = GeoAddresses::from(&addresses[..]);
+    assert_eq!(addresses.len(), geo_addresses.len());
+    info!("Geo addresses loaded: {} entries.", geo_addresses.len());
     Ok(())
 }
 
@@ -163,31 +151,28 @@ fn business_licenses() -> Clean<()> {
 
     let file = "tests/test_data/business_licenses_20240520.csv";
     let licenses = BusinessLicenses::from_csv(file)?;
-    info!(
-        "Business licenses loaded: {} entries.",
-        licenses.records.len()
-    );
+    info!("Business licenses loaded: {} entries.", licenses.len());
     let mut licenses = licenses.deduplicate();
     licenses.detype_subaddresses()?;
     info!(
         "Business licenses deduplicated: {} entries.",
-        licenses.records.len()
+        licenses.len()
     );
     let city_path = "tests/test_data/city_addresses_20240513.csv";
     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
-    let mut match_records = BusinessMatchRecords::compare(&licenses, &city_addresses.records);
-    info!("Match records: {}", match_records.records.len());
+    let mut match_records = BusinessMatchRecords::compare(&licenses, &city_addresses);
+    info!("Match records: {}", match_records.len());
     // info!("{:?}", match_records.records[0]);
     match_records.to_csv("c:/users/erose/geojson/business_match.csv".into())?;
     let points = Businesses::from_csv("tests/test_data/business_points.csv")?;
     info!("Business points: {}", points.len());
 
-    info!("{:?}", licenses.records[0]);
-    let mut matching = match_records.filter("matching");
+    info!("{:?}", licenses[0]);
+    let mut matching = match_records.clone().filter("matching");
     matching.to_csv("c:/users/erose/documents/business_matching.csv".into())?;
-    let mut divergent = match_records.filter("divergent");
+    let mut divergent = match_records.clone().filter("divergent");
     divergent.to_csv("c:/users/erose/documents/business_divergent.csv".into())?;
-    let mut missing = match_records.filter("missing");
+    let mut missing = match_records.clone().filter("missing");
     missing = missing.filter("local");
     missing.to_csv("c:/users/erose/documents/business_missing.csv".into())?;
 
@@ -206,37 +191,34 @@ fn read_bus_licenses() -> Result<(), std::io::Error> {
 
     let file = "tests/test_data/active_business_licenses.csv";
     let licenses = BusinessLicenses::from_csv(file)?;
-    info!(
-        "Business licenses loaded: {} entries.",
-        licenses.records.len()
-    );
+    info!("Business licenses loaded: {} entries.", licenses.len());
     // info!("Record 171:");
     // info!("{:?}", licenses.records[171]);
-    assert!(licenses.records[0].pre_directional() == Some(StreetNamePreDirectional::NORTHEAST));
+    assert!(licenses[0].pre_directional() == Some(StreetNamePreDirectional::NORTHEAST));
     info!("NE reads.");
-    assert!(licenses.records[3].pre_directional() == Some(StreetNamePreDirectional::NORTHWEST));
+    assert!(licenses[3].pre_directional() == Some(StreetNamePreDirectional::NORTHWEST));
     info!("NW reads.");
-    assert!(licenses.records[1].pre_directional() == Some(StreetNamePreDirectional::SOUTHEAST));
+    assert!(licenses[1].pre_directional() == Some(StreetNamePreDirectional::SOUTHEAST));
     info!("SE reads.");
-    assert!(licenses.records[109].pre_directional() == Some(StreetNamePreDirectional::SOUTHEAST));
+    assert!(licenses[109].pre_directional() == Some(StreetNamePreDirectional::SOUTHEAST));
     info!("SOUTHEAST reads.");
-    assert!(licenses.records[0].post_type() == Some(StreetNamePostType::STREET));
+    assert!(licenses[0].post_type() == Some(StreetNamePostType::STREET));
     info!("ST reads.");
-    assert!(licenses.records[1].post_type() == Some(StreetNamePostType::STREET));
+    assert!(licenses[1].post_type() == Some(StreetNamePostType::STREET));
     info!("St reads.");
-    assert!(licenses.records[109].post_type() == Some(StreetNamePostType::STREET));
+    assert!(licenses[109].post_type() == Some(StreetNamePostType::STREET));
     info!("STREET reads.");
-    assert!(licenses.records[171].post_type() == Some(StreetNamePostType::AVENUE));
+    assert!(licenses[171].post_type() == Some(StreetNamePostType::AVENUE));
     info!("Ave reads.");
-    assert!(licenses.records[88].post_type() == Some(StreetNamePostType::BOULEVARD));
+    assert!(licenses[88].post_type() == Some(StreetNamePostType::BOULEVARD));
     info!("BOULEVARD reads.");
-    assert!(licenses.records[134].post_type() == Some(StreetNamePostType::DRIVE));
+    assert!(licenses[134].post_type() == Some(StreetNamePostType::DRIVE));
     info!("Dr reads.");
-    assert!(licenses.records[5].post_type() == Some(StreetNamePostType::HIGHWAY));
+    assert!(licenses[5].post_type() == Some(StreetNamePostType::HIGHWAY));
     info!("HWY reads.");
-    assert!(licenses.records[214].post_type() == Some(StreetNamePostType::HIGHWAY));
+    assert!(licenses[214].post_type() == Some(StreetNamePostType::HIGHWAY));
     info!("Hwy reads.");
-    assert!(licenses.records[405].post_type() == Some(StreetNamePostType::HIGHWAY));
+    assert!(licenses[405].post_type() == Some(StreetNamePostType::HIGHWAY));
     info!("HIGHWAY reads.");
     Ok(())
 }
@@ -254,15 +236,12 @@ fn match_city_address() -> Clean<()> {
     let city_path = "tests/test_data/addresses.data";
     let county_path = "tests/test_data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
-    assert_eq!(city_addresses.records.len(), 27509);
+    assert_eq!(city_addresses.len(), 27509);
     let county_addresses = SpatialAddresses::load(county_path)?;
-    assert_eq!(county_addresses.records.len(), 45205);
+    assert_eq!(county_addresses.len(), 45205);
     info!("Matching single address.");
-    let match_records = MatchRecords::new(
-        &city_addresses.records[0].clone(),
-        &county_addresses.records,
-    );
-    info!("Record 0 is: {:?}", match_records.records[0]);
+    let match_records = MatchRecords::new(&city_addresses[0].clone(), &county_addresses);
+    info!("Record 0 is: {:?}", match_records[0]);
     Ok(())
 }
 
@@ -280,8 +259,8 @@ fn match_business_addresses() -> Clean<()> {
     let city_path = "tests/test_data/city_addresses_20240513.csv";
     let business_addresses = BusinessLicenses::from_csv(business_path)?;
     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
-    let match_records = BusinessMatchRecords::compare(&business_addresses, &city_addresses.records);
-    assert_eq!(match_records.records.len(), 6100);
+    let match_records = BusinessMatchRecords::compare(&business_addresses, &city_addresses);
+    assert_eq!(match_records.len(), 6100);
     info!("Business addresses match against commmon addresses.");
 
     Ok(())
@@ -324,11 +303,8 @@ fn match_city_addresses() -> Clean<()> {
     let county_path = "./tests/test_data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     let county_addresses = SpatialAddresses::load(county_path)?;
-    let match_records = MatchRecords::compare(
-        &city_addresses.records[0..10].to_vec(),
-        &county_addresses.records,
-    );
-    assert_eq!(match_records.records.len(), 10);
+    let match_records = MatchRecords::compare(&city_addresses[0..10].to_vec(), &county_addresses);
+    assert_eq!(match_records.len(), 10);
     Ok(())
 }
 
@@ -344,13 +320,10 @@ fn filter_status() -> Clean<()> {
     let county_path = "tests/test_data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     let county_addresses = SpatialAddresses::load(county_path)?;
-    let match_records = MatchRecords::compare(
-        &city_addresses.records[0..1000].to_vec(),
-        &county_addresses.records,
-    );
-    assert_eq!(match_records.records.len(), 1000);
-    let filtered = match_records.filter("status");
-    assert_eq!(filtered.records.len(), 967);
+    let match_records = MatchRecords::compare(&city_addresses[0..1000].to_vec(), &county_addresses);
+    assert_eq!(match_records.len(), 1000);
+    let filtered = match_records.clone().filter("status");
+    assert_eq!(filtered.len(), 967);
     info!("Matches filtered by status.");
     Ok(())
 }
@@ -367,13 +340,10 @@ fn filter_missing() -> Clean<()> {
     let county_path = "tests/test_data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     let county_addresses = SpatialAddresses::load(county_path)?;
-    let match_records = MatchRecords::compare(
-        &city_addresses.records[0..1000].to_vec(),
-        &county_addresses.records,
-    );
-    assert_eq!(match_records.records.len(), 1000);
-    let filtered = match_records.filter("missing");
-    assert_eq!(filtered.records.len(), 3);
+    let match_records = MatchRecords::compare(&city_addresses[0..1000].to_vec(), &county_addresses);
+    assert_eq!(match_records.len(), 1000);
+    let filtered = match_records.clone().filter("missing");
+    assert_eq!(filtered.len(), 3);
     info!("Matches filtered by missing.");
     Ok(())
 }
@@ -821,31 +791,22 @@ fn business_mailing() -> Clean<()> {
 
     let situs = "tests/test_data/business_licenses_20240520.csv";
     let situs = BusinessLicenses::from_csv(situs)?;
-    info!("Business licenses loaded: {} entries.", situs.records.len());
+    info!("Business licenses loaded: {} entries.", situs.len());
     let mut situs = situs.deduplicate();
     situs.detype_subaddresses()?;
-    info!(
-        "Business licenses deduplicated: {} entries.",
-        situs.records.len()
-    );
+    info!("Business licenses deduplicated: {} entries.", situs.len());
     let mailing = "c:/users/erose/documents/business_licenses_mailing_20240530.csv";
     let mailing = BusinessLicenses::from_csv(mailing)?;
-    info!(
-        "Business licenses loaded: {} entries.",
-        mailing.records.len()
-    );
+    info!("Business licenses loaded: {} entries.", mailing.len());
     let mut mailing = mailing.deduplicate();
     mailing.detype_subaddresses()?;
-    info!(
-        "Business licenses deduplicated: {} entries.",
-        mailing.records.len()
-    );
+    info!("Business licenses deduplicated: {} entries.", mailing.len());
 
     let mut mail = Vec::new();
-    for site in situs.records {
+    for site in situs.iter() {
         let matching = mailing.clone().filter("license", &site.license());
-        if !matching.records.is_empty() {
-            mail.push(matching.records[0].clone());
+        if !matching.is_empty() {
+            mail.push(matching[0].clone());
         }
     }
     tracing::info!("Mailing list: {} records", mail.len());

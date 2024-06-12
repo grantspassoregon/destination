@@ -4,9 +4,9 @@ use crate::address_components::*;
 use crate::prelude::{from_csv, load_bin, save, to_csv, Address, Addresses, Point, Portable};
 use crate::utils::deserialize_arcgis_data;
 use aid::prelude::*;
+use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
 use serde::{Deserialize, Serialize};
-use std::ops;
 use std::path::Path;
 
 /// The `GrantsPassSpatialAddress` struct represents an address site point for the City of Grants Pass.
@@ -267,27 +267,10 @@ impl Address for GrantsPassAddress {
 
 /// The `GrantsPassAddresses` struct holds a vector of type
 /// ['GrantsPassAddress'].
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, PartialOrd)]
-pub struct GrantsPassAddresses {
-    /// The `records` field holds a vector of type [`GrantsPassAddresses`].
-    pub records: Vec<GrantsPassAddress>,
-}
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, PartialOrd, Deref, DerefMut)]
+pub struct GrantsPassAddresses(Vec<GrantsPassAddress>);
 
 impl Addresses<GrantsPassAddress> for GrantsPassAddresses {}
-
-impl ops::Deref for GrantsPassAddresses {
-    type Target = Vec<GrantsPassAddress>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for GrantsPassAddresses {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
-    }
-}
 
 impl Portable<GrantsPassAddresses> for GrantsPassAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -302,11 +285,11 @@ impl Portable<GrantsPassAddresses> for GrantsPassAddresses {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
@@ -604,27 +587,10 @@ impl GeoPoint for GrantsPassSpatialAddress {
 
 /// The `GrantsPassSpatialAddresses` struct holds a vector of type
 /// ['GrantsPassSpatialAddress'].
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, PartialOrd)]
-pub struct GrantsPassSpatialAddresses {
-    /// The `records` field holds a vector of type [`GrantsPassAddress`].
-    pub records: Vec<GrantsPassSpatialAddress>,
-}
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, PartialOrd, Deref, DerefMut)]
+pub struct GrantsPassSpatialAddresses(Vec<GrantsPassSpatialAddress>);
 
 impl Addresses<GrantsPassSpatialAddress> for GrantsPassSpatialAddresses {}
-
-impl ops::Deref for GrantsPassSpatialAddresses {
-    type Target = Vec<GrantsPassSpatialAddress>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for GrantsPassSpatialAddresses {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
-    }
-}
 
 impl Portable<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -639,10 +605,10 @@ impl Portable<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }

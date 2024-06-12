@@ -1,16 +1,16 @@
 //!  The `compare_fire` module implements address matching and comparison for Fire Inspections.
 use crate::prelude::*;
+use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::ops;
 use tracing::info;
 
 /// The `FireInspectionmatch` struct holds a [`FireInspection`] in the `inspection` field, and a
 /// [`MatchPartialRecord`] in the `record` field.  The `record` matches the partial business
 /// address against a set of fully-specified addresses.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct FireInspectionMatch {
     // The fire inspection record.
     inspection: FireInspection,
@@ -46,11 +46,8 @@ impl FireInspectionMatch {
 }
 
 /// The `FireInspectionMatches` struct is a wrapper for a vector of type [`FireInspectionMatch`].
-#[derive(Debug, Clone)]
-pub struct FireInspectionMatches {
-    // The `records` field holds a vector of type [`FireInspectionMatch`].
-    records: Vec<FireInspectionMatch>,
-}
+#[derive(Debug, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut)]
+pub struct FireInspectionMatches(Vec<FireInspectionMatch>);
 
 impl FireInspectionMatches {
     /// The `compare` method creates a [`PartialMatchRecords`] for each business address in the
@@ -69,7 +66,7 @@ impl FireInspectionMatches {
             .map(|r| FireInspectionMatch::compare(r, addresses))
             .progress_with_style(style)
             .collect::<Vec<FireInspectionMatch>>();
-        FireInspectionMatches { records }
+        FireInspectionMatches(records)
     }
 
     /// The `filter` method filters records from Self.  Currently accepts values "missing",
@@ -84,23 +81,9 @@ impl FireInspectionMatches {
     }
 }
 
-impl ops::Deref for FireInspectionMatches {
-    type Target = Vec<FireInspectionMatch>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for FireInspectionMatches {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
-    }
-}
-
 /// The `FireInspectionMatchRecord` struct holds a selection of fields from the fire inspection
 /// record and the partial address match, designed to export to csv for visualization in GIS.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct FireInspectionMatchRecord {
     // The match status of the partial address.
     status: MatchStatus,
@@ -126,11 +109,8 @@ impl FireInspectionMatchRecord {
 
 /// The `FireInspectionMatchRecords` struct is wrapper for a vector of type
 /// [`FireInspectionMatchRecord`].
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FireInspectionMatchRecords {
-    // The `records` field holds a vector of type [`FireInspectionMatchRecord`].
-    records: Vec<FireInspectionMatchRecord>,
-}
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize, Deref, DerefMut)]
+pub struct FireInspectionMatchRecords(Vec<FireInspectionMatchRecord>);
 
 impl FireInspectionMatchRecords {
     /// Writes the contents of the struct to a csv file at location `title`.
@@ -142,7 +122,7 @@ impl FireInspectionMatchRecords {
     /// Reads the contents of the struct from a csv file at location `path`.
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
         let records = from_csv(path)?;
-        Ok(FireInspectionMatchRecords { records })
+        Ok(FireInspectionMatchRecords(records))
     }
 
     /// The `filter` method returns the subset of records that match the filter.  Current values
@@ -155,20 +135,6 @@ impl FireInspectionMatchRecords {
             "matching" => self.retain(|r| r.status() == MatchStatus::Matching),
             _ => info!("Invalid filter provided."),
         }
-    }
-}
-
-impl ops::Deref for FireInspectionMatchRecords {
-    type Target = Vec<FireInspectionMatchRecord>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for FireInspectionMatchRecords {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
     }
 }
 
@@ -188,7 +154,7 @@ impl From<&FireInspectionMatch> for FireInspectionMatchRecords {
             });
         }
 
-        FireInspectionMatchRecords { records }
+        FireInspectionMatchRecords(records)
     }
 }
 
@@ -201,6 +167,6 @@ impl From<&FireInspectionMatches> for FireInspectionMatchRecords {
                 records.push(item.clone());
             }
         }
-        FireInspectionMatchRecords { records }
+        FireInspectionMatchRecords(records)
     }
 }

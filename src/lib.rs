@@ -23,7 +23,8 @@ pub mod prelude {
         PartialAddress, PartialAddresses,
     };
     pub use crate::address_components::{
-        deserialize_mixed_post_type, deserialize_mixed_pre_directional, AddressStatus,
+        deserialize_mixed_post_type, deserialize_mixed_pre_directional, match_mixed_post_type,
+        match_mixed_pre_directional, match_mixed_subaddress_type, AddressStatus,
         StreetNamePostType, StreetNamePreDirectional, SubaddressType,
     };
     pub use crate::business::{BusinessLicenses, BusinessMatchRecord, BusinessMatchRecords};

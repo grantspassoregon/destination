@@ -1,6 +1,7 @@
 //! The `lexisnexis` module produces address range reports for the LexisNexis dispatch service.
 use crate::prelude::{from_csv, load_bin, save, to_csv, Address, Addresses, Portable};
 use aid::prelude::*;
+use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::Path;
@@ -175,11 +176,21 @@ pub struct LexisNexisItem {
 
 /// The `LexisNexis` struct holds a vector of [`LexisNexisItem`] objects, for serialization into a
 /// .csv file.
-#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
-pub struct LexisNexis {
-    /// The `records` field holds a vector of type [`LexisNexisItem`].
-    pub records: Vec<LexisNexisItem>,
-}
+#[derive(
+    Default,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Deserialize,
+    Serialize,
+    Deref,
+    DerefMut,
+)]
+pub struct LexisNexis(Vec<LexisNexisItem>);
 
 impl LexisNexis {
     /// The `from_addresses` method creates a [`LexisNexis`] struct from a set of addresses to
@@ -224,7 +235,7 @@ impl LexisNexis {
                 }
             }
         }
-        Ok(LexisNexis { records })
+        Ok(LexisNexis(records))
     }
 }
 
@@ -241,11 +252,11 @@ impl Portable<LexisNexis> for LexisNexis {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
@@ -271,11 +282,21 @@ impl LexisNexisRangeItem {
 /// street name.  The `include` field is *true* for addresses within the city limits or with a public
 /// safety agreement, and *false* for addresses outside of city limits or without a public safety
 /// agreement.  Used to produce valid ranges of addresses in the city service area.
-#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
-pub struct LexisNexisRange {
-    /// The `records` field holds a vector of type [`LexisNexisRangeItem`].
-    pub records: Vec<LexisNexisRangeItem>,
-}
+#[derive(
+    Default,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Deserialize,
+    Serialize,
+    Deref,
+    DerefMut,
+)]
+pub struct LexisNexisRange(Vec<LexisNexisRangeItem>);
 
 impl LexisNexisRange {
     /// The `from_addresses` method creates a [`LexisNexisRange`] from a set of addresses to
@@ -297,7 +318,7 @@ impl LexisNexisRange {
         );
         records.sort_by_key(|v| v.num);
         // tracing::info!("Record: {:#?}", &records);
-        Self { records }
+        Self(records)
     }
 
     /// The `ranges` method returns the ranges of addresses within the service area, as marked by
@@ -307,7 +328,7 @@ impl LexisNexisRange {
         let mut min = 0;
         let mut max = 0;
         let mut open = false;
-        for item in &self.records {
+        for item in self.iter() {
             if item.include {
                 if !open {
                     open = true;

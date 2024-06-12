@@ -5,6 +5,7 @@ use crate::prelude::{
     Mismatch, Point, Portable, StreetNamePostType, StreetNamePreDirectional, SubaddressType,
 };
 use aid::prelude::*;
+use derive_more::{Deref, DerefMut};
 use indicatif::ProgressBar;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -257,7 +258,7 @@ pub trait Address {
                     .cloned()
                     .filter(|record| {
                         if let Some(dir) = record.directional() {
-                            field == format!("{}", dir)
+                            field == dir.abbreviate()
                         } else {
                             false
                         }
@@ -635,27 +636,10 @@ impl<T: Address> From<&T> for CommonAddress {
 }
 
 /// The `CommonAddresses` struct holds a vector of type [`CommonAddress`].
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
-pub struct CommonAddresses {
-    /// The `records` field contains a vector of type [`CommonAddress`].
-    pub records: Vec<CommonAddress>,
-}
+#[derive(Debug, Default, Serialize, Deserialize, Clone, Deref, DerefMut)]
+pub struct CommonAddresses(Vec<CommonAddress>);
 
 impl Addresses<CommonAddress> for CommonAddresses {}
-
-impl ops::Deref for CommonAddresses {
-    type Target = Vec<CommonAddress>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for CommonAddresses {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
-    }
-}
 
 impl Portable<CommonAddresses> for CommonAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -670,11 +654,11 @@ impl Portable<CommonAddresses> for CommonAddresses {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
@@ -684,7 +668,7 @@ impl<T: Address + Clone> From<&[T]> for CommonAddresses {
             .iter()
             .map(CommonAddress::from)
             .collect::<Vec<CommonAddress>>();
-        Self { records }
+        Self(records)
     }
 }
 
@@ -873,16 +857,27 @@ impl PartialAddress {
 
 /// The `PartialAddresses` struct holds a `records` field that contains a vector of type
 /// [`PartialAddress`].
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct PartialAddresses {
-    records: Vec<PartialAddress>,
-}
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Deref,
+    DerefMut,
+)]
+pub struct PartialAddresses(Vec<PartialAddress>);
 
 impl PartialAddresses {
     /// Creates a new `PartialAddresses` struct from the provided `records`, a vector of
     /// [`PartialAddress`] objects.
     pub fn new(records: Vec<PartialAddress>) -> Self {
-        Self { records }
+        Self(records)
     }
 }
 
@@ -899,31 +894,17 @@ impl Portable<PartialAddresses> for PartialAddresses {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
-    }
-}
-
-impl ops::Deref for PartialAddresses {
-    type Target = Vec<PartialAddress>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for PartialAddresses {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
 impl From<Vec<PartialAddress>> for PartialAddresses {
     fn from(records: Vec<PartialAddress>) -> Self {
-        PartialAddresses { records }
+        PartialAddresses(records)
     }
 }
 
@@ -967,23 +948,13 @@ impl AddressDelta {
 
 /// The `AddressDeltas` struct holds a `records` field that contains a vector of type
 /// [`AddressDelta`].
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
-pub struct AddressDeltas {
-    /// The `records` field holds a vector of type [`AddressDelta`].
-    pub records: Vec<AddressDelta>,
-}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd, Deref, DerefMut)]
+pub struct AddressDeltas(Vec<AddressDelta>);
 
-impl ops::Deref for AddressDeltas {
-    type Target = Vec<AddressDelta>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for AddressDeltas {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
+impl AddressDeltas {
+    /// Creates a new instance of `AddressDeltas` from a vector of type [`AddressDelta`].
+    pub fn new(records: Vec<AddressDelta>) -> Self {
+        Self(records)
     }
 }
 
@@ -1000,10 +971,10 @@ impl Portable<AddressDeltas> for AddressDeltas {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }

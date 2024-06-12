@@ -2,14 +2,14 @@
 //! for the City of Grants Pass.
 use crate::prelude::*;
 use aid::prelude::*;
+use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
-use std::ops;
 
 /// The `BusinessRaw` struct contains business license records. Serves as an intermediary for
 /// creating a [`Business`] struct when reading the data in from a csv.  Mainly this involves
 /// parsing the `street_address_label` from a String into a `PartialAddress`.
 /// The fields correspond to the export format from the GIS layer.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
 pub struct BusinessRaw {
     company_name: String,
     contact_name: Option<String>,
@@ -27,42 +27,21 @@ pub struct BusinessRaw {
 }
 
 /// The `BusinessesRaw` struct is a wrapper for a vector of type [`BusinessRaw`].
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct BusinessesRaw {
-    // The `records` field holds a vector of type [`BusinessRaw`].
-    records: Vec<BusinessRaw>,
-}
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, Deref, DerefMut,
+)]
+pub struct BusinessesRaw(Vec<BusinessRaw>);
 
 impl BusinessesRaw {
     /// Writes the contents of the struct to a csv file at location `path`.
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
         let records = from_csv(path)?;
-        Ok(BusinessesRaw { records })
-    }
-
-    /// The `records` method returns the cloned value of the `records` field, containing a vector
-    /// of type [`BusinessRaw`].
-    pub fn records(&self) -> Vec<BusinessRaw> {
-        self.records.clone()
-    }
-}
-
-impl ops::Deref for BusinessesRaw {
-    type Target = Vec<BusinessRaw>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for BusinessesRaw {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
+        Ok(BusinessesRaw(records))
     }
 }
 
 /// The `Business` struct holds query information for active business licenses, for access in GIS.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
 pub struct Business {
     // The official name of the company.
     company_name: String,
@@ -197,35 +176,19 @@ impl TryFrom<BusinessRaw> for Business {
 
 /// The `Businesses` struct is a wrapper around a vector of type [`Business`].
 /// This struct contains business licenses that have mapped to valid addresses.
-#[derive(Debug, Clone)]
-pub struct Businesses {
-    records: Vec<Business>,
-}
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, Deref, DerefMut,
+)]
+pub struct Businesses(Vec<Business>);
 
 impl Businesses {
     /// Writes the contents to a csv file at location `path`.
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Clean<Self> {
         let raw = BusinessesRaw::from_csv(path)?;
         let mut records = Vec::new();
-        for record in raw.records {
-            records.push(Business::try_from(record)?);
+        for record in raw.iter() {
+            records.push(Business::try_from(record.clone())?);
         }
-        Ok(Businesses { records })
-    }
-}
-
-// Since we are wrapping a vector, we want the struct to deref to the underlying vector.
-impl ops::Deref for Businesses {
-    type Target = Vec<Business>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-// We also implemented deref_mut to be able to modify the underlying vector.
-impl ops::DerefMut for Businesses {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
+        Ok(Businesses(records))
     }
 }

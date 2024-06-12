@@ -1,9 +1,21 @@
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+// use std::fmt;
 
 /// The `AddressStatus` enum represents the address status, used by City of Grants Pass staff.
 #[derive(
-    Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default, PartialOrd, Ord, Hash,
+    Copy,
+    Clone,
+    Debug,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    Eq,
+    Default,
+    PartialOrd,
+    Ord,
+    Hash,
+    Display,
 )]
 pub enum AddressStatus {
     /// Current active valid address.
@@ -21,15 +33,15 @@ pub enum AddressStatus {
     Other,
 }
 
-impl fmt::Display for AddressStatus {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Current => write!(f, "Current"),
-            Self::Pending => write!(f, "Pending"),
-            Self::Retired => write!(f, "Retired"),
-            Self::Temporary => write!(f, "Temporary"),
-            Self::Virtual => write!(f, "Virtual"),
-            Self::Other => write!(f, "Other"),
-        }
-    }
-}
+// impl fmt::Display for AddressStatus {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         match self {
+//             Self::Current => write!(f, "Current"),
+//             Self::Pending => write!(f, "Pending"),
+//             Self::Retired => write!(f, "Retired"),
+//             Self::Temporary => write!(f, "Temporary"),
+//             Self::Virtual => write!(f, "Virtual"),
+//             Self::Other => write!(f, "Other"),
+//         }
+//     }
+// }

@@ -1,6 +1,8 @@
 //! The `parser` module contains functions for parsing unstructured text into address components.
-use crate::address::*;
-use crate::address_components::*;
+use crate::prelude::{
+    match_mixed_post_type, match_mixed_pre_directional, match_mixed_subaddress_type,
+    PartialAddress, StreetNamePostType, StreetNamePreDirectional, SubaddressType,
+};
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_until};
 use nom::character::complete::{alpha1, alphanumeric1, digit1, space0};
@@ -80,27 +82,45 @@ pub fn is_post_type(input: &str) -> IResult<&str, bool> {
     Ok((rem, post.is_some()))
 }
 
-/// The `multi_word` function expect at least one word, and then tests the remainder for the
+/// The `multi_word` function expects at least one word, and then tests the remainder for the
 /// presence of a street name post type.  If a street name post type is not present, the function will
 /// continue iterating over words in the input until the next word parses as a street name
-/// post type, when it will stop and return.  Josephine County has a couple instances of streets with multiple post type values (e.g. Azalea Drive Cutoff).  According to FGDC guidelines, multiple post type values can either be parsed as part of the street name component or as multiple values of the street name post type, and we have chosen the latter strategy.
+/// post type, when it will stop and return.  Josephine County has a couple instances of streets with multiple
+/// post type values (e.g. Azalea Drive Cutoff).  
+/// According to FGDC guidelines, multiple post type values can either be parsed as part of the street name
+/// component or as multiple values of the street name post type, and we have chosen the latter strategy.
+/// TODO: Maybe should be renamed to parse_street_name_elements, multi_word is too vague.
 pub fn multi_word(input: &str) -> IResult<&str, Vec<&str>> {
+    // Take the first set of alphanumeric characters.
     let (rem, start) = single_word(input)?;
+    // Determine if the following word is a post type.
     let (_, test) = is_post_type(rem)?;
+    // A vector to hold street name parts.
     let mut name = vec![start];
     tracing::trace!("Name is {:#?}", &name);
+    // If no post type is found, we return the input, so we back it up here.
     let mut remaining = rem;
     tracing::trace!("Remaining is {:#?}", &rem);
+    // True if a post type is already present, false is not.
     let mut cond = test;
     tracing::trace!("Starting condition is {:#?}", &test);
+    // While no post type is present
     while !cond {
+        // Take the next set of alphanumeric characters.
         let (rem, next) = single_word(remaining)?;
+        // Since it comes after the beginning of the street name, and before a post type
+        // declaration, additional words must be part of a compound street name.
         name.push(next);
         tracing::trace!("Name is {:#?}", &name);
+        // Check if the next word is a post type.
         let (_, test) = is_post_type(rem)?;
+        // Update the return input, since we have processed a word
         remaining = rem;
+        // Update the test condition based on whether the next word is a post type
         cond = test;
     }
+    // Note we do not parse the post type, just stop when we hit it.  Here we just return the name
+    // and the remainder, including the post type.
     Ok((remaining, name))
 }
 
@@ -140,6 +160,8 @@ pub fn recursive_post_type(input: &str) -> IResult<&str, Vec<StreetNamePostType>
 ///
 /// TODO:  For streets with multiple post type values, such as Azalea Dr Cutoff, this will
 /// incorrectly classify the post type and street name.
+///
+/// TODO: When parsing a partial address, the street type may not be included, so must be optional.
 pub fn parse_complete_street_name(
     input: &str,
 ) -> IResult<
@@ -150,6 +172,7 @@ pub fn parse_complete_street_name(
         StreetNamePostType,
     ),
 > {
+    // Take a predirectional if present.
     let (rem, predir) = parse_pre_directional(input)?;
     tracing::trace!("Predir is {:#?}", &predir);
     let (name_rem, name) = multi_word(rem)?;

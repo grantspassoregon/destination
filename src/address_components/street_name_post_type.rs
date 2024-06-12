@@ -1,13 +1,24 @@
+use derive_more::Display;
 use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 /// The `StreetNamePostType` represents the street name post type of an address.  Acceptable post
 /// types include the list of recognized street suffix names in Appendix C1 of the United States
 /// Postal Service (USPS) Publication 28 - Postal Addressing Standards.
 #[allow(missing_docs)]
 #[derive(
-    Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default, PartialOrd, Ord, Hash,
+    Copy,
+    Clone,
+    Debug,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    Eq,
+    Default,
+    PartialOrd,
+    Ord,
+    Hash,
+    Display,
 )]
 pub enum StreetNamePostType {
     ALLEY,
@@ -435,11 +446,11 @@ impl StreetNamePostType {
     }
 }
 
-impl fmt::Display for StreetNamePostType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
+// impl fmt::Display for StreetNamePostType {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "{:?}", self)
+//     }
+// }
 
 /// Deserialization function for post type abbreviations.  This works if all the post types in the
 /// data observe the official postal contraction.  For post types with a mix of abbreviations and

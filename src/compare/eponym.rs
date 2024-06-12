@@ -2,12 +2,12 @@
 //! comparing addresses.
 use crate::prelude::*;
 use aid::prelude::Clean;
+use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
 use galileo::galileo_types::geometry_type::{GeoSpace2d, GeometryType, PointGeometryType};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::ops;
 use std::path::Path;
 use tracing::info;
 
@@ -53,16 +53,26 @@ impl Mismatch {
 }
 
 /// The `Mismatches` struct holds a vector of type [`Mismatch`].
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
-pub struct Mismatches {
-    /// The `fields` field holds a vector of type ['Mismatch'].
-    pub fields: Vec<Mismatch>,
-}
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    PartialEq,
+    PartialOrd,
+    Eq,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Deref,
+    DerefMut,
+)]
+pub struct Mismatches(Vec<Mismatch>);
 
 impl Mismatches {
     /// Creates a new 'Mismatches' from a vector of type ['Mismatch'].
     pub fn new(fields: Vec<Mismatch>) -> Self {
-        Mismatches { fields }
+        Mismatches(fields)
     }
 }
 
@@ -158,11 +168,8 @@ impl GeometryType for MatchRecord {
 }
 
 /// The `MatchRecords` struct holds a vector of type [`MatchRecord`].
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
-pub struct MatchRecords {
-    /// The `records` field holds a vector of type [`MatchRecord`]
-    pub records: Vec<MatchRecord>,
-}
+#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Serialize, Deserialize, Deref, DerefMut)]
+pub struct MatchRecords(Vec<MatchRecord>);
 
 impl MatchRecords {
     /// The constructor for `MatchRecords` compares a single subject address against a set of
@@ -199,14 +206,14 @@ impl MatchRecords {
                         latitude,
                     }),
                     Some(mismatches) => {
-                        for mismatch in mismatches.fields {
+                        for mismatch in mismatches.iter() {
                             match mismatch {
                                 Mismatch::SubaddressType(message) => {
-                                    subaddress_type = Some(message)
+                                    subaddress_type = Some(message.to_owned())
                                 }
-                                Mismatch::Floor(message) => floor = Some(message),
-                                Mismatch::Building(message) => building = Some(message),
-                                Mismatch::Status(message) => status = Some(message),
+                                Mismatch::Floor(message) => floor = Some(message.to_owned()),
+                                Mismatch::Building(message) => building = Some(message.to_owned()),
+                                Mismatch::Status(message) => status = Some(message.to_owned()),
                             }
                         }
                         match_record.push(MatchRecord {
@@ -235,9 +242,7 @@ impl MatchRecords {
                 latitude,
             })
         }
-        MatchRecords {
-            records: match_record,
-        }
+        MatchRecords(match_record)
     }
 
     /// For each address in `self_addresses`, the `compare` method calculates the match record for
@@ -261,9 +266,9 @@ impl MatchRecords {
             .collect::<Vec<MatchRecords>>();
         let mut records = Vec::new();
         for mut item in record {
-            records.append(&mut item.records);
+            records.append(&mut item);
         }
-        MatchRecords { records }
+        MatchRecords(records)
     }
 
     /// The `filter` method returns the subset of `MatchRecords` that meet the filter requirement.
@@ -272,91 +277,26 @@ impl MatchRecords {
     /// match status, the return records contain those records where the match status equals the
     /// filter value.  For the mismatch fields, the return records contain values where a mismatch
     /// is present in the provided field.
-    pub fn filter(self, filter: &str) -> Self {
-        let mut records = Vec::new();
+    pub fn filter(mut self, filter: &str) -> Self {
         match filter {
-            "matching" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.match_status == MatchStatus::Matching)
-                    .collect(),
-            ),
-            "missing" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.match_status == MatchStatus::Missing)
-                    .collect(),
-            ),
-            "divergent" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.match_status == MatchStatus::Divergent)
-                    .collect(),
-            ),
-            "subaddress" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| {
-                        record.match_status == MatchStatus::Divergent
-                            && record.subaddress_type.is_some()
-                    })
-                    .collect(),
-            ),
-            "floor" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| {
-                        record.match_status == MatchStatus::Divergent && record.floor.is_some()
-                    })
-                    .collect(),
-            ),
-            "building" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| {
-                        record.match_status == MatchStatus::Divergent && record.building.is_some()
-                    })
-                    .collect(),
-            ),
-            "status" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| {
-                        record.match_status == MatchStatus::Divergent && record.status.is_some()
-                    })
-                    .collect(),
-            ),
+            "matching" => self.retain(|r| r.match_status == MatchStatus::Matching),
+            "missing" => self.retain(|r| r.match_status == MatchStatus::Missing),
+            "divergent" => self.retain(|r| r.match_status == MatchStatus::Divergent),
+            "subaddress" => self.retain(|r| {
+                r.match_status == MatchStatus::Divergent && r.subaddress_type.is_some()
+            }),
+            "floor" => {
+                self.retain(|r| r.match_status == MatchStatus::Divergent && r.floor.is_some())
+            }
+            "building" => {
+                self.retain(|r| r.match_status == MatchStatus::Divergent && r.building.is_some())
+            }
+            "status" => {
+                self.retain(|r| r.match_status == MatchStatus::Divergent && r.status.is_some())
+            }
             _ => info!("Invalid filter provided."),
         }
-        MatchRecords { records }
-    }
-}
-
-impl ops::Deref for MatchRecords {
-    type Target = Vec<MatchRecord>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for MatchRecords {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
+        self
     }
 }
 
@@ -373,11 +313,11 @@ impl Portable<MatchRecords> for MatchRecords {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
@@ -488,7 +428,7 @@ impl MatchPartialRecord {
                 latitude: None,
             })
         }
-        let compared = MatchPartialRecords { records };
+        let compared = MatchPartialRecords(records);
         let matching = compared.clone().filter("matching");
         if matching.is_empty() {
             compared
@@ -524,10 +464,8 @@ impl MatchPartialRecord {
 }
 
 /// The `MatchPartialRecords` struct holds a vector of type [`MatchPartialRecord`].
-#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
-pub struct MatchPartialRecords {
-    records: Vec<MatchPartialRecord>,
-}
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize, Deref, DerefMut)]
+pub struct MatchPartialRecords(Vec<MatchPartialRecord>);
 
 impl MatchPartialRecords {
     /// For each partial address in `self_addresses`, the `compare` method attempts to match the
@@ -548,59 +486,23 @@ impl MatchPartialRecords {
             .collect::<Vec<MatchPartialRecords>>();
         let mut records = Vec::new();
         for mut item in record {
-            records.append(&mut item.records);
+            records.append(&mut item);
         }
-        MatchPartialRecords { records }
+        MatchPartialRecords(records)
     }
 
     /// The `filter` method returns the subset of `PartialMatchRecords` that meet the filter requirement.
     /// The `filter` parameter takes a string reference that can take the values "matching",
     /// "missing", or "divergent".  The return records contain those records where the match status equals the
     /// filter value.
-    pub fn filter(self, filter: &str) -> Self {
-        let mut records = Vec::new();
+    pub fn filter(mut self, filter: &str) -> Self {
         match filter {
-            "missing" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.match_status == MatchStatus::Missing)
-                    .collect(),
-            ),
-            "divergent" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.match_status == MatchStatus::Divergent)
-                    .collect(),
-            ),
-            "matching" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.match_status == MatchStatus::Matching)
-                    .collect(),
-            ),
+            "missing" => self.retain(|r| r.match_status == MatchStatus::Missing),
+            "divergent" => self.retain(|r| r.match_status == MatchStatus::Divergent),
+            "matching" => self.retain(|r| r.match_status == MatchStatus::Matching),
             _ => info!("Invalid filter provided."),
         }
-        MatchPartialRecords { records }
-    }
-}
-
-impl ops::Deref for MatchPartialRecords {
-    type Target = Vec<MatchPartialRecord>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for MatchPartialRecords {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
+        self
     }
 }
 
@@ -617,10 +519,10 @@ impl Portable<MatchPartialRecords> for MatchPartialRecords {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }

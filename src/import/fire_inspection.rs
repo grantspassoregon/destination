@@ -2,13 +2,13 @@
 //! address matching.
 use crate::prelude::*;
 use aid::prelude::*;
+use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
-use std::ops;
 
 /// The `FireInspectionRaw` struct functions as a builder for a [`FireInspection`] struct.
 /// The fields correspond to the csv of fire inspection data from the fire department.
 /// A raw inspection represents the address a String, as opposed to a [`PartialAddress`].
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct FireInspectionRaw {
     // Business name.
@@ -22,23 +22,22 @@ pub struct FireInspectionRaw {
 }
 
 /// The `FireInspectionsRaw` struct is a wrapper around a vector of type [`FireInspectionRaw`]
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct FireInspectionsRaw {
-    /// The `records` field holds a vector of type [`FireInspectionRaw`].
-    pub records: Vec<FireInspectionRaw>,
-}
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, Deref, DerefMut,
+)]
+pub struct FireInspectionsRaw(Vec<FireInspectionRaw>);
 
 impl FireInspectionsRaw {
     /// Used to read fire inspection data in from the csv source file.
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
         let records = from_csv(path)?;
-        Ok(FireInspectionsRaw { records })
+        Ok(FireInspectionsRaw(records))
     }
 }
 
 /// The `FireInspection` struct contains fields from a fire inspection record, with the business
 /// address mapped to a [`PartialAddress`].  Built from a [`FireInspectionRaw`].
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct FireInspection {
     // Business name.
     name: String,
@@ -95,11 +94,10 @@ impl TryFrom<FireInspectionRaw> for FireInspection {
 }
 
 /// The `FireInspections` struct is a wrapper around a vector of type [`FireInspection`].
-#[derive(Debug, Clone)]
-pub struct FireInspections {
-    // The `records` field holds a vector of type [`FireInspection`].
-    records: Vec<FireInspection>,
-}
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, Deref, DerefMut,
+)]
+pub struct FireInspections(Vec<FireInspection>);
 
 impl FireInspections {
     /// Reads in the data as a raw fire inspections, attempts to parse each address, returning a
@@ -108,24 +106,10 @@ impl FireInspections {
         // Try to read in as raw.
         let raw = FireInspectionsRaw::from_csv(path)?;
         let mut records = Vec::new();
-        for record in raw.records {
+        for record in raw.iter() {
             // Parse the raw address.
-            records.push(FireInspection::try_from(record)?);
+            records.push(FireInspection::try_from(record.clone())?);
         }
-        Ok(FireInspections { records })
-    }
-}
-
-impl ops::Deref for FireInspections {
-    type Target = Vec<FireInspection>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for FireInspections {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
+        Ok(FireInspections(records))
     }
 }

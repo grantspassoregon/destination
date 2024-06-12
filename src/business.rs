@@ -2,6 +2,7 @@
 //! matching, divergent and missing addresses.
 use crate::prelude::*;
 use aid::prelude::Clean;
+use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
@@ -10,7 +11,7 @@ use std::collections::HashSet;
 use tracing::info;
 
 /// The `BusinessMatchRecord` struct holds match data for a licensed business.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct BusinessMatchRecord {
     match_status: MatchStatus,
     business_address_label: String,
@@ -84,11 +85,8 @@ impl BusinessMatchRecord {
 }
 
 /// The `BusinessMatchRecords` struct holds a vector of [`BusinessMatchRecord`] objects.
-#[derive(Clone)]
-pub struct BusinessMatchRecords {
-    /// The `records` field holds a vector of [`BusinessMatchRecord`] objects.
-    pub records: Vec<BusinessMatchRecord>,
-}
+#[derive(Debug, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut)]
+pub struct BusinessMatchRecords(Vec<BusinessMatchRecord>);
 
 impl BusinessMatchRecords {
     /// Matches the provided address associated with a business license against the addresses in
@@ -121,15 +119,13 @@ impl BusinessMatchRecords {
                 address_longitude: None,
             });
         }
-        let business_record = BusinessMatchRecords { records };
-        let matched = business_record.filter("matching");
-        let divergent = business_record.filter("divergent");
-        if !matched.records.is_empty() {
-            let trim_match = matched.records[0].clone();
-            BusinessMatchRecords {
-                records: vec![trim_match],
-            }
-        } else if !divergent.records.is_empty() {
+        let business_record = BusinessMatchRecords(records);
+        let matched = business_record.clone().filter("matching");
+        let divergent = business_record.clone().filter("divergent");
+        if !matched.is_empty() {
+            let trim_match = matched[0].clone();
+            BusinessMatchRecords(vec![trim_match])
+        } else if !divergent.is_empty() {
             divergent
         } else {
             business_record
@@ -150,23 +146,23 @@ impl BusinessMatchRecords {
         let mut missing = Vec::new();
         for addresses in address_list {
             let record = BusinessMatchRecords::new(business, addresses);
-            let matched = record.filter("matching");
-            let diverged = record.filter("divergent");
-            let missed = record.filter("missing");
-            if !matched.records.is_empty() && matching.is_empty() {
-                matching = matched.records;
-            } else if !diverged.records.is_empty() && divergent.is_empty() {
-                divergent = diverged.records;
-            } else if !missed.records.is_empty() && missing.is_empty() {
-                missing = missed.records;
+            let matched = record.clone().filter("matching");
+            let diverged = record.clone().filter("divergent");
+            let missed = record.clone().filter("missing");
+            if !matched.is_empty() && matching.is_empty() {
+                matching = matched.0;
+            } else if !diverged.is_empty() && divergent.is_empty() {
+                divergent = diverged.0;
+            } else if !missed.is_empty() && missing.is_empty() {
+                missing = missed.0;
             }
         }
         if !matching.is_empty() {
-            BusinessMatchRecords { records: matching }
+            BusinessMatchRecords(matching)
         } else if !divergent.is_empty() {
-            BusinessMatchRecords { records: divergent }
+            BusinessMatchRecords(divergent)
         } else {
-            BusinessMatchRecords { records: missing }
+            BusinessMatchRecords(missing)
         }
     }
 
@@ -182,16 +178,15 @@ impl BusinessMatchRecords {
         )
         .unwrap();
         let record = businesses
-            .records
             .par_iter()
             .map(|address| BusinessMatchRecords::new(address, addresses))
             .progress_with_style(style)
             .collect::<Vec<BusinessMatchRecords>>();
         let mut records = Vec::new();
         for mut item in record {
-            records.append(&mut item.records);
+            records.append(&mut item);
         }
-        BusinessMatchRecords { records }
+        BusinessMatchRecords(records)
     }
 
     /// Compares each address in `businesses` against the addresses in `addresses` using the
@@ -206,16 +201,15 @@ impl BusinessMatchRecords {
         )
         .unwrap();
         let record = businesses
-            .records
             .par_iter()
             .map(|address| BusinessMatchRecords::chain(address, addresses))
             .progress_with_style(style)
             .collect::<Vec<BusinessMatchRecords>>();
         let mut records = Vec::new();
         for mut item in record {
-            records.append(&mut item.records);
+            records.append(&mut item);
         }
-        BusinessMatchRecords { records }
+        BusinessMatchRecords(records)
     }
 
     /// The `filter` method filters the [`BusinessMatchRecord`] objects in the `records` field
@@ -224,108 +218,74 @@ impl BusinessMatchRecords {
     /// option returns records where the business name is unique.  The "multiple" options returns
     /// records where multiple licenses exist registered under the same business name. The "local"
     /// option returns records within Grants Pass or Merlin.
-    pub fn filter(&self, filter: &str) -> Self {
-        let mut records = Vec::new();
+    ///
+    /// As a filter, the method must either copy the data in Self to create a subset using the
+    /// filter, or it must mutate the data of Self in place.  Here we take ownership of Self and
+    /// mutate it in place, because it is the more efficient option, and leaves the option to the
+    /// caller whether to mutate the source data or clone it before passing in.  Whereas if we take
+    /// a reference, we must clone inside the function, removing the choice from the caller.
+    pub fn filter(mut self, filter: &str) -> Self {
         match filter {
-            "missing" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.match_status == MatchStatus::Missing)
-                    .collect(),
-            ),
-            "nonmissing" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.match_status != MatchStatus::Missing)
-                    .collect(),
-            ),
-            "divergent" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.match_status == MatchStatus::Divergent)
-                    .collect(),
-            ),
-            "matching" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.match_status == MatchStatus::Matching)
-                    .collect(),
-            ),
+            "missing" => self.retain(|r| r.match_status == MatchStatus::Missing),
+            "nonmissing" => self.retain(|r| r.match_status != MatchStatus::Missing),
+            "divergent" => self.retain(|r| r.match_status == MatchStatus::Divergent),
+            "matching" => self.retain(|r| r.match_status == MatchStatus::Matching),
             "unique" => {
                 let mut names = HashSet::new();
-                for record in self.records.clone() {
+                let mut records = Vec::new();
+                for record in self.iter() {
                     if let Some(name) = record.company_name() {
                         if !names.contains(&name) {
                             names.insert(name.clone());
-                            let subset = self.filter_field("name", &name);
-                            if subset.records.len() == 1 {
-                                records.push(subset.records[0].clone());
+                            let subset = self.clone().filter_field("name", &name);
+                            if subset.len() == 1 {
+                                records.push(subset[0].clone());
                             }
                         }
                     }
                 }
+                self.0 = records;
             }
             "multiple" => {
                 let mut names = HashSet::new();
-                for record in self.records.clone() {
+                let mut records = Vec::new();
+                for record in self.iter() {
                     if let Some(name) = record.company_name() {
                         if !names.contains(&name) {
                             names.insert(name.clone());
-                            let mut subset = self.filter_field("name", &name);
-                            if subset.records.len() > 1 {
-                                records.append(&mut subset.records);
+                            let mut subset = self.clone().filter_field("name", &name);
+                            if subset.len() > 1 {
+                                records.append(&mut subset);
                             }
                         }
                     }
                 }
+                self.0 = records;
             }
-            "local" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| {
-                        record.community == "GRANTS PASS" || record.community == "MERLIN"
-                    })
-                    .collect(),
-            ),
+            "local" => self.retain(|r| r.community == "GRANTS PASS" || r.community == "MERLIN"),
             _ => info!("Invalid filter provided."),
         }
-        BusinessMatchRecords { records }
+        self
     }
 
     /// The `filter_field` method filters [`BusinessMatchRecord`] objects in the `records` field
     /// by comparing the value of the field specified in `filter` to the value of `field`.  The
     /// `filter` field accepts the value "name", and matches the value of `field` against the company
     /// name associated with the record.
-    pub fn filter_field(&self, filter: &str, field: &str) -> Self {
-        let mut records = Vec::new();
+    ///
+    /// Like the filter method, we move the responsibility to clone to the caller.
+    pub fn filter_field(mut self, filter: &str, field: &str) -> Self {
         match filter {
-            "name" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.company_name() == Some(field.to_string()))
-                    .collect(),
-            ),
+            "name" => self.retain(|r| r.company_name() == Some(field.to_string())),
             _ => info!("Invalid filter provided."),
         }
-        BusinessMatchRecords { records }
+        self
     }
 
     /// Writes the contents of `BusinessMatchRecords` to a CSV file at location `title`.  Each element in
     /// the vector of type [`BusinessMatchRecord`] maps to a row of data on the CSV.
     pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        to_csv(self.records_mut(), title)?;
+        to_csv(self, title)?;
         Ok(())
     }
 
@@ -334,13 +294,7 @@ impl BusinessMatchRecords {
     /// [`BusinessMatchRecords::to_csv()`].
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
         let records = from_csv(path)?;
-        Ok(BusinessMatchRecords { records })
-    }
-
-    /// The `records` field holds a vector of type [`BusinessMatchRecord`].  This method returns a
-    /// mutable reference to the vector.
-    pub fn records_mut(&mut self) -> &mut Vec<BusinessMatchRecord> {
-        &mut self.records
+        Ok(BusinessMatchRecords(records))
     }
 }
 
@@ -522,7 +476,7 @@ impl BusinessLicense {
             None => self.street_name.to_string(),
         };
         let complete_street_name = match self.street_name_pre_directional {
-            Some(pre_directional) => format!("{} {}", pre_directional, street_name),
+            Some(pre_directional) => format!("{} {}", pre_directional.abbreviate(), street_name),
             None => street_name,
         };
         match self.subaddress_identifier() {
@@ -551,44 +505,26 @@ impl BusinessLicense {
 
 /// The `BusinessLicenses` struct holds a `records` field containing a vector of type
 /// [`BusinessLicense`].
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct BusinessLicenses {
-    /// The `records` field contains a vector of type [`BusinessLicense`].
-    pub records: Vec<BusinessLicense>,
-}
+#[derive(Debug, Clone, Deserialize, Serialize, Deref, DerefMut)]
+pub struct BusinessLicenses(Vec<BusinessLicense>);
 
 impl BusinessLicenses {
     /// Creates a new `BusinessLicenses` struct from a CSV file located at `path`.
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
         let records = from_csv(path)?;
-        Ok(BusinessLicenses { records })
+        Ok(BusinessLicenses(records))
     }
 
     /// Returns the subset of `BusinessLicenses` where the value of the `filter` field is equal to
     /// the test value in `field`.  Currently `filter` can take the value `name`, referring to the
     /// company name.
-    pub fn filter(&self, filter: &str, field: &str) -> Self {
-        let mut records = Vec::new();
+    pub fn filter(mut self, filter: &str, field: &str) -> Self {
         match filter {
-            "name" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.company_name() == Some(field.to_string()))
-                    .collect(),
-            ),
-            "license" => records.append(
-                &mut self
-                    .records
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| record.license() == *field)
-                    .collect(),
-            ),
+            "name" => self.retain(|r| r.company_name() == Some(field.to_string())),
+            "license" => self.retain(|r| r.license() == *field),
             _ => info!("Invalid filter provided."),
         }
-        BusinessLicenses { records }
+        self
     }
 
     /// Retains one record from each license in `BusinessLicenses`, keeping the first encountered,
@@ -596,21 +532,20 @@ impl BusinessLicenses {
     pub fn deduplicate(&self) -> Self {
         let mut records = Vec::new();
         let mut licenses = HashSet::new();
-        for record in self.records.clone() {
+        for record in self.iter() {
             let license = record.license();
             if !licenses.contains(&license) {
                 licenses.insert(license);
-                records.push(record);
+                records.push(record.clone());
             }
         }
-        BusinessLicenses { records }
+        BusinessLicenses(records)
     }
 
-    /// The `detype_subaddresses` method calls the [`detype_subadress`] method on each record in
+    /// The `detype_subaddresses` method calls the [`detype_subaddress`] method on each record in
     /// `records`.
     pub fn detype_subaddresses(&mut self) -> Clean<()> {
-        self.records
-            .iter_mut()
+        self.iter_mut()
             .map(BusinessLicense::detype_subaddress)
             .for_each(drop);
         Ok(())

@@ -4,9 +4,9 @@ use crate::address_components::*;
 use crate::prelude::{from_csv, load_bin, save, to_csv, Address, Addresses, Point, Portable};
 use crate::utils::deserialize_arcgis_data;
 use aid::prelude::*;
+use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
 use serde::{Deserialize, Serialize};
-use std::ops;
 use std::path::Path;
 
 /// The `JosephineCountyAddress2024` struct represents an address site point for Josephine County,
@@ -211,27 +211,10 @@ impl Address for JosephineCountyAddress2024 {
 
 /// The `JosephineCountyAddresses2024` struct holds a vector of type
 /// ['JosephineCountyAddress2024'].
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize)]
-pub struct JosephineCountyAddresses2024 {
-    /// The `records` field holds a vector of type [`JosephineCountyAddress2024`].
-    pub records: Vec<JosephineCountyAddress2024>,
-}
+#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut)]
+pub struct JosephineCountyAddresses2024(Vec<JosephineCountyAddress2024>);
 
 impl Addresses<JosephineCountyAddress2024> for JosephineCountyAddresses2024 {}
-
-impl ops::Deref for JosephineCountyAddresses2024 {
-    type Target = Vec<JosephineCountyAddress2024>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for JosephineCountyAddresses2024 {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
-    }
-}
 
 impl Portable<JosephineCountyAddresses2024> for JosephineCountyAddresses2024 {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -246,11 +229,11 @@ impl Portable<JosephineCountyAddresses2024> for JosephineCountyAddresses2024 {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
@@ -490,27 +473,10 @@ impl GeoPoint for JosephineCountySpatialAddress2024 {
 
 /// The `JosephineCountySpatialAddresses2024` struct holds a vector of type
 /// ['JosephineCountySpatialAddress2024'].
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize)]
-pub struct JosephineCountySpatialAddresses2024 {
-    /// The `records` field holds a vector of type [`JosephineCountySpatialAddress2024`].
-    pub records: Vec<JosephineCountySpatialAddress2024>,
-}
+#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut)]
+pub struct JosephineCountySpatialAddresses2024(Vec<JosephineCountySpatialAddress2024>);
 
 impl Addresses<JosephineCountySpatialAddress2024> for JosephineCountySpatialAddresses2024 {}
-
-impl ops::Deref for JosephineCountySpatialAddresses2024 {
-    type Target = Vec<JosephineCountySpatialAddress2024>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for JosephineCountySpatialAddresses2024 {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
-    }
-}
 
 impl Portable<JosephineCountySpatialAddresses2024> for JosephineCountySpatialAddresses2024 {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -525,11 +491,11 @@ impl Portable<JosephineCountySpatialAddresses2024> for JosephineCountySpatialAdd
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
@@ -730,27 +696,10 @@ impl Address for JosephineCountyAddress {
 
 /// The `JosephineCountyAddresses` struct holds a vector of type
 /// ['JosephineCountyAddress'].
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize)]
-pub struct JosephineCountyAddresses {
-    /// The `records` field holds a vector of type [`JosephineCountyAddress`].
-    pub records: Vec<JosephineCountyAddress>,
-}
+#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut)]
+pub struct JosephineCountyAddresses(Vec<JosephineCountyAddress>);
 
 impl Addresses<JosephineCountyAddress> for JosephineCountyAddresses {}
-
-impl ops::Deref for JosephineCountyAddresses {
-    type Target = Vec<JosephineCountyAddress>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for JosephineCountyAddresses {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
-    }
-}
 
 impl Portable<JosephineCountyAddresses> for JosephineCountyAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -765,11 +714,11 @@ impl Portable<JosephineCountyAddresses> for JosephineCountyAddresses {
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
@@ -1006,27 +955,10 @@ impl GeoPoint for JosephineCountySpatialAddress {
 
 /// The `JosephineCountySpatialAddresses` struct holds a vector of type
 /// ['JosephineCountySpatialAddress'].
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize)]
-pub struct JosephineCountySpatialAddresses {
-    /// The `records` field holds a vector of type [`JosephineCountySpatialAddress`].
-    pub records: Vec<JosephineCountySpatialAddress>,
-}
+#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut)]
+pub struct JosephineCountySpatialAddresses(Vec<JosephineCountySpatialAddress>);
 
 impl Addresses<JosephineCountySpatialAddress> for JosephineCountySpatialAddresses {}
-
-impl ops::Deref for JosephineCountySpatialAddresses {
-    type Target = Vec<JosephineCountySpatialAddress>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.records
-    }
-}
-
-impl ops::DerefMut for JosephineCountySpatialAddresses {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.records
-    }
-}
 
 impl Portable<JosephineCountySpatialAddresses> for JosephineCountySpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -1041,10 +973,10 @@ impl Portable<JosephineCountySpatialAddresses> for JosephineCountySpatialAddress
 
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = from_csv(path)?;
-        Ok(Self { records })
+        Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.records, path.as_ref().into())?)
+        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
