@@ -43,11 +43,16 @@ pub fn parse_address_number_suffix(input: &str) -> IResult<&str, Option<&str>> {
 /// returns the value and the remainder of the input.  If not present, the function returns `None`
 /// as the directional and gives the full input back.
 pub fn parse_pre_directional(input: &str) -> IResult<&str, Option<StreetNamePreDirectional>> {
+    // Strip preceding whitespace.
     let (rem, _) = space0(input)?;
+    // Take one or more alphabetic character.
     let (rem, result) = alpha1(rem)?;
+    // Match against valid directional values.
     let predir = match_mixed_pre_directional(result);
     match predir {
+        // If some, return the remainder after parsing the directional.
         Some(_) => Ok((rem, predir)),
+        // If none, return the original input, sinced we haven't parsed anything from it.
         None => Ok((input, predir)),
     }
 }
@@ -131,22 +136,32 @@ pub fn multi_word(input: &str) -> IResult<&str, Vec<&str>> {
 /// types until failure, at which point the function returns the vector of parsed post types and
 /// the remainder of the input.
 pub fn recursive_post_type(input: &str) -> IResult<&str, Vec<StreetNamePostType>> {
+    // Empty vec to populate with post type values.
     let mut post_type = Vec::new();
+    // Condition for while loop, starts at true and runs until set false
     let mut cond = true;
+    // Copy the input string to return if unable to parse any input.
     let mut remaining = input;
     while cond {
+        // `post` may contain one or more alphabetic characters.
         let (rem, post) = opt(single_word)(remaining)?;
         match post {
             Some(value) => {
+                // Check if the value is a post type.
                 let val = match_mixed_post_type(value);
                 match val {
+                    // If so, push to the vector of post type values.
                     Some(val_type) => {
                         post_type.push(val_type);
+                        // Set 'remaining' to the remainder after parsing the value.
                         remaining = rem;
                     }
+                    // If the word is not a post type, no more post types are present, break and
+                    // return.
                     None => cond = false,
                 }
             }
+            // If no word is present, break and return.
             None => cond = false,
         }
     }
@@ -306,7 +321,8 @@ pub fn parse_address(input: &str) -> IResult<&str, PartialAddress> {
     address.set_address_number_suffix(suffix);
     // attempt to read the complete street name
     let (rem, (predir, name, post_type)) = parse_complete_street_name(rem)?;
-    // can't we remove this if let like above?
+    // can't we remove this if let like above? No, the set method takes a value and wraps it in
+    // Some.
     if let Some(value) = predir {
         address.set_pre_directional(&value)
     }
