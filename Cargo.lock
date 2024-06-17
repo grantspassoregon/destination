@@ -80,7 +80,7 @@ dependencies = [
 [[package]]
 name = "aid"
 version = "0.1.0"
-source = "git+https://github.com/grantspassoregon/aid.git#c9366ba5d25e3a667e8cd8cef06909b34558c3b2"
+source = "git+https://github.com/grantspassoregon/aid.git#012c7ed9d96d627975dea2381cca640fa431cf61"
 dependencies = [
  "bincode",
  "hyper-util",
