@@ -19,7 +19,7 @@ aid = { git = "https://github.com/grantspassoregon/aid.git", default-features = 
 bincode = "1.3.3"
 clap = { version = "4.5.7", features = ["derive"] }
 csv = "1.3.0"
-derive_more = "0.99.17"
+derive_more = "0.99.18"
 galileo = { git = "https://github.com/Maximkaaa/galileo" }
 # galileo = { path = "../galileo/galileo" }
 galileo-types = { git = "https://github.com/Maximkaaa/galileo" }
