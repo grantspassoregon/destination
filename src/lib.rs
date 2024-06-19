@@ -23,9 +23,8 @@ pub mod prelude {
         PartialAddress, PartialAddresses,
     };
     pub use crate::address_components::{
-        deserialize_mixed_post_type, deserialize_mixed_pre_directional, match_mixed_post_type,
-        match_mixed_pre_directional, match_mixed_subaddress_type, AddressStatus,
-        StreetNamePostType, StreetNamePreDirectional, SubaddressType,
+        AddressStatus, PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional,
+        StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
     };
     pub use crate::business::{BusinessLicenses, BusinessMatchRecord, BusinessMatchRecords};
     pub use crate::compare::{
@@ -47,7 +46,7 @@ pub mod prelude {
         parse_address_number_suffix, parse_complete_street_name, parse_phone_number,
         parse_post_type, parse_pre_directional, parse_subaddress_element,
         parse_subaddress_elements, parse_subaddress_identifiers, parse_subaddress_type,
-        recursive_post_type,
+        recursive_post_type, Parser,
     };
     pub use crate::utils::{from_csv, load_bin, save, to_csv, Portable};
 }

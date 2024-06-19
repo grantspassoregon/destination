@@ -52,136 +52,142 @@ pub enum SubaddressType {
     Laundry,
 }
 
-// impl fmt::Display for SubaddressType {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         match self {
-//             Self::Apartment => write!(f, "Apartment"),
-//             Self::Basement => write!(f, "Basement"),
-//             Self::Building => write!(f, "Building"),
-//             Self::Department => write!(f, "Department"),
-//             Self::Floor => write!(f, "Floor"),
-//             Self::Front => write!(f, "Front"),
-//             Self::Hanger => write!(f, "Hanger"),
-//             Self::Key => write!(f, "Key"),
-//             Self::Lobby => write!(f, "Lobby"),
-//             Self::Lot => write!(f, "Lot"),
-//             Self::Lower => write!(f, "Lower"),
-//             Self::Office => write!(f, "Office"),
-//             Self::Penthouse => write!(f, "Penthouse"),
-//             Self::Pier => write!(f, "Pier"),
-//             Self::Rear => write!(f, "Rear"),
-//             Self::Room => write!(f, "Room"),
-//             Self::Side => write!(f, "Side"),
-//             Self::Slip => write!(f, "Slip"),
-//             Self::Space => write!(f, "Space"),
-//             Self::Stop => write!(f, "Stop"),
-//             Self::Suite => write!(f, "Suite"),
-//             Self::Trailer => write!(f, "Trailer"),
-//             Self::Unit => write!(f, "Unit"),
-//             Self::Upper => write!(f, "Upper"),
-//             Self::Rec => write!(f, "Rec"),
-//             Self::Laundry => write!(f, "Laundry"),
-//         }
-//     }
-// }
-
-/// Deserialization function for subaddress types.  This works if all the subaddress types in the
-/// data observe the official postal contraction.  For subaddress types with a mix of abbreviations and
-/// alternative spellings, [`match_mixed_subaddress_type()`] will work better.
-pub fn deserialize_abbreviated_subaddress_type<'de, D: Deserializer<'de>>(
-    de: D,
-) -> Result<Option<SubaddressType>, D::Error> {
-    let intermediate = Deserialize::deserialize(de)?;
-
-    match intermediate {
-        "APT" => Ok(Some(SubaddressType::Apartment)),
-        "BSMT" => Ok(Some(SubaddressType::Basement)),
-        "BLDG" => Ok(Some(SubaddressType::Building)),
-        "DEPT" => Ok(Some(SubaddressType::Department)),
-        "FL" => Ok(Some(SubaddressType::Floor)),
-        "FRNT" => Ok(Some(SubaddressType::Front)),
-        "HNGR" => Ok(Some(SubaddressType::Hanger)),
-        "KEY" => Ok(Some(SubaddressType::Key)),
-        "LBBY" => Ok(Some(SubaddressType::Lobby)),
-        "LOT" => Ok(Some(SubaddressType::Lot)),
-        "LOWR" => Ok(Some(SubaddressType::Lower)),
-        "OFC" => Ok(Some(SubaddressType::Office)),
-        "PH" => Ok(Some(SubaddressType::Penthouse)),
-        "PIER" => Ok(Some(SubaddressType::Pier)),
-        "REAR" => Ok(Some(SubaddressType::Rear)),
-        "RM" => Ok(Some(SubaddressType::Room)),
-        "SIDE" => Ok(Some(SubaddressType::Side)),
-        "SLIP" => Ok(Some(SubaddressType::Slip)),
-        "SPC" => Ok(Some(SubaddressType::Space)),
-        "STOP" => Ok(Some(SubaddressType::Stop)),
-        "STE" => Ok(Some(SubaddressType::Suite)),
-        "TRLR" => Ok(Some(SubaddressType::Trailer)),
-        "UNIT" => Ok(Some(SubaddressType::Unit)),
-        "UPPR" => Ok(Some(SubaddressType::Upper)),
-        "REC" => Ok(Some(SubaddressType::Rec)),
-        "LAUN" => Ok(Some(SubaddressType::Laundry)),
-        _ => Ok(None),
+impl SubaddressType {
+    /// The `abbreviate` method returns a String with the postal abbreviation of the subaddress
+    /// type.
+    pub fn abbreviate(&self) -> String {
+        let str = match self {
+            SubaddressType::Apartment => "apt",
+            SubaddressType::Basement => "bsmt",
+            SubaddressType::Building => "bldg",
+            SubaddressType::Department => "dept",
+            SubaddressType::Floor => "fl",
+            SubaddressType::Front => "frnt",
+            SubaddressType::Hanger => "hngr",
+            SubaddressType::Key => "key",
+            SubaddressType::Lobby => "lbby",
+            SubaddressType::Lot => "lot",
+            SubaddressType::Lower => "lowr",
+            SubaddressType::Office => "ofc",
+            SubaddressType::Penthouse => "ph",
+            SubaddressType::Pier => "pier",
+            SubaddressType::Rear => "rear",
+            SubaddressType::Room => "rm",
+            SubaddressType::Side => "side",
+            SubaddressType::Slip => "slip",
+            SubaddressType::Space => "spc",
+            SubaddressType::Stop => "stop",
+            SubaddressType::Suite => "ste",
+            SubaddressType::Trailer => "trlr",
+            SubaddressType::Unit => "unit",
+            SubaddressType::Upper => "uppr",
+            SubaddressType::Rec => "rec",
+            SubaddressType::Laundry => "laun",
+        };
+        str.to_uppercase()
     }
-}
 
-/// The `deserialize_mixed_subaddress_type` function attempts to deserialize the input data into a
-/// [`SubaddressType`].
-pub fn deserialize_mixed_subaddress_type<'de, D: Deserializer<'de>>(
-    de: D,
-) -> Result<Option<SubaddressType>, D::Error> {
-    let intermediate = Deserialize::deserialize(de)?;
-    let result = match_mixed_subaddress_type(intermediate);
-    Ok(result)
-}
+    /// Matches subaddress types in the
+    /// data that observe the official postal contraction.  For subaddress types with a mix of abbreviations and
+    /// alternative spellings, the `match_mixed` method will work better.
+    pub fn match_abbreviated(input: &str) -> Option<Self> {
+        match input.to_uppercase().as_ref() {
+            "APT" => Some(SubaddressType::Apartment),
+            "BSMT" => Some(SubaddressType::Basement),
+            "BLDG" => Some(SubaddressType::Building),
+            "DEPT" => Some(SubaddressType::Department),
+            "FL" => Some(SubaddressType::Floor),
+            "FRNT" => Some(SubaddressType::Front),
+            "HNGR" => Some(SubaddressType::Hanger),
+            "KEY" => Some(SubaddressType::Key),
+            "LBBY" => Some(SubaddressType::Lobby),
+            "LOT" => Some(SubaddressType::Lot),
+            "LOWR" => Some(SubaddressType::Lower),
+            "OFC" => Some(SubaddressType::Office),
+            "PH" => Some(SubaddressType::Penthouse),
+            "PIER" => Some(SubaddressType::Pier),
+            "REAR" => Some(SubaddressType::Rear),
+            "RM" => Some(SubaddressType::Room),
+            "SIDE" => Some(SubaddressType::Side),
+            "SLIP" => Some(SubaddressType::Slip),
+            "SPC" => Some(SubaddressType::Space),
+            "STOP" => Some(SubaddressType::Stop),
+            "STE" => Some(SubaddressType::Suite),
+            "TRLR" => Some(SubaddressType::Trailer),
+            "UNIT" => Some(SubaddressType::Unit),
+            "UPPR" => Some(SubaddressType::Upper),
+            "REC" => Some(SubaddressType::Rec),
+            "LAUN" => Some(SubaddressType::Laundry),
+            _ => None,
+        }
+    }
 
-/// Matches the target data against novel spellings of valid subaddress types.  Add any missing spelling
-/// variants to the match statement.  Called by [`crate::parser::parse_subaddress_type()`].
-/// Add additional variants to accommodate alternative abbreviations as needed.
-pub fn match_mixed_subaddress_type(input: &str) -> Option<SubaddressType> {
-    match input.to_uppercase().as_ref() {
-        "APT" => Some(SubaddressType::Apartment),
-        "APARTMENT" => Some(SubaddressType::Apartment),
-        "BSMT" => Some(SubaddressType::Basement),
-        "BASEMENT" => Some(SubaddressType::Basement),
-        "BLDG" => Some(SubaddressType::Building),
-        "BUILDING" => Some(SubaddressType::Building),
-        "DEPT" => Some(SubaddressType::Department),
-        "DEPARTMENT" => Some(SubaddressType::Department),
-        "FL" => Some(SubaddressType::Floor),
-        "FLOOR" => Some(SubaddressType::Floor),
-        "FRNT" => Some(SubaddressType::Front),
-        "FRONT" => Some(SubaddressType::Front),
-        "HNGR" => Some(SubaddressType::Hanger),
-        "HANGER" => Some(SubaddressType::Hanger),
-        "KEY" => Some(SubaddressType::Key),
-        "LBBY" => Some(SubaddressType::Lobby),
-        "LOBBY" => Some(SubaddressType::Lobby),
-        "LOT" => Some(SubaddressType::Lot),
-        "LOWR" => Some(SubaddressType::Lower),
-        "LOWER" => Some(SubaddressType::Lower),
-        "OFC" => Some(SubaddressType::Office),
-        "OFFICE" => Some(SubaddressType::Office),
-        "PH" => Some(SubaddressType::Penthouse),
-        "PENTHOUSE" => Some(SubaddressType::Penthouse),
-        "PIER" => Some(SubaddressType::Pier),
-        "REAR" => Some(SubaddressType::Rear),
-        "RM" => Some(SubaddressType::Room),
-        "ROOM" => Some(SubaddressType::Room),
-        "SIDE" => Some(SubaddressType::Side),
-        "SLIP" => Some(SubaddressType::Slip),
-        "SPC" => Some(SubaddressType::Space),
-        "SPACE" => Some(SubaddressType::Space),
-        "STOP" => Some(SubaddressType::Stop),
-        "STE" => Some(SubaddressType::Suite),
-        "SUITE" => Some(SubaddressType::Suite),
-        "TRLR" => Some(SubaddressType::Trailer),
-        "TRAILER" => Some(SubaddressType::Trailer),
-        "UNIT" => Some(SubaddressType::Unit),
-        "UPPR" => Some(SubaddressType::Upper),
-        "UPPER" => Some(SubaddressType::Upper),
-        "REC" => Some(SubaddressType::Rec),
-        "LAUN" => Some(SubaddressType::Laundry),
-        "LAUNDRY" => Some(SubaddressType::Laundry),
-        _ => None,
+    /// Deserialization function for subaddress types.  This works if all the subaddress types in the
+    /// data observe the official postal contraction.  For subaddress types with a mix of abbreviations and
+    /// alternative spellings, [`match_mixed_subaddress_type()`] will work better.
+    pub fn deserialize_abbreviated<'de, D: Deserializer<'de>>(
+        de: D,
+    ) -> Result<Option<Self>, D::Error> {
+        let intermediate = Deserialize::deserialize(de)?;
+        Ok(Self::match_abbreviated(intermediate))
+    }
+
+    /// Matches the target data against novel spellings of valid subaddress types.  Add any missing spelling
+    /// variants to the match statement.  Called by [`crate::parser::parse_subaddress_type()`].
+    /// Add additional variants to accommodate alternative abbreviations as needed.
+    pub fn match_mixed(input: &str) -> Option<Self> {
+        match input.to_uppercase().as_str() {
+            "APT" => Some(Self::Apartment),
+            "APARTMENT" => Some(Self::Apartment),
+            "BSMT" => Some(Self::Basement),
+            "BASEMENT" => Some(Self::Basement),
+            "BLDG" => Some(Self::Building),
+            "BUILDING" => Some(Self::Building),
+            "DEPT" => Some(Self::Department),
+            "DEPARTMENT" => Some(Self::Department),
+            "FL" => Some(Self::Floor),
+            "FLOOR" => Some(Self::Floor),
+            "FRNT" => Some(Self::Front),
+            "FRONT" => Some(Self::Front),
+            "HNGR" => Some(Self::Hanger),
+            "HANGER" => Some(Self::Hanger),
+            "KEY" => Some(Self::Key),
+            "LBBY" => Some(Self::Lobby),
+            "LOBBY" => Some(Self::Lobby),
+            "LOT" => Some(Self::Lot),
+            "LOWR" => Some(Self::Lower),
+            "LOWER" => Some(Self::Lower),
+            "OFC" => Some(Self::Office),
+            "OFFICE" => Some(Self::Office),
+            "PH" => Some(Self::Penthouse),
+            "PENTHOUSE" => Some(Self::Penthouse),
+            "PIER" => Some(Self::Pier),
+            "REAR" => Some(Self::Rear),
+            "RM" => Some(Self::Room),
+            "ROOM" => Some(Self::Room),
+            "SIDE" => Some(Self::Side),
+            "SLIP" => Some(Self::Slip),
+            "SPC" => Some(Self::Space),
+            "SPACE" => Some(Self::Space),
+            "STOP" => Some(Self::Stop),
+            "STE" => Some(Self::Suite),
+            "SUITE" => Some(Self::Suite),
+            "TRLR" => Some(Self::Trailer),
+            "TRAILER" => Some(Self::Trailer),
+            "UNIT" => Some(Self::Unit),
+            "UPPR" => Some(Self::Upper),
+            "UPPER" => Some(Self::Upper),
+            "REC" => Some(Self::Rec),
+            "LAUN" => Some(Self::Laundry),
+            "LAUNDRY" => Some(Self::Laundry),
+            _ => None,
+        }
+    }
+
+    /// The `deserialize_mixed_subaddress_type` function attempts to deserialize the input data into a
+    /// `SubaddressType`.
+    pub fn deserialize_mixed<'de, D: Deserializer<'de>>(de: D) -> Result<Option<Self>, D::Error> {
+        let intermediate = Deserialize::deserialize(de)?;
+        Ok(Self::match_mixed(intermediate))
     }
 }

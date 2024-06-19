@@ -1,8 +1,9 @@
 //! The `geo` module defines spatial address types, and implements traits from the `galileo` crate for these types.
+use crate::address_components::StreetSeparator;
 use crate::prelude::{
     from_csv, load_bin, save, to_csv, Address, AddressDelta, AddressDeltas, AddressStatus,
-    Addresses, CommonAddress, Portable, StreetNamePostType, StreetNamePreDirectional,
-    SubaddressType,
+    Addresses, CommonAddress, Portable, State, StreetNamePostType, StreetNamePreDirectional,
+    StreetNamePreModifier, StreetNamePreType, SubaddressType,
 };
 use aid::prelude::Clean;
 use derive_more::{Deref, DerefMut};
@@ -122,27 +123,27 @@ impl Address for GeoAddress {
         &mut self.address.directional
     }
 
-    fn street_name_pre_modifier(&self) -> &Option<String> {
+    fn street_name_pre_modifier(&self) -> &Option<StreetNamePreModifier> {
         &self.address.pre_modifier
     }
 
-    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<StreetNamePreModifier> {
         &mut self.address.pre_modifier
     }
 
-    fn street_name_pre_type(&self) -> &Option<String> {
+    fn street_name_pre_type(&self) -> &Option<StreetNamePreType> {
         &self.address.pre_type
     }
 
-    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<StreetNamePreType> {
         &mut self.address.pre_type
     }
 
-    fn street_name_separator(&self) -> &Option<String> {
+    fn street_name_separator(&self) -> &Option<StreetSeparator> {
         &self.address.separator
     }
 
-    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+    fn street_name_separator_mut(&mut self) -> &mut Option<StreetSeparator> {
         &mut self.address.separator
     }
 
@@ -210,11 +211,11 @@ impl Address for GeoAddress {
         &mut self.address.postal_community
     }
 
-    fn state(&self) -> &String {
+    fn state(&self) -> &State {
         &self.address.state
     }
 
-    fn state_mut(&mut self) -> &mut String {
+    fn state_mut(&mut self) -> &mut State {
         &mut self.address.state
     }
 
@@ -333,27 +334,27 @@ impl Address for AddressPoint {
         &mut self.address.directional
     }
 
-    fn street_name_pre_modifier(&self) -> &Option<String> {
+    fn street_name_pre_modifier(&self) -> &Option<StreetNamePreModifier> {
         &self.address.pre_modifier
     }
 
-    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<StreetNamePreModifier> {
         &mut self.address.pre_modifier
     }
 
-    fn street_name_pre_type(&self) -> &Option<String> {
+    fn street_name_pre_type(&self) -> &Option<StreetNamePreType> {
         &self.address.pre_type
     }
 
-    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<StreetNamePreType> {
         &mut self.address.pre_type
     }
 
-    fn street_name_separator(&self) -> &Option<String> {
+    fn street_name_separator(&self) -> &Option<StreetSeparator> {
         &self.address.separator
     }
 
-    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+    fn street_name_separator_mut(&mut self) -> &mut Option<StreetSeparator> {
         &mut self.address.separator
     }
 
@@ -421,11 +422,11 @@ impl Address for AddressPoint {
         &mut self.address.postal_community
     }
 
-    fn state(&self) -> &String {
+    fn state(&self) -> &State {
         &self.address.state
     }
 
-    fn state_mut(&mut self) -> &mut String {
+    fn state_mut(&mut self) -> &mut State {
         &mut self.address.state
     }
 
@@ -554,27 +555,27 @@ impl Address for SpatialAddress {
         &mut self.address.directional
     }
 
-    fn street_name_pre_modifier(&self) -> &Option<String> {
+    fn street_name_pre_modifier(&self) -> &Option<StreetNamePreModifier> {
         &self.address.pre_modifier
     }
 
-    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<StreetNamePreModifier> {
         &mut self.address.pre_modifier
     }
 
-    fn street_name_pre_type(&self) -> &Option<String> {
+    fn street_name_pre_type(&self) -> &Option<StreetNamePreType> {
         &self.address.pre_type
     }
 
-    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<StreetNamePreType> {
         &mut self.address.pre_type
     }
 
-    fn street_name_separator(&self) -> &Option<String> {
+    fn street_name_separator(&self) -> &Option<StreetSeparator> {
         &self.address.separator
     }
 
-    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+    fn street_name_separator_mut(&mut self) -> &mut Option<StreetSeparator> {
         &mut self.address.separator
     }
 
@@ -642,11 +643,11 @@ impl Address for SpatialAddress {
         &mut self.address.postal_community
     }
 
-    fn state(&self) -> &String {
+    fn state(&self) -> &State {
         &self.address.state
     }
 
-    fn state_mut(&mut self) -> &mut String {
+    fn state_mut(&mut self) -> &mut State {
         &mut self.address.state
     }
 

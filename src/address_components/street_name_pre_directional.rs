@@ -47,83 +47,74 @@ impl StreetNamePreDirectional {
         };
         abbr.to_string()
     }
-}
 
-/// Matches the target data against the official postal abbreviation for street name
-/// prediretionals.
-pub fn match_abbreviated_pre_directional(input: &str) -> Option<StreetNamePreDirectional> {
-    match input {
-        "NE" => Some(StreetNamePreDirectional::NORTHEAST),
-        "NW" => Some(StreetNamePreDirectional::NORTHWEST),
-        "SE" => Some(StreetNamePreDirectional::SOUTHEAST),
-        "SW" => Some(StreetNamePreDirectional::SOUTHWEST),
-        "N" => Some(StreetNamePreDirectional::NORTH),
-        "S" => Some(StreetNamePreDirectional::SOUTH),
-        "E" => Some(StreetNamePreDirectional::EAST),
-        "W" => Some(StreetNamePreDirectional::WEST),
-        _ => None,
+    /// Matches the target data against the official postal abbreviation for street name
+    /// prediretionals.
+    pub fn match_abbreviated(input: &str) -> Option<Self> {
+        match input {
+            "NE" => Some(Self::NORTHEAST),
+            "NW" => Some(Self::NORTHWEST),
+            "SE" => Some(Self::SOUTHEAST),
+            "SW" => Some(Self::SOUTHWEST),
+            "N" => Some(Self::NORTH),
+            "S" => Some(Self::SOUTH),
+            "E" => Some(Self::EAST),
+            "W" => Some(Self::WEST),
+            _ => None,
+        }
+    }
+
+    /// Deserialization function for street name predirectionals.  This works if all the predirectionals in the
+    /// data observe the official postal contraction.  For predirectionals with a mix of abbreviations and
+    /// alternative spellings, [`deserialize_mixed_pre_directional()`] will work better.
+    pub fn deserialize_abbreviated<'de, D: Deserializer<'de>>(
+        de: D,
+    ) -> Result<Option<Self>, D::Error> {
+        let intermediate = Deserialize::deserialize(de)?;
+        Ok(Self::match_abbreviated(intermediate))
+    }
+
+    /// Maps the string representation of a street pre-directional designation to the appropriate
+    /// [`StreetNamePreDirectional`] enum variant.
+    pub fn match_mixed(input: &str) -> Option<Self> {
+        match input.to_uppercase().as_str() {
+            "NE" => Some(Self::NORTHEAST),
+            "N.E." => Some(Self::NORTHEAST),
+            "NE." => Some(Self::NORTHEAST),
+            "NORTHEAST" => Some(Self::NORTHEAST),
+            "NW" => Some(Self::NORTHWEST),
+            "N.W." => Some(Self::NORTHWEST),
+            "NW." => Some(Self::NORTHWEST),
+            "NORTHWEST" => Some(Self::NORTHWEST),
+            "SE" => Some(Self::SOUTHEAST),
+            "S.E." => Some(Self::SOUTHEAST),
+            "SE." => Some(Self::SOUTHEAST),
+            "SOUTHEAST" => Some(Self::SOUTHEAST),
+            "SW" => Some(Self::SOUTHWEST),
+            "S.W." => Some(Self::SOUTHWEST),
+            "SW." => Some(Self::SOUTHWEST),
+            "SOUTHWEST" => Some(Self::SOUTHWEST),
+            "N" => Some(Self::NORTH),
+            "N." => Some(Self::NORTH),
+            "NORTH" => Some(Self::NORTH),
+            "S" => Some(Self::SOUTH),
+            "S." => Some(Self::SOUTH),
+            "SOUTH" => Some(Self::SOUTH),
+            "E" => Some(Self::EAST),
+            "E." => Some(Self::EAST),
+            "EAST" => Some(Self::EAST),
+            "W" => Some(Self::WEST),
+            "W." => Some(Self::WEST),
+            "WEST" => Some(Self::WEST),
+            _ => None,
+        }
+    }
+
+    /// Deserialization function for street name predirectionals.
+    /// Matches the target data against novel spellings of valid predirectionals.  Add any missing spelling
+    /// variants to the match statement.
+    pub fn deserialize_mixed<'de, D: Deserializer<'de>>(de: D) -> Result<Option<Self>, D::Error> {
+        let intermediate = Deserialize::deserialize(de)?;
+        Ok(Self::match_mixed(intermediate))
     }
 }
-
-/// Deserialization function for street name predirectionals.  This works if all the predirectionals in the
-/// data observe the official postal contraction.  For predirectionals with a mix of abbreviations and
-/// alternative spellings, [`deserialize_mixed_pre_directional()`] will work better.
-pub fn deserialize_abbreviated_pre_directional<'de, D: Deserializer<'de>>(
-    de: D,
-) -> Result<Option<StreetNamePreDirectional>, D::Error> {
-    let intermediate = Deserialize::deserialize(de)?;
-    let result = match_abbreviated_pre_directional(intermediate);
-    Ok(result)
-}
-
-/// Maps the string representation of a street pre-directional designation to the appropriate
-/// [`StreetNamePreDirectional`] enum variant.
-pub fn match_mixed_pre_directional(input: &str) -> Option<StreetNamePreDirectional> {
-    match input.to_uppercase().as_str() {
-        "NE" => Some(StreetNamePreDirectional::NORTHEAST),
-        "NORTHEAST" => Some(StreetNamePreDirectional::NORTHEAST),
-        "NW" => Some(StreetNamePreDirectional::NORTHWEST),
-        "NORTHWEST" => Some(StreetNamePreDirectional::NORTHWEST),
-        "SE" => Some(StreetNamePreDirectional::SOUTHEAST),
-        "SOUTHEAST" => Some(StreetNamePreDirectional::SOUTHEAST),
-        "SW" => Some(StreetNamePreDirectional::SOUTHWEST),
-        "SOUTHWEST" => Some(StreetNamePreDirectional::SOUTHWEST),
-        "N" => Some(StreetNamePreDirectional::NORTH),
-        "NORTH" => Some(StreetNamePreDirectional::NORTH),
-        "S" => Some(StreetNamePreDirectional::SOUTH),
-        "SOUTH" => Some(StreetNamePreDirectional::SOUTH),
-        "E" => Some(StreetNamePreDirectional::EAST),
-        "EAST" => Some(StreetNamePreDirectional::EAST),
-        "W" => Some(StreetNamePreDirectional::WEST),
-        "WEST" => Some(StreetNamePreDirectional::WEST),
-        _ => None,
-    }
-}
-
-/// Deserialization function for street name predirectionals.
-/// Matches the target data against novel spellings of valid predirectionals.  Add any missing spelling
-/// variants to the match statement.
-pub fn deserialize_mixed_pre_directional<'de, D: Deserializer<'de>>(
-    de: D,
-) -> Result<Option<StreetNamePreDirectional>, D::Error> {
-    let intermediate = Deserialize::deserialize(de)?;
-    let result = match_mixed_pre_directional(intermediate);
-    Ok(result)
-}
-
-// impl std::fmt::Display for StreetNamePreDirectional {
-//     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-//         let mut out = "".to_owned();
-//         match self {
-//             StreetNamePreDirectional::NORTH => out.push('N'),
-//             StreetNamePreDirectional::SOUTH => out.push('S'),
-//             StreetNamePreDirectional::EAST => out.push('E'),
-//             StreetNamePreDirectional::WEST => out.push('W'),
-//             StreetNamePreDirectional::NORTHEAST => out.push_str("NE"),
-//             StreetNamePreDirectional::NORTHWEST => out.push_str("NW"),
-//             StreetNamePreDirectional::SOUTHEAST => out.push_str("SE"),
-//             StreetNamePreDirectional::SOUTHWEST => out.push_str("SW"),
-//         }
-//         write!(f, "{}", out)
-//     }
-// }

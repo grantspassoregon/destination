@@ -2,7 +2,9 @@
 //! implementation blocks to convert data from import types to the valid address format.
 use crate::prelude::{
     from_csv, load_bin, save, to_csv, AddressMatch, AddressStatus, FireInspections, LexisNexis,
-    Mismatch, Point, Portable, StreetNamePostType, StreetNamePreDirectional, SubaddressType,
+    Mismatch, Point, Portable, PostalCommunity, State, StreetNamePostType,
+    StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType, StreetSeparator,
+    SubaddressType,
 };
 use aid::prelude::*;
 use derive_more::{Deref, DerefMut};
@@ -31,17 +33,17 @@ pub trait Address {
     /// The `directional` method returns a mutable reference to the [`StreetNamePreDirectional`] value.
     fn directional_mut(&mut self) -> &mut Option<StreetNamePreDirectional>;
     /// The `street_name_pre_modifier` method returns the street name pre modifier component.
-    fn street_name_pre_modifier(&self) -> &Option<String>;
+    fn street_name_pre_modifier(&self) -> &Option<StreetNamePreModifier>;
     /// The `street_name_pre_modifier_mut` method returns a mutable reference to the street name pre modifier component.
-    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String>;
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<StreetNamePreModifier>;
     /// The `street_name_pre_type` method returns the street name pre type component.
-    fn street_name_pre_type(&self) -> &Option<String>;
+    fn street_name_pre_type(&self) -> &Option<StreetNamePreType>;
     /// The `street_name_pre_type_mut` method returns a mutable reference to the street name pre type component.
-    fn street_name_pre_type_mut(&mut self) -> &mut Option<String>;
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<StreetNamePreType>;
     /// The `street_name_separator` method returns the separator element component.
-    fn street_name_separator(&self) -> &Option<String>;
+    fn street_name_separator(&self) -> &Option<StreetSeparator>;
     /// The `street_name_separator_mut` method returns a mutable reference to the separator element component.
-    fn street_name_separator_mut(&mut self) -> &mut Option<String>;
+    fn street_name_separator_mut(&mut self) -> &mut Option<StreetSeparator>;
     /// The `street_name` method returns the street name component.
     fn street_name(&self) -> &String;
     /// The `street_name_mut` method returns a mutable reference to the street name component.
@@ -80,10 +82,10 @@ pub trait Address {
     /// community component.
     fn postal_community_mut(&mut self) -> &mut String;
     /// The `state` method returns the state name component of the address.
-    fn state(&self) -> &String;
+    fn state(&self) -> &State;
     /// The `state_mut` method returns a mutable reference to the value of the state name
     /// component.
-    fn state_mut(&mut self) -> &mut String;
+    fn state_mut(&mut self) -> &mut State;
     /// The `status` method returns the local status of the address, as determined by the
     /// relevant address authority.
     fn status(&self) -> &AddressStatus;
@@ -147,12 +149,14 @@ pub trait Address {
 
         let complete_subaddress = match &self.subaddress_id() {
             Some(identifier) => match self.subaddress_type() {
-                Some(subaddress_type) => Some(format!("{} {}", subaddress_type, identifier)),
+                Some(subaddress_type) => {
+                    Some(format!("{} {}", subaddress_type.abbreviate(), identifier))
+                }
                 None => Some(format!("#{}", identifier)),
             },
             None => self
                 .subaddress_type()
-                .map(|subaddress_type| format!("{}", subaddress_type)),
+                .map(|subaddress_type| subaddress_type.abbreviate()),
         };
 
         match complete_subaddress {
@@ -184,21 +188,25 @@ pub trait Address {
             name.push(' ');
         }
         if let Some(modifier) = self.street_name_pre_modifier() {
-            name.push_str(modifier);
+            name.push_str(modifier.label().as_str());
             name.push(' ');
         }
         if let Some(pre_type) = self.street_name_pre_type() {
-            name.push_str(pre_type);
+            name.push_str(pre_type.label().as_str());
             name.push(' ');
         }
         if let Some(separator) = self.street_name_separator() {
-            name.push_str(separator);
+            name.push_str(separator.label().as_str());
             name.push(' ');
         }
         name.push_str(&self.street_name().to_string());
         if let Some(post_type) = self.street_type() {
             name.push(' ');
-            name.push_str(&post_type.to_string());
+            if abbreviate {
+                name.push_str(&post_type.abbreviate());
+            } else {
+                name.push_str(&post_type.to_string());
+            }
         }
         name
     }
@@ -432,13 +440,13 @@ pub struct CommonAddress {
     pub directional: Option<StreetNamePreDirectional>,
     /// The `pre_modifier` field represents the street name pre modifier component of the complete
     /// street name.
-    pub pre_modifier: Option<String>,
+    pub pre_modifier: Option<StreetNamePreModifier>,
     /// The `pre_type` field represents the street name pre type component of the complete street
     /// name.
-    pub pre_type: Option<String>,
+    pub pre_type: Option<StreetNamePreType>,
     /// The `separator` field represents the separator element component of the complete street
     /// name.
-    pub separator: Option<String>,
+    pub separator: Option<StreetSeparator>,
     /// The `street_name` field represents the street name component of the complete street name.
     pub street_name: String,
     /// The `street_type` field represents the street name post type component of the complete street
@@ -460,7 +468,7 @@ pub struct CommonAddress {
     /// being either the unincorporated or incorporated municipality name.
     pub postal_community: String,
     /// The `state` field represents the state name component of the address.
-    pub state: String,
+    pub state: State,
     /// The `status` field represents the local status of the address as determined by the relevant
     /// addressing authority.
     pub status: AddressStatus,
@@ -491,27 +499,27 @@ impl Address for CommonAddress {
         &mut self.directional
     }
 
-    fn street_name_pre_modifier(&self) -> &Option<String> {
+    fn street_name_pre_modifier(&self) -> &Option<StreetNamePreModifier> {
         &self.pre_modifier
     }
 
-    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<StreetNamePreModifier> {
         &mut self.pre_modifier
     }
 
-    fn street_name_pre_type(&self) -> &Option<String> {
+    fn street_name_pre_type(&self) -> &Option<StreetNamePreType> {
         &self.pre_type
     }
 
-    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<StreetNamePreType> {
         &mut self.pre_type
     }
 
-    fn street_name_separator(&self) -> &Option<String> {
+    fn street_name_separator(&self) -> &Option<StreetSeparator> {
         &self.separator
     }
 
-    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+    fn street_name_separator_mut(&mut self) -> &mut Option<StreetSeparator> {
         &mut self.separator
     }
 
@@ -579,11 +587,11 @@ impl Address for CommonAddress {
         &mut self.postal_community
     }
 
-    fn state(&self) -> &String {
+    fn state(&self) -> &State {
         &self.state
     }
 
-    fn state_mut(&mut self) -> &mut String {
+    fn state_mut(&mut self) -> &mut State {
         &mut self.state
     }
 
@@ -601,9 +609,9 @@ impl<T: Address> From<&T> for CommonAddress {
         let number = address.number();
         let number_suffix = address.number_suffix().clone();
         let directional = *address.directional();
-        let pre_modifier = address.street_name_pre_modifier().clone();
-        let pre_type = address.street_name_pre_type().clone();
-        let separator = address.street_name_separator().clone();
+        let pre_modifier = *address.street_name_pre_modifier();
+        let pre_type = *address.street_name_pre_type();
+        let separator = *address.street_name_separator();
         let street_name = address.street_name().clone();
         let street_type = *address.street_type();
         let subaddress_type = *address.subaddress_type();
@@ -612,7 +620,7 @@ impl<T: Address> From<&T> for CommonAddress {
         let building = address.building().clone();
         let zip = address.zip();
         let postal_community = address.postal_community().clone();
-        let state = address.state().clone();
+        let state = *address.state();
         let status = *address.status();
         Self {
             number,
@@ -688,13 +696,13 @@ pub struct PartialAddress {
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
     /// The `pre_modifier` field represents the street name pre modifier component of the complete
     /// street name.
-    pub pre_modifier: Option<String>,
+    pub pre_modifier: Option<StreetNamePreModifier>,
     /// The `pre_type` field represents the street name pre type component of the complete street
     /// name.
-    pub pre_type: Option<String>,
+    pub pre_type: Option<StreetNamePreType>,
     /// The `separator` field represents the separator element component of the complete street
     /// name.
-    pub separator: Option<String>,
+    pub separator: Option<StreetSeparator>,
     /// The `street_name` field represents the street name component of the complete street name.
     pub street_name: Option<String>,
     /// The `street_type` field represents the street name post type component of the complete street
@@ -714,7 +722,7 @@ pub struct PartialAddress {
     pub zip_code: Option<i64>,
     /// The `postal_community` field represents the postal community component of the address,
     /// being either the unincorporated or incorporated municipality name.
-    pub postal_community: Option<String>,
+    pub postal_community: Option<PostalCommunity>,
     /// The `state` field represents the state name component of the address.
     pub state_name: Option<String>,
     /// The `status` field represents the local status of the address as determined by the relevant
@@ -744,6 +752,24 @@ impl PartialAddress {
     /// complete street name.  This function returns the cloned value of the field.
     pub fn street_name_pre_directional(&self) -> Option<StreetNamePreDirectional> {
         self.street_name_pre_directional
+    }
+
+    /// The `pre_modifier` field represents the street name premodifier component of the
+    /// complete street name.  This function returns the cloned value of the field.
+    pub fn pre_modifier(&self) -> Option<StreetNamePreModifier> {
+        self.pre_modifier
+    }
+
+    /// The `pre_type` field represents the street name pretype component of the
+    /// complete street name.  This function returns the cloned value of the field.
+    pub fn pre_type(&self) -> Option<StreetNamePreType> {
+        self.pre_type
+    }
+
+    /// The `separator` field represents the street name separator component of the
+    /// complete street name.  This function returns the cloned value of the field.
+    pub fn separator(&self) -> Option<StreetSeparator> {
+        self.separator
     }
 
     /// The `street_name` field represents the street name component of the complete street name.
@@ -825,6 +851,71 @@ impl PartialAddress {
     pub fn label(&self) -> String {
         let mut address = "".to_owned();
         if let Some(address_number) = self.address_number() {
+            address.push_str(&address_number.to_string());
+        }
+        if let Some(address_number_suffix) = self.address_number_suffix() {
+            address.push(' ');
+            address.push_str(&address_number_suffix);
+        }
+        if let Some(pre_directional) = self.street_name_pre_directional() {
+            address.push(' ');
+            address.push_str(&pre_directional.abbreviate());
+        }
+        if let Some(modifier) = self.pre_modifier() {
+            address.push(' ');
+            address.push_str(&modifier.label());
+        }
+        if let Some(pre_type) = self.pre_type() {
+            address.push(' ');
+            address.push_str(&pre_type.label());
+        }
+        if let Some(separator) = self.separator() {
+            address.push(' ');
+            address.push_str(&separator.label());
+        }
+        if let Some(street_name) = self.street_name() {
+            address.push(' ');
+            address.push_str(&street_name);
+        }
+        if let Some(post_type) = self.street_name_post_type() {
+            address.push(' ');
+            address.push_str(&post_type.abbreviate());
+        }
+        let subtype_flag;
+        if let Some(subtype) = self.subaddress_type() {
+            subtype_flag = true;
+            address.push(' ');
+            address.push_str(&subtype.abbreviate());
+        } else {
+            subtype_flag = false;
+        }
+        if let Some(subaddress_identifier) = self.subaddress_identifier() {
+            address.push(' ');
+            if !subtype_flag {
+                address.push('#');
+            }
+            address.push_str(&subaddress_identifier);
+        }
+        address
+    }
+
+    /// The `mailing` method prints the label format of the address, including postal community,
+    /// state and zip code.
+    pub fn mailing(&self) -> String {
+        let mut address = self.label();
+        if let Some(post_comm) = self.postal_community {
+            address.push_str(", ");
+            address.push_str(&post_comm.label());
+        }
+        address
+    }
+
+    /// Returns a String representing the address label, consisting of the complete address number,
+    /// complete street name and complete subaddress, used for the fully-disambiguated
+    /// representation.
+    pub fn complete_address(&self) -> String {
+        let mut address = "".to_owned();
+        if let Some(address_number) = self.address_number() {
             address.push_str(&format!("{}", address_number));
         }
         if let Some(address_number_suffix) = self.address_number_suffix() {
@@ -833,7 +924,19 @@ impl PartialAddress {
         }
         if let Some(pre_directional) = self.street_name_pre_directional() {
             address.push(' ');
-            address.push_str(&format!("{:?}", pre_directional));
+            address.push_str(&format!("{pre_directional}"));
+        }
+        if let Some(modifier) = self.pre_modifier() {
+            address.push(' ');
+            address.push_str(&modifier.label());
+        }
+        if let Some(pre_type) = self.pre_type() {
+            address.push(' ');
+            address.push_str(&pre_type.label());
+        }
+        if let Some(separator) = self.separator() {
+            address.push(' ');
+            address.push_str(&separator.label());
         }
         if let Some(street_name) = self.street_name() {
             address.push(' ');
@@ -841,11 +944,11 @@ impl PartialAddress {
         }
         if let Some(post_type) = self.street_name_post_type() {
             address.push(' ');
-            address.push_str(&format!("{:?}", post_type));
+            address.push_str(&format!("{post_type}"));
         }
         if let Some(subtype) = self.subaddress_type() {
             address.push(' ');
-            address.push_str(&format!("{:?}", subtype));
+            address.push_str(&subtype.to_string().to_uppercase());
         }
         if let Some(subaddress_identifier) = self.subaddress_identifier() {
             address.push(' ');

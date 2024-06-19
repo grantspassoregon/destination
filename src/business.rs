@@ -323,12 +323,12 @@ pub struct BusinessLicense {
     street_name: String,
     #[serde(
         rename(deserialize = "PREDIRECTION"),
-        deserialize_with = "deserialize_mixed_pre_directional"
+        deserialize_with = "StreetNamePreDirectional::deserialize_mixed"
     )]
     street_name_pre_directional: Option<StreetNamePreDirectional>,
     #[serde(
         rename(deserialize = "STREETTYPE"),
-        deserialize_with = "deserialize_mixed_post_type"
+        deserialize_with = "StreetNamePostType::deserialize_mixed"
     )]
     street_name_post_type: Option<StreetNamePostType>,
     #[serde(

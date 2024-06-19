@@ -2,21 +2,22 @@
 //! elements, as defined by FGDC guidelines.
 mod address_status;
 mod floor;
+mod postal_community;
+mod state;
 mod street_name_post_type;
 mod street_name_pre_directional;
+mod street_name_pre_modifier;
+mod street_name_pre_type;
+mod street_separator;
 mod subaddress_type;
 
 pub use address_status::AddressStatus;
 pub use floor::zero_floor;
-pub use street_name_post_type::{
-    deserialize_abbreviated_post_type, deserialize_mixed_post_type, match_mixed_post_type,
-    StreetNamePostType,
-};
-pub use street_name_pre_directional::{
-    deserialize_abbreviated_pre_directional, deserialize_mixed_pre_directional,
-    match_mixed_pre_directional, StreetNamePreDirectional,
-};
-pub use subaddress_type::{
-    deserialize_abbreviated_subaddress_type, deserialize_mixed_subaddress_type,
-    match_mixed_subaddress_type, SubaddressType,
-};
+pub use postal_community::PostalCommunity;
+pub use state::State;
+pub use street_name_post_type::StreetNamePostType;
+pub use street_name_pre_directional::StreetNamePreDirectional;
+pub use street_name_pre_modifier::StreetNamePreModifier;
+pub use street_name_pre_type::StreetNamePreType;
+pub use street_separator::StreetSeparator;
+pub use subaddress_type::SubaddressType;

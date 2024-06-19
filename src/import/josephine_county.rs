@@ -24,33 +24,45 @@ pub struct JosephineCountyAddress2024 {
     /// The `street_name_pre_directional` field represents the street name pre directional component of the
     /// complete street name.
     #[serde(
-        deserialize_with = "deserialize_mixed_pre_directional",
+        deserialize_with = "StreetNamePreDirectional::deserialize_mixed",
         rename = "st_predir"
     )]
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
     /// The `street_name_pre_modifier` field represents the street name pre modifier component of the complete
     /// street name.
-    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_premod")]
-    pub street_name_pre_modifier: Option<String>,
+    #[serde(
+        deserialize_with = "StreetNamePreModifier::deserialize_mixed",
+        rename = "st_premod"
+    )]
+    pub street_name_pre_modifier: Option<StreetNamePreModifier>,
     /// The `street_name_pre_type` field represents the street name pre type component of the complete street
     /// name.
-    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_pretyp")]
-    pub street_name_pre_type: Option<String>,
+    #[serde(
+        deserialize_with = "StreetNamePreType::deserialize_mixed",
+        rename = "st_pretyp"
+    )]
+    pub street_name_pre_type: Option<StreetNamePreType>,
     /// The `street_name_separator` field represents the separator element component of the complete street
     /// name.
-    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_presep")]
-    pub street_name_separator: Option<String>,
+    #[serde(
+        deserialize_with = "StreetSeparator::deserialize_mixed",
+        rename = "st_presep"
+    )]
+    pub street_name_separator: Option<StreetSeparator>,
     /// The `street_name` field represents the street name component of the complete street name.
     #[serde(rename = "st_name")]
     pub street_name: String,
     /// The `street_name_post_type` field represents the street name post type component of the complete street
     /// name.
-    #[serde(deserialize_with = "deserialize_mixed_post_type", rename = "st_postyp")]
+    #[serde(
+        deserialize_with = "StreetNamePostType::deserialize_mixed",
+        rename = "st_postyp"
+    )]
     pub street_name_post_type: Option<StreetNamePostType>,
     /// The `subaddress_type` field represents the subaddress type component of the complete
     /// subaddress.
     #[serde(
-        deserialize_with = "deserialize_mixed_subaddress_type",
+        deserialize_with = "SubaddressType::deserialize_mixed",
         rename = "unittype"
     )]
     pub subaddress_type: Option<SubaddressType>,
@@ -72,8 +84,9 @@ pub struct JosephineCountyAddress2024 {
     #[serde(rename = "post_code")]
     pub zip_code: i64,
     /// The `state_name` field represents the state name component of the address.
+    #[serde(deserialize_with = "State::deserialize_mixed")]
     #[serde(rename = "state")]
-    pub state_name: String,
+    pub state_name: State,
     /// The `status` field represents the local status of the address as determined by the relevant
     /// addressing authority.
     pub status: AddressStatus,
@@ -104,27 +117,27 @@ impl Address for JosephineCountyAddress2024 {
         &mut self.street_name_pre_directional
     }
 
-    fn street_name_pre_modifier(&self) -> &Option<String> {
+    fn street_name_pre_modifier(&self) -> &Option<StreetNamePreModifier> {
         &self.street_name_pre_modifier
     }
 
-    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<StreetNamePreModifier> {
         &mut self.street_name_pre_modifier
     }
 
-    fn street_name_pre_type(&self) -> &Option<String> {
+    fn street_name_pre_type(&self) -> &Option<StreetNamePreType> {
         &self.street_name_pre_type
     }
 
-    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<StreetNamePreType> {
         &mut self.street_name_pre_type
     }
 
-    fn street_name_separator(&self) -> &Option<String> {
+    fn street_name_separator(&self) -> &Option<StreetSeparator> {
         &self.street_name_separator
     }
 
-    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+    fn street_name_separator_mut(&mut self) -> &mut Option<StreetSeparator> {
         &mut self.street_name_separator
     }
 
@@ -192,11 +205,11 @@ impl Address for JosephineCountyAddress2024 {
         &mut self.postal_community
     }
 
-    fn state(&self) -> &String {
+    fn state(&self) -> &State {
         &self.state_name
     }
 
-    fn state_mut(&mut self) -> &mut String {
+    fn state_mut(&mut self) -> &mut State {
         &mut self.state_name
     }
 
@@ -252,33 +265,45 @@ pub struct JosephineCountySpatialAddress2024 {
     /// The `street_name_pre_directional` field represents the street name pre directional component of the
     /// complete street name.
     #[serde(
-        deserialize_with = "deserialize_mixed_pre_directional",
+        deserialize_with = "StreetNamePreDirectional::deserialize_mixed",
         rename = "st_predir"
     )]
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
     /// The `street_name_pre_modifier` field represents the street name pre modifier component of the complete
     /// street name.
-    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_premod")]
-    pub street_name_pre_modifier: Option<String>,
+    #[serde(
+        deserialize_with = "StreetNamePreModifier::deserialize_mixed",
+        rename = "st_premod"
+    )]
+    pub street_name_pre_modifier: Option<StreetNamePreModifier>,
     /// The `street_name_pre_type` field represents the street name pre type component of the complete street
     /// name.
-    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_pretyp")]
-    pub street_name_pre_type: Option<String>,
+    #[serde(
+        deserialize_with = "StreetNamePreType::deserialize_mixed",
+        rename = "st_pretyp"
+    )]
+    pub street_name_pre_type: Option<StreetNamePreType>,
     /// The `street_name_separator` field represents the separator element component of the complete street
     /// name.
-    #[serde(deserialize_with = "deserialize_arcgis_data", rename = "st_presep")]
-    pub street_name_separator: Option<String>,
+    #[serde(
+        deserialize_with = "StreetSeparator::deserialize_mixed",
+        rename = "st_presep"
+    )]
+    pub street_name_separator: Option<StreetSeparator>,
     /// The `street_name` field represents the street name component of the complete street name.
     #[serde(rename = "st_name")]
     pub street_name: String,
     /// The `street_name_post_type` field represents the street name post type component of the complete street
     /// name.
-    #[serde(deserialize_with = "deserialize_mixed_post_type", rename = "st_postyp")]
+    #[serde(
+        deserialize_with = "StreetNamePostType::deserialize_mixed",
+        rename = "st_postyp"
+    )]
     pub street_name_post_type: Option<StreetNamePostType>,
     /// The `subaddress_type` field represents the subaddress type component of the complete
     /// subaddress.
     #[serde(
-        deserialize_with = "deserialize_mixed_subaddress_type",
+        deserialize_with = "SubaddressType::deserialize_mixed",
         rename = "unittype"
     )]
     pub subaddress_type: Option<SubaddressType>,
@@ -300,8 +325,9 @@ pub struct JosephineCountySpatialAddress2024 {
     #[serde(rename = "post_code")]
     pub zip_code: i64,
     /// The `state_name` field represents the state name component of the address.
+    #[serde(deserialize_with = "State::deserialize_mixed")]
     #[serde(rename = "state")]
-    pub state_name: String,
+    pub state_name: State,
     /// The `status` field represents the local status of the address as determined by the relevant
     /// addressing authority.
     pub status: AddressStatus,
@@ -344,27 +370,27 @@ impl Address for JosephineCountySpatialAddress2024 {
         &mut self.street_name_pre_directional
     }
 
-    fn street_name_pre_modifier(&self) -> &Option<String> {
+    fn street_name_pre_modifier(&self) -> &Option<StreetNamePreModifier> {
         &self.street_name_pre_modifier
     }
 
-    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<StreetNamePreModifier> {
         &mut self.street_name_pre_modifier
     }
 
-    fn street_name_pre_type(&self) -> &Option<String> {
+    fn street_name_pre_type(&self) -> &Option<StreetNamePreType> {
         &self.street_name_pre_type
     }
 
-    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<StreetNamePreType> {
         &mut self.street_name_pre_type
     }
 
-    fn street_name_separator(&self) -> &Option<String> {
+    fn street_name_separator(&self) -> &Option<StreetSeparator> {
         &self.street_name_separator
     }
 
-    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
+    fn street_name_separator_mut(&mut self) -> &mut Option<StreetSeparator> {
         &mut self.street_name_separator
     }
 
@@ -432,11 +458,11 @@ impl Address for JosephineCountySpatialAddress2024 {
         &mut self.postal_community
     }
 
-    fn state(&self) -> &String {
+    fn state(&self) -> &State {
         &self.state_name
     }
 
-    fn state_mut(&mut self) -> &mut String {
+    fn state_mut(&mut self) -> &mut State {
         &mut self.state_name
     }
 
@@ -518,7 +544,7 @@ pub struct JosephineCountyAddress {
     /// The `street_name_pre_directional` field represents the street name pre directional component of the
     /// complete street name.
     #[serde(
-        deserialize_with = "deserialize_abbreviated_pre_directional",
+        deserialize_with = "StreetNamePreDirectional::deserialize_abbreviated",
         rename = "predir"
     )]
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
@@ -528,14 +554,15 @@ pub struct JosephineCountyAddress {
     /// The `street_name_post_type` field represents the street name post type component of the complete street
     /// name.
     #[serde(
-        deserialize_with = "deserialize_abbreviated_post_type",
+        deserialize_with = "StreetNamePostType::deserialize_mixed",
+        // deserialize_with = "deserialize_abbreviated_post_type",
         rename = "type"
     )]
     pub street_name_post_type: Option<StreetNamePostType>,
     /// The `subaddress_type` field represents the subaddress type component of the complete
     /// subaddress.
     #[serde(
-        deserialize_with = "deserialize_abbreviated_subaddress_type",
+        deserialize_with = "SubaddressType::deserialize_abbreviated",
         rename = "unit_type"
     )]
     pub subaddress_type: Option<SubaddressType>,
@@ -557,11 +584,33 @@ pub struct JosephineCountyAddress {
     #[serde(rename = "zip")]
     pub zip_code: i64,
     /// The `state_name` field represents the state name component of the address.
+    #[serde(deserialize_with = "State::deserialize_mixed")]
     #[serde(rename = "state")]
-    pub state_name: String,
+    pub state_name: State,
     /// The `status` field represents the local status of the address as determined by the relevant
     /// addressing authority.
     pub status: AddressStatus,
+    /// The `street_name_pre_modifier` field holds the pre-modifier element of the complete street
+    /// name.
+    #[serde(
+        deserialize_with = "StreetNamePreModifier::deserialize_mixed",
+        rename = "premod"
+    )]
+    pub street_name_pre_modifier: Option<StreetNamePreModifier>,
+    /// The `street_name_pre_type` field holds the pre-type element of the complete street
+    /// name.
+    #[serde(
+        deserialize_with = "StreetNamePreType::deserialize_mixed",
+        rename = "pretype"
+    )]
+    pub street_name_pre_type: Option<StreetNamePreType>,
+    /// The `street_separator` field holds the separator element of the complete street
+    /// name.
+    #[serde(
+        deserialize_with = "StreetSeparator::deserialize_mixed",
+        rename = "structdesc"
+    )]
+    pub street_separator: Option<StreetSeparator>,
 }
 
 impl Address for JosephineCountyAddress {
@@ -589,28 +638,28 @@ impl Address for JosephineCountyAddress {
         &mut self.street_name_pre_directional
     }
 
-    fn street_name_pre_modifier(&self) -> &Option<String> {
-        &None
+    fn street_name_pre_modifier(&self) -> &Option<StreetNamePreModifier> {
+        &self.street_name_pre_modifier
     }
 
-    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
-        self.number_suffix_mut()
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<StreetNamePreModifier> {
+        &mut self.street_name_pre_modifier
     }
 
-    fn street_name_pre_type(&self) -> &Option<String> {
-        &None
+    fn street_name_pre_type(&self) -> &Option<StreetNamePreType> {
+        &self.street_name_pre_type
     }
 
-    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
-        self.number_suffix_mut()
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<StreetNamePreType> {
+        &mut self.street_name_pre_type
     }
 
-    fn street_name_separator(&self) -> &Option<String> {
-        &None
+    fn street_name_separator(&self) -> &Option<StreetSeparator> {
+        &self.street_separator
     }
 
-    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
-        self.number_suffix_mut()
+    fn street_name_separator_mut(&mut self) -> &mut Option<StreetSeparator> {
+        &mut self.street_separator
     }
 
     fn street_name(&self) -> &String {
@@ -677,11 +726,11 @@ impl Address for JosephineCountyAddress {
         &mut self.postal_community
     }
 
-    fn state(&self) -> &String {
+    fn state(&self) -> &State {
         &self.state_name
     }
 
-    fn state_mut(&mut self) -> &mut String {
+    fn state_mut(&mut self) -> &mut State {
         &mut self.state_name
     }
 
@@ -741,7 +790,7 @@ pub struct JosephineCountySpatialAddress {
     /// The `street_name_pre_directional` field represents the street name pre directional component of the
     /// complete street name.
     #[serde(
-        deserialize_with = "deserialize_abbreviated_pre_directional",
+        deserialize_with = "StreetNamePreDirectional::deserialize_abbreviated",
         rename = "predir"
     )]
     pub street_name_pre_directional: Option<StreetNamePreDirectional>,
@@ -751,14 +800,15 @@ pub struct JosephineCountySpatialAddress {
     /// The `street_name_post_type` field represents the street name post type component of the complete street
     /// name.
     #[serde(
-        deserialize_with = "deserialize_abbreviated_post_type",
+        // from abbreviated to mixed
+        deserialize_with = "StreetNamePostType::deserialize_mixed",
         rename = "type"
     )]
     pub street_name_post_type: Option<StreetNamePostType>,
     /// The `subaddress_type` field represents the subaddress type component of the complete
     /// subaddress.
     #[serde(
-        deserialize_with = "deserialize_abbreviated_subaddress_type",
+        deserialize_with = "SubaddressType::deserialize_abbreviated",
         rename = "unit_type"
     )]
     pub subaddress_type: Option<SubaddressType>,
@@ -780,8 +830,9 @@ pub struct JosephineCountySpatialAddress {
     #[serde(rename = "zip")]
     pub zip_code: i64,
     /// The `state_name` field represents the state name component of the address.
+    #[serde(deserialize_with = "State::deserialize_mixed")]
     #[serde(rename = "state")]
-    pub state_name: String,
+    pub state_name: State,
     /// The `status` field represents the local status of the address as determined by the relevant
     /// addressing authority.
     pub status: AddressStatus,
@@ -799,6 +850,27 @@ pub struct JosephineCountySpatialAddress {
     /// The `lon` field represents the longitude of the geographic coordinates for the address.
     #[serde(rename = "longitude")]
     pub lon: f64,
+    /// The `street_name_pre_modifier` field holds the pre-modifier element of the complete street
+    /// name.
+    #[serde(
+        deserialize_with = "StreetNamePreModifier::deserialize_mixed",
+        rename = "premod"
+    )]
+    pub street_name_pre_modifier: Option<StreetNamePreModifier>,
+    /// The `street_name_pre_type` field holds the pre-type element of the complete street
+    /// name.
+    #[serde(
+        deserialize_with = "StreetNamePreType::deserialize_mixed",
+        rename = "pretype"
+    )]
+    pub street_name_pre_type: Option<StreetNamePreType>,
+    /// The `street_separator` field holds the separator element of the complete street
+    /// name.
+    #[serde(
+        deserialize_with = "StreetSeparator::deserialize_mixed",
+        rename = "structdesc"
+    )]
+    pub street_separator: Option<StreetSeparator>,
 }
 
 impl Address for JosephineCountySpatialAddress {
@@ -826,28 +898,28 @@ impl Address for JosephineCountySpatialAddress {
         &mut self.street_name_pre_directional
     }
 
-    fn street_name_pre_modifier(&self) -> &Option<String> {
-        &None
+    fn street_name_pre_modifier(&self) -> &Option<StreetNamePreModifier> {
+        &self.street_name_pre_modifier
     }
 
-    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<String> {
-        self.number_suffix_mut()
+    fn street_name_pre_modifier_mut(&mut self) -> &mut Option<StreetNamePreModifier> {
+        &mut self.street_name_pre_modifier
     }
 
-    fn street_name_pre_type(&self) -> &Option<String> {
-        &None
+    fn street_name_pre_type(&self) -> &Option<StreetNamePreType> {
+        &self.street_name_pre_type
     }
 
-    fn street_name_pre_type_mut(&mut self) -> &mut Option<String> {
-        self.number_suffix_mut()
+    fn street_name_pre_type_mut(&mut self) -> &mut Option<StreetNamePreType> {
+        &mut self.street_name_pre_type
     }
 
-    fn street_name_separator(&self) -> &Option<String> {
-        &None
+    fn street_name_separator(&self) -> &Option<StreetSeparator> {
+        &self.street_separator
     }
 
-    fn street_name_separator_mut(&mut self) -> &mut Option<String> {
-        self.number_suffix_mut()
+    fn street_name_separator_mut(&mut self) -> &mut Option<StreetSeparator> {
+        &mut self.street_separator
     }
 
     fn street_name(&self) -> &String {
@@ -914,11 +986,11 @@ impl Address for JosephineCountySpatialAddress {
         &mut self.postal_community
     }
 
-    fn state(&self) -> &String {
+    fn state(&self) -> &State {
         &self.state_name
     }
 
-    fn state_mut(&mut self) -> &mut String {
+    fn state_mut(&mut self) -> &mut State {
         &mut self.state_name
     }
 

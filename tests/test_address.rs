@@ -2,6 +2,12 @@ use address::prelude::*;
 use aid::prelude::*;
 use tracing::{info, trace};
 
+#[derive(Clone, serde::Deserialize)]
+struct AddressSample {
+    address: String,
+    // zip: String,
+}
+
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
 fn load_ecso_addresses() -> Clean<()> {
@@ -754,11 +760,6 @@ fn load_businesses() -> Clean<()> {
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
 fn parse_address_sample() -> Clean<()> {
-    #[derive(Clone, serde::Deserialize)]
-    struct AddressSample {
-        address: String,
-        zip: String,
-    }
     if let Ok(()) = tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
         .try_init()
@@ -766,16 +767,94 @@ fn parse_address_sample() -> Clean<()> {
     let path = std::env::current_dir()?;
     let file_path = path.join("tests/test_data/address_sample.csv");
     let samples: Vec<AddressSample> = address::prelude::from_csv(file_path)?;
-    let city_path = "./tests/test_data/addresses.data";
-    let city_addresses = SpatialAddresses::load(city_path)?;
+    // let city_path = "./tests/test_data/addresses.data";
+    // let city_addresses = SpatialAddresses::load(city_path)?;
     for sample in samples {
-        let (rem, address) = parse_address(&sample.address)?;
+        let (_, address) = parse_address(&sample.address)?;
         tracing::info!("{}", address.label());
     }
     // let match_records = MatchRecords::compare(
     //     &city_addresses.records[0..10].to_vec(),
     //     &county_addresses.records,
     // );
+    Ok(())
+}
+
+#[test]
+#[cfg_attr(feature = "ci", ignore)]
+fn address_samples() -> Clean<()> {
+    if let Ok(()) = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .try_init()
+    {};
+    let path = std::env::current_dir()?;
+    let file_path = path.join("tests/test_data/address_sample.csv");
+    let samples: Vec<AddressSample> = address::prelude::from_csv(file_path)?;
+    for sample in samples {
+        let (_rem, address) = Parser::address(&sample.address)?;
+        tracing::info!("{}", address.mailing());
+        // tracing::info!("{}", address.complete_address());
+    }
+    // let city_path = "./tests/test_data/addresses.data";
+    // let city_addresses = SpatialAddresses::load(city_path)?;
+    // for sample in city_addresses.iter() {
+    //     if sample.street_name_pre_modifier().is_some() {
+    //         tracing::info!("{:?}", sample.label());
+    //         let (_rem, address) = Parser::address(&sample.label())?;
+    //         tracing::info!("{}", address.label());
+    //     }
+    // }
+    // let match_records = MatchRecords::compare(
+    //     &city_addresses.records[0..10].to_vec(),
+    //     &county_addresses.records,
+    // );
+    Ok(())
+}
+
+#[test]
+#[cfg_attr(feature = "ci", ignore)]
+fn parse_city_address() -> Clean<()> {
+    if let Ok(()) = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .try_init()
+    {};
+    let city_path = "./tests/test_data/addresses.data";
+    let city_addresses = SpatialAddresses::load(city_path)?;
+    for sample in city_addresses.iter() {
+        let label = Address::label(sample);
+        let (_, address) = Parser::address(&label)?;
+        let address_label = address.label();
+        if label != address_label {
+            tracing::info!("{}", label);
+            tracing::info!("{}", address_label);
+        }
+        // assert_eq!(label, address.label());
+    }
+    Ok(())
+}
+
+#[test]
+#[cfg_attr(feature = "ci", ignore)]
+fn parse_county_address() -> Clean<()> {
+    if let Ok(()) = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .try_init()
+    {};
+    let county_path = "./tests/test_data/county_addresses.data";
+    let county_addresses = SpatialAddresses::load(county_path)?;
+    for sample in county_addresses.iter() {
+        // if sample.street_name() == "PARK PLAZA" {
+        let label = Address::label(sample);
+        let (_, address) = Parser::address(&label)?;
+        let address_label = address.label();
+        if label != address_label {
+            tracing::info!("{}", label);
+            tracing::info!("{}", address_label);
+        }
+        //     tracing::info!("{:#?}", sample);
+        // }
+        // assert_eq!(label, address.label());
+    }
     Ok(())
 }
 
