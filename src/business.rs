@@ -493,8 +493,8 @@ impl BusinessLicense {
     /// the id to addresses in the city.
     pub fn detype_subaddress(&mut self) -> Clean<()> {
         if let Some(val) = &self.subaddress_identifier {
-            let (rem, _) = parse_subaddress_type(val)?;
-            let (_, element) = parse_subaddress_element(rem)?;
+            let (rem, _) = Parser::subaddress_type(val)?;
+            let (_, element) = Parser::subaddress_id(rem)?;
             if let Some(id) = element {
                 self.subaddress_identifier = Some(id.to_string());
             }

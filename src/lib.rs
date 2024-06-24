@@ -41,12 +41,6 @@ pub mod prelude {
         JosephineCountySpatialAddresses2024,
     };
     pub use crate::lexisnexis::{LexisNexis, LexisNexisItem};
-    pub use crate::parser::{
-        deserialize_phone_number, multi_word, parse_address, parse_address_number,
-        parse_address_number_suffix, parse_complete_street_name, parse_phone_number,
-        parse_post_type, parse_pre_directional, parse_subaddress_element,
-        parse_subaddress_elements, parse_subaddress_identifiers, parse_subaddress_type,
-        recursive_post_type, Parser,
-    };
+    pub use crate::parser::{deserialize_phone_number, parse_phone_number, Parser};
     pub use crate::utils::{from_csv, load_bin, save, to_csv, Portable};
 }

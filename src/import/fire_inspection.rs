@@ -75,7 +75,7 @@ impl TryFrom<FireInspectionRaw> for FireInspection {
     type Error = Bandage;
 
     fn try_from(raw: FireInspectionRaw) -> Result<Self, Self::Error> {
-        match parse_address(&raw.address) {
+        match Parser::address(&raw.address) {
             Ok((_, address)) => {
                 let mut upper_address = address.clone();
                 if let Some(identifier) = address.subaddress_identifier() {

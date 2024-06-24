@@ -151,7 +151,7 @@ impl TryFrom<BusinessRaw> for Business {
     // [`Business`] type.  Errors if the address parsing fails.
     fn try_from(raw: BusinessRaw) -> Result<Self, Self::Error> {
         // Attempt to parse the address label to a [`PartialAddress`].
-        match parse_address(&raw.street_address_label) {
+        match Parser::address(&raw.street_address_label) {
             // Return the conversion on success.
             Ok((_, address)) => Ok(Business {
                 company_name: raw.company_name,
