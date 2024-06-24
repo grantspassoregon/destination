@@ -1,7 +1,7 @@
 //! The `parser` module contains functions for parsing unstructured text into address components.
 use crate::address_components::{StreetNamePreModifier, StreetSeparator};
 use crate::prelude::{
-    PartialAddress, PostalCommunity, StreetNamePostType, StreetNamePreDirectional,
+    PartialAddress, PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional,
     StreetNamePreType, SubaddressType,
 };
 use nom::branch::alt;
@@ -441,20 +441,71 @@ impl Parser {
         let (rem, _) = opt(tag("#"))(rem)?;
         let (rem, _) = opt(tag("&"))(rem)?;
         let (rem, _) = opt(tag("-"))(rem)?;
+        // Strip whitespace between symbol and id.
+        let (rem, _) = space0(rem)?;
         // If there is no subaddress, we expect the city name next.
-        let (_, check) = Self::is_postal_community(rem)?;
-        if check {
-            Ok((rem, None))
-        } else {
-            let mut id = String::new();
+        let (_, mut cond) = Self::is_postal_community(rem)?;
+        // Could be a state name instead of a subaddress.
+        let (_, state) = Self::is_state(rem)?;
+        // Could be a zip code.
+        let (_, zip) = Self::is_zip(rem)?;
+        cond = cond | state | zip;
+        // End loop if at end of input.
+        if eof::<&str, nom::error::Error<_>>(rem).is_ok() {
+            tracing::trace!("Eof detected.");
+            cond = true;
+        }
+        // Variable to store id.
+        let mut id = String::new();
+        let mut remain = rem;
+        // Next value is likely a subaddress.
+        // Loop to parse potentially multiple subaddresses.
+        while !cond {
+            tracing::trace!("Cond is {}", cond);
+            tracing::trace!("Rem: {}", &rem);
             // Take one or more alphanumeric characters.
-            if let Ok((remain, result)) = alphanumeric1::<&str, nom::error::Error<_>>(rem) {
+            if let Ok((rem, result)) = alphanumeric1::<&str, nom::error::Error<_>>(remain) {
+                // Add the value to the subaddress string.
+                if !id.is_empty() {
+                    id.push(' ');
+                }
                 id.push_str(result);
-                Ok((remain, Some(id)))
+                tracing::trace!("Id: {}", &id);
+                tracing::trace!("Rem: {}", &rem);
+
+                // Second pass.
+                // Strip preceding whitespace.
+                let (rem, _) = space0(rem)?;
+                // Strip common subaddress identifier symbols.
+                let (rem, _) = opt(tag("#"))(rem)?;
+                let (rem, _) = opt(tag("&"))(rem)?;
+                let (rem, _) = opt(tag("-"))(rem)?;
+                let (rem, _) = opt(tag(","))(rem)?;
+                // Strip whitespace between symbol and id.
+                let (rem, _) = space0(rem)?;
+                remain = rem;
+                // If there is no subaddress, we expect the city name next.
+                let (_, comm) = Self::is_postal_community(rem)?;
+                // Could be a state name instead of a subaddress.
+                let (_, state) = Self::is_state(rem)?;
+                // Could be a zip code.
+                let (_, zip) = Self::is_zip(rem)?;
+                cond = comm | state | zip;
+                // End loop if at end of input.
+                if eof::<&str, nom::error::Error<_>>(rem).is_ok() {
+                    tracing::trace!("Eof detected.");
+                    cond = true;
+                }
             } else {
-                // If parsing input fails, return the original input.
-                Ok((input, None))
+                tracing::trace!("Subaddress ID not present where expected.");
+                // Exit loop, we have come off the rails.
+                cond = true;
             }
+        }
+        if id.is_empty() {
+            Ok((input, None))
+        } else {
+            Ok((remain, Some(id)))
         }
     }
 
@@ -463,25 +514,35 @@ impl Parser {
     #[allow(clippy::single_match)]
     pub fn postal_community(input: &str) -> IResult<&str, Option<PostalCommunity>> {
         tracing::trace!("Calling postal_community on {}", input);
+        // Holds potentially compound community name.
         let mut comm = String::new();
-        let (remaining, _) = space0(input)?;
+        let (rem, _) = opt(tag(","))(input)?;
+        // Strip preceding whitespace.
+        let (remaining, _) = space0(rem)?;
+        // Take one or more alphanumeric characters.
         if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(remaining) {
             // Strip preceding whitespace.
-            let (rem, _) = space0(rem)?;
+            let (mut rem, _) = space0(rem)?;
+            // Add first word to community name.
             comm.push_str(result);
             tracing::trace!("Postal community check on {:#?}", &result);
+            // Check for compound community name.
             match result.to_lowercase().as_str() {
+                // Grants Pass
                 "grants" => {
                     tracing::trace!("Attempting to match remainder: {}", rem);
-                    if let Ok((_, next)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+                    // Add the next word to community name.
+                    if let Ok((remain, next)) = alpha1::<&str, nom::error::Error<_>>(rem) {
                         tracing::trace!("Next is {}", next);
                         comm.push(' ');
                         comm.push_str(next);
+                        rem = remain;
                     }
                     tracing::trace!("Comm is {}", comm);
                 }
                 _ => {}
             }
+            // Match community name against valid postal communities.
             let post_comm = PostalCommunity::match_mixed(&comm);
             Ok((rem, post_comm))
         } else {
@@ -499,6 +560,84 @@ impl Parser {
             Ok((input, post.is_some()))
         } else {
             tracing::trace!("No postal community detected.");
+            Ok((input, false))
+        }
+    }
+
+    /// The `state` function attempts to parse the next word in the input as a
+    /// [`State`] value.
+    pub fn state(input: &str) -> IResult<&str, Option<State>> {
+        tracing::trace!("Calling state on {}", input);
+        // Strip preceding comma.
+        let (rem, _) = opt(tag(","))(input)?;
+        // Strip preceding whitespace.
+        let (remaining, _) = space0(rem)?;
+        // State name is alphabetic
+        if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(remaining) {
+            tracing::trace!("State check on {:#?}", &result);
+            if let Some(state) = State::match_mixed(result) {
+                Ok((rem, Some(state)))
+            } else {
+                Ok((remaining, None))
+            }
+        } else {
+            tracing::trace!("Invalid state input.");
+            Ok((remaining, None))
+        }
+    }
+
+    /// The `is_state` function returns true if the input parses to a valid [`State`].
+    /// Peeks at the data without consuming it.
+    pub fn is_state(input: &str) -> IResult<&str, bool> {
+        tracing::trace!("Calling is_state");
+        if let Ok((_, state)) = Self::state(input) {
+            tracing::trace!("Postal community is {:#?}", &state);
+            Ok((input, state.is_some()))
+        } else {
+            tracing::trace!("No state detected.");
+            Ok((input, false))
+        }
+    }
+
+    /// The `zip` function attempts to parse the next word in the input as a
+    /// postal zip code.
+    pub fn zip(input: &str) -> IResult<&str, Option<i64>> {
+        tracing::trace!("Calling zip on {}", input);
+        // Strip preceding comma.
+        let (rem, _) = opt(tag(","))(input)?;
+        // Strip preceding whitespace.
+        let (remaining, _) = space0(rem)?;
+        // Zip code is an integer.
+        if let Ok((rem, result)) = digit1::<&str, nom::error::Error<_>>(remaining) {
+            tracing::trace!("Zip check on {:#?}", &result);
+            // Zip code must have 5 digits
+            if result.len() == 5 {
+                // Try to parse as number.
+                if let Ok(num) = result.parse() {
+                    // Return successful zip code.
+                    Ok((rem, Some(num)))
+                } else {
+                    // If it doesn't parse, return input
+                    Ok((remaining, None))
+                }
+            } else {
+                Ok((remaining, None))
+            }
+        } else {
+            tracing::trace!("Invalid zip input.");
+            Ok((remaining, None))
+        }
+    }
+
+    /// The `is_zip` function returns true if the input parses to a valid zip code.
+    /// Peeks at the data without consuming it.
+    pub fn is_zip(input: &str) -> IResult<&str, bool> {
+        tracing::trace!("Calling is_zip");
+        if let Ok((_, zip)) = Self::zip(input) {
+            tracing::trace!("Zip is {:#?}", &zip);
+            Ok((input, zip.is_some()))
+        } else {
+            tracing::trace!("No state detected.");
             Ok((input, false))
         }
     }
@@ -546,23 +685,12 @@ impl Parser {
         let (rem, post_comm) = Self::postal_community(rem)?;
         tracing::trace!("Postal community: {:#?}", &post_comm);
         address.postal_community = post_comm;
-        // let (rem, subtype) = parse_subaddress_type(rem)?;
-        // if let Some(value) = subtype {
-        //     tracing::trace!("Subaddress type: {:#?}", &value);
-        //     address.set_subaddress_type(&value);
-        // }
-        // let (rem, elements) = parse_subaddress_identifiers(rem)?;
-        // if let Some(value) = elements {
-        //     let mut subaddress_identifier = String::new();
-        //     for (i, val) in value.iter().enumerate() {
-        //         subaddress_identifier.push_str(val);
-        //         if value.len() > 1 && i < value.len() - 1 {
-        //             subaddress_identifier.push(' ');
-        //         }
-        //     }
-        //     tracing::trace!("Subaddress identifier: {:#?}", &subaddress_identifier);
-        //     address.set_subaddress_identifier(&subaddress_identifier);
-        // }
+        let (rem, state) = Self::state(rem)?;
+        tracing::trace!("Postal community: {:#?}", &state);
+        address.state_name = state;
+        let (rem, zip) = Self::zip(rem)?;
+        tracing::trace!("Zip code: {:#?}", &zip);
+        address.zip_code = zip;
         Ok((rem, address))
     }
 }

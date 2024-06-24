@@ -724,7 +724,7 @@ pub struct PartialAddress {
     /// being either the unincorporated or incorporated municipality name.
     pub postal_community: Option<PostalCommunity>,
     /// The `state` field represents the state name component of the address.
-    pub state_name: Option<String>,
+    pub state_name: Option<State>,
     /// The `status` field represents the local status of the address as determined by the relevant
     /// addressing authority.
     pub status: Option<AddressStatus>,
@@ -906,6 +906,14 @@ impl PartialAddress {
         if let Some(post_comm) = self.postal_community {
             address.push_str(", ");
             address.push_str(&post_comm.label());
+        }
+        if let Some(state) = self.state_name {
+            address.push_str(", ");
+            address.push_str(&state.abbreviate());
+        }
+        if let Some(zip) = self.zip_code {
+            address.push(' ');
+            address.push_str(&zip.to_string());
         }
         address
     }
