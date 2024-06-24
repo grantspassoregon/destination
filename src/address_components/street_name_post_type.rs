@@ -500,6 +500,7 @@ impl StreetNamePostType {
             "XRDS" => Some(Self::CROSSROADS),
             "CURV" => Some(Self::CURVE),
             "CUTOFF" => Some(Self::CUTOFF),
+            "CTOFF" => Some(Self::CUTOFF),
             "DL" => Some(Self::DALE),
             "DM" => Some(Self::DAM),
             "DV" => Some(Self::DIVIDE),

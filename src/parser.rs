@@ -250,6 +250,10 @@ impl Parser {
     /// street name.  After finding at least one word, will return if the next word in `input` is a
     /// street name post type.
     /// Screen for PO Boxes?
+    /// TODO: If no street name is present, but street type is present, this will categorize the
+    /// street type as a street name, because we do not check for post-type on the first pass.
+    /// Eg. West Street parses as directional: West, street name: Street.  Should parse as
+    /// directional: None, street name: West, street type: Street.
     pub fn street_name(input: &str) -> IResult<&str, Option<String>> {
         // On the initial pass, we read the first word of the street name.
         let mut name = String::new();

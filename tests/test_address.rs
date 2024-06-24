@@ -833,22 +833,29 @@ fn parse_city_address() -> Clean<()> {
 #[cfg_attr(feature = "ci", ignore)]
 fn parse_county_address() -> Clean<()> {
     if let Ok(()) = tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+        .with_max_level(tracing::Level::TRACE)
         .try_init()
     {};
     let county_path = "./tests/test_data/county_addresses.data";
     let county_addresses = SpatialAddresses::load(county_path)?;
+
+    tracing::info!("Standardizing county addresses.");
     for sample in county_addresses.iter() {
-        // if sample.street_name() == "PARK PLAZA" {
-        let label = Address::label(sample);
-        let (_, address) = Parser::address(&label)?;
-        let address_label = address.label();
-        if label != address_label {
-            tracing::info!("{}", label);
-            tracing::info!("{}", address_label);
+        if sample.street_name().as_str() == "WEST" {
+            let label = Address::label(sample);
+            let (_, mut address) = Parser::address(&label)?;
+            address.standardize();
+            let address_label = address.label();
+            if label != address_label {
+                tracing::info!("OG street: {}", sample.street_name());
+                tracing::info!("Parsed street: {:#?}", address.street_name);
+                // Native label
+                tracing::info!("{}", label);
+                // Parsed label
+                tracing::info!("{}", address_label);
+            }
+            // tracing::info!("{:#?}", sample);
         }
-        //     tracing::info!("{:#?}", sample);
-        // }
         // assert_eq!(label, address.label());
     }
     Ok(())

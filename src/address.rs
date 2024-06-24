@@ -964,6 +964,72 @@ impl PartialAddress {
         }
         address
     }
+
+    /// The `standardize` method takes county address naming conventions and converts them to city
+    /// naming conventions.
+    pub fn standardize(&mut self) {
+        trace!("Running standardize");
+        if self.street_name_pre_directional() == Some(StreetNamePreDirectional::WEST)
+            && self.street_name() == Some("SIDE".to_string())
+        {
+            self.street_name_pre_directional = None;
+            self.street_name = Some("WEST SIDE".to_string());
+        }
+        if self.street_name_pre_directional() == Some(StreetNamePreDirectional::WEST)
+            && self.street_name() == None
+        {
+            tracing::info!("Fixing West Street");
+            self.street_name_pre_directional = None;
+            self.street_name = Some("WEST".to_string());
+        }
+        // if let Some(sub) = self.subaddress_id() {
+        //     if comp_street == "LEWIS AVE" && sub == "OFFICE" {
+        //         info!("Fixing Lewis Ave");
+        //         *self.subaddress_id_mut() = None;
+        //         *self.subaddress_type_mut() = Some(SubaddressType::Office);
+        //     }
+        // }
+        // if comp_street == "NE BEAVILLA VIEW" {
+        //     trace!("Fixing Beavilla View");
+        //     *self.street_name_mut() = "BEAVILLA".to_string();
+        //     *self.street_type_mut() = Some(StreetNamePostType::VIEW);
+        // }
+        // if comp_street == "COLUMBIA CREST" {
+        //     trace!("Fixing Columbia Crest");
+        //     *self.street_name_mut() = "COLUMBIA".to_string();
+        //     *self.street_type_mut() = Some(StreetNamePostType::CREST);
+        // }
+        // if comp_street == "SE FORMOSA GARDENS" {
+        //     trace!("Fixing Formosa Gardens");
+        //     *self.street_name_mut() = "FORMOSA".to_string();
+        //     *self.street_type_mut() = Some(StreetNamePostType::GARDENS);
+        // }
+        // if comp_street == "SE HILLTOP VIEW" {
+        //     trace!("Fixing Hilltop View");
+        //     *self.street_name_mut() = "HILLTOP".to_string();
+        //     *self.street_type_mut() = Some(StreetNamePostType::VIEW);
+        // }
+        // if comp_street == "MARILEE ROW" {
+        //     trace!("Fixing Marilee Row");
+        //     *self.street_name_mut() = "MARILEE".to_string();
+        //     *self.street_type_mut() = Some(StreetNamePostType::ROW);
+        // }
+        // if comp_street == "MEADOW GLEN" {
+        //     trace!("Fixing Meadow Glen");
+        //     *self.street_name_mut() = "MEADOW".to_string();
+        //     *self.street_type_mut() = Some(StreetNamePostType::GLEN);
+        // }
+        // if comp_street == "ROBERTSON CREST" {
+        //     trace!("Fixing Robertson Crest");
+        //     *self.street_name_mut() = "ROBERTSON".to_string();
+        //     *self.street_type_mut() = Some(StreetNamePostType::CREST);
+        // }
+        // if comp_street == "NE QUAIL CROSSING" {
+        //     trace!("Fixing Quail Crossing");
+        //     *self.street_name_mut() = "QUAIL".to_string();
+        //     *self.street_type_mut() = Some(StreetNamePostType::CROSSING);
+        // }
+    }
 }
 
 /// The `PartialAddresses` struct holds a `records` field that contains a vector of type
