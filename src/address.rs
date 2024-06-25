@@ -976,7 +976,7 @@ impl PartialAddress {
             self.street_name = Some("WEST SIDE".to_string());
         }
         if self.street_name_pre_directional() == Some(StreetNamePreDirectional::WEST)
-            && self.street_name() == None
+            && self.street_name().is_none()
         {
             tracing::info!("Fixing West Street");
             self.street_name_pre_directional = None;

@@ -367,6 +367,124 @@ impl Parser {
         }
     }
 
+    /// The `street_name` method attempts to parse the next sequence of words in the input as a
+    /// street name.  After finding at least one word, will return if the next word in `input` is a
+    /// street name post type.
+    /// Screen for PO Boxes?
+    /// TODO: If no street name is present, but street type is present, this will categorize the
+    /// street type as a street name, because we do not check for post-type on the first pass.
+    /// Eg. West Street parses as directional: West, street name: Street.  Should parse as
+    /// directional: None, street name: West, street type: Street.
+    /// TODO: Only checks for two post types in succession, but streets like Park Plaza Drive have
+    /// three.
+    pub fn street_name1(input: &str) -> IResult<&str, Option<String>> {
+        // On the initial pass, we read the first word of the street name.
+        let mut name = String::new();
+        // Strip preceding whitespace.
+        let (rem, _) = space0(input)?;
+        let mut remaining = rem;
+        // The next word of remaining may be part of the street name.
+        // It could also be a post type, subaddress, city, state or zip.
+        // Check if the next word parses as a post type.
+        let (_, mut cond) = Self::is_post_type(rem)?;
+        // If a post type is found, check to see if it is followed by a post type.
+        if cond {
+            let (first, _) = Self::post_type(rem)?;
+            let (_, next) = Self::is_post_type(first)?;
+            if next {
+                // If so, only the last type is the post type.
+                cond = false;
+            }
+            // If the post type could also be a subaddress, parse as post type and not part of
+            // the street name.
+            if let Ok((_, Some(_))) = Self::subaddress_type(first) {
+                cond = true;
+            }
+        }
+        // Check if the next word parses as a postal community.
+        let (_, check) = Self::is_postal_community(rem)?;
+        if check {
+            // Cond is the variable that will control the while loop
+            cond = true;
+        }
+        // If cond is false because input is empty, set to true
+        if combinator::eof::<&str, nom::error::Error<_>>(rem).is_ok() {
+            tracing::trace!("Eof detected.");
+            cond = true;
+        // Break if input is not alphanumeric.
+        } else if alphanumeric1::<&str, nom::error::Error<_>>(rem).is_err() {
+            tracing::trace!("Nonalphanumeric characters detected: {}", rem);
+            cond = true;
+        }
+        tracing::trace!("Initial condition is {}", cond);
+        while !cond {
+            // Strip preceding whitespace.
+            let (rem, _) = space0(remaining)?;
+            // Take one or more alphabetic character.
+            if let Ok((rem, result)) = alphanumeric1::<&str, nom::error::Error<_>>(rem) {
+                // Strip preceding whitespace.
+                let (rem, _) = space0(rem)?;
+                // Read has succeeded, reset remainder.
+                remaining = rem;
+                if !name.is_empty() {
+                    // Push parsed word to street name.
+                    name.push(' ');
+                }
+                name.push_str(result);
+                tracing::trace!("Working name: {}", name);
+                // Capture apostrophes in street names.
+                tracing::trace!("Apostrophe check on {}", remaining);
+                let (rem, apostrophe) = combinator::opt(tag("'"))(remaining)?;
+                if let Some(value) = apostrophe {
+                    tracing::trace!("Apostrophe found, rem: {}", rem);
+                    name.push_str(value);
+                    // Could probably just tack on an 'S' here.
+                    // Skipping check for other types because it follows an apostrophe.
+                    if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+                        name.push_str(result);
+                        remaining = rem;
+                    }
+                }
+                // If next word is a post type, end loop.
+                (_, cond) = Self::is_post_type(rem)?;
+                // If a post type is found, check to see if it is followed by a post type.
+                if cond {
+                    let (first, _) = Self::post_type(rem)?;
+                    let (_, next) = Self::is_post_type(first)?;
+                    if next {
+                        // If so, only the last type is the post type.
+                        cond = false;
+                    }
+                    // If the post type could also be a subaddress, parse as post type and not part of
+                    // the street name.
+                    if let Ok((_, Some(_))) = Self::subaddress_type(first) {
+                        cond = true;
+                    }
+                }
+                // If next word is a postal community, end loop.
+                let (_, check) = Self::is_postal_community(rem)?;
+                if check {
+                    cond = true;
+                }
+                // End loop if at end of input.
+                if combinator::eof::<&str, nom::error::Error<_>>(rem).is_ok() {
+                    tracing::trace!("Eof detected.");
+                    cond = true;
+                // Break if input is not alphanumeric.
+                } else if alphanumeric1::<&str, nom::error::Error<_>>(rem).is_err() {
+                    tracing::trace!("Nonalphanumeric characters detected.");
+                    cond = true;
+                }
+            }
+        }
+        tracing::trace!("Rem: {}", remaining);
+        if name.is_empty() {
+            Ok((input, None))
+        } else {
+            Ok((remaining, Some(name.to_uppercase())))
+        }
+    }
+
     /// The `post_type` function attempts to parse the next word in the input as a
     /// [`StreetNamePostType`] value.  Since the street name post type is a required field for Grants
     /// Pass addresses, there is no need to peek and conditionally return.  If the street name post
@@ -673,7 +791,7 @@ impl Parser {
         let (rem, separator) = Self::separator(rem)?;
         tracing::trace!("Street name separator: {:#?}", &separator);
         address.separator = separator;
-        let (rem, name) = Self::street_name(rem)?;
+        let (rem, name) = Self::street_name1(rem)?;
         tracing::trace!("Street name element: {:#?}", &name);
         address.street_name = name;
         let (rem, post_type) = Self::post_type(rem)?;

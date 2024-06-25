@@ -841,14 +841,14 @@ fn parse_county_address() -> Clean<()> {
 
     tracing::info!("Standardizing county addresses.");
     for sample in county_addresses.iter() {
-        if sample.street_name().as_str() == "WEST" {
+        if sample.street_name().as_str() == "PARK PLAZA" {
             let label = Address::label(sample);
             let (_, mut address) = Parser::address(&label)?;
             address.standardize();
             let address_label = address.label();
             if label != address_label {
-                tracing::info!("OG street: {}", sample.street_name());
-                tracing::info!("Parsed street: {:#?}", address.street_name);
+                // tracing::info!("OG street: {}", sample.street_name());
+                // tracing::info!("Parsed street: {:#?}", address.street_name);
                 // Native label
                 tracing::info!("{}", label);
                 // Parsed label
