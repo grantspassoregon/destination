@@ -19,13 +19,13 @@ fn load_ecso_addresses() -> Clean<()> {
     info!("Subscriber initialized.");
 
     trace!("Deserializing county addresses from a csv file.");
-    let file = "tests/test_data/county_addresses_20240508.csv";
+    let file = "tests/test_data/county_addresses_20240626.csv";
     let addresses = JosephineCountySpatialAddresses2024::from_csv(file)?;
-    assert_eq!(addresses.len(), 45205);
+    assert_eq!(addresses.len(), 45252);
     trace!("City addresses loaded: {} entries.", addresses.len());
     let mut spatial = SpatialAddresses::from(&addresses[..]);
     info!("Addresses loaded: {}", spatial.len());
-    spatial.citify();
+    spatial.standardize();
     spatial.save("tests/test_data/county_addresses.data")?;
     // let addresses = GrantsPassAddresses::from_csv(file)?;
     // assert_eq!(addresses.records.len(), 27437);

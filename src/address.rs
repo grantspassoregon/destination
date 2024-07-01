@@ -285,6 +285,60 @@ pub trait Address {
         }
         records
     }
+
+    /// The `standardize` method takes county address naming conventions and converts them to city
+    /// naming conventions.
+    fn standardize(&mut self) {
+        let comp = self.street_name().clone();
+        if comp == "AZALEA DRIVE" {
+            trace!("Fixing Azalea Drive Cutoff");
+            *self.street_name_mut() = "AZALEA".to_string();
+            *self.street_type_mut() = Some(StreetNamePostType::DriveCutoff);
+        }
+
+        if let Some(sub) = self.subaddress_id() {
+            if comp == "LEWIS" && sub == "OFFICE" {
+                info!("Fixing Lewis Ave Office");
+                *self.subaddress_id_mut() = None;
+                *self.subaddress_type_mut() = Some(SubaddressType::Office);
+            }
+        }
+        if comp == "BEAVILLA VIEW" {
+            trace!("Fixing Beavilla View");
+            *self.street_name_mut() = "BEAVILLA".to_string();
+            *self.street_type_mut() = Some(StreetNamePostType::VIEW);
+        }
+        if comp == "COLUMBIA CREST" {
+            trace!("Fixing Columbia Crest");
+            *self.street_name_mut() = "COLUMBIA".to_string();
+            *self.street_type_mut() = Some(StreetNamePostType::CREST);
+        }
+        if comp == "HILLTOP VIEW" {
+            trace!("Fixing Hilltop View");
+            *self.street_name_mut() = "HILLTOP".to_string();
+            *self.street_type_mut() = Some(StreetNamePostType::VIEW);
+        }
+        if comp == "MARILEE ROW" {
+            trace!("Fixing Marilee Row");
+            *self.street_name_mut() = "MARILEE".to_string();
+            *self.street_type_mut() = Some(StreetNamePostType::ROW);
+        }
+        if comp == "MEADOW GLEN" {
+            trace!("Fixing Meadow Glen");
+            *self.street_name_mut() = "MEADOW".to_string();
+            *self.street_type_mut() = Some(StreetNamePostType::GLEN);
+        }
+        if comp == "ROBERTSON CREST" {
+            trace!("Fixing Robertson Crest");
+            *self.street_name_mut() = "ROBERTSON".to_string();
+            *self.street_type_mut() = Some(StreetNamePostType::CREST);
+        }
+        if comp == "QUAIL CROSSING" {
+            trace!("Fixing Quail Crossing");
+            *self.street_name_mut() = "QUAIL".to_string();
+            *self.street_type_mut() = Some(StreetNamePostType::CROSSING);
+        }
+    }
 }
 
 /// The `Addresses` trait enables methods that act on vectors of type [`Address`].
@@ -422,6 +476,13 @@ where
     /// address ranges within the City of Grants Pass.
     fn lexis_nexis(&self, other: &Self) -> Clean<LexisNexis> {
         LexisNexis::from_addresses(self, other)
+    }
+
+    /// The `standardize` method takes county address naming conventions and converts them to city
+    /// naming conventions.
+    fn standardize(&mut self) {
+        trace!("Running standardize");
+        self.iter_mut().map(|v| v.standardize()).for_each(drop);
     }
 }
 
@@ -982,6 +1043,7 @@ impl PartialAddress {
             self.street_name_pre_directional = None;
             self.street_name = Some("WEST".to_string());
         }
+
         // if let Some(sub) = self.subaddress_id() {
         //     if comp_street == "LEWIS AVE" && sub == "OFFICE" {
         //         info!("Fixing Lewis Ave");
