@@ -12,7 +12,7 @@ struct AddressSample {
 #[cfg_attr(feature = "ci", ignore)]
 fn load_ecso_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
         .is_ok()
     {};
@@ -36,7 +36,7 @@ fn load_ecso_addresses() -> Clean<()> {
 #[cfg_attr(feature = "ci", ignore)]
 fn load_city_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
         .is_ok()
     {};
@@ -61,7 +61,7 @@ fn save_city_addresses() -> Clean<()> {
     info!("Subscriber initialized.");
 
     trace!("Opening city addresses from a csv file.");
-    let file = "tests/test_data/city_addresses_20240513.csv";
+    let file = "tests/test_data/city_addresses_20240630.csv";
     let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
     let addresses = SpatialAddresses::from(&addresses[..]);
     trace!("Saving city addresses to binary.");
@@ -91,7 +91,7 @@ fn save_city_addresses() -> Clean<()> {
 #[test]
 fn load_county_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
         .is_ok()
     {};
@@ -108,7 +108,7 @@ fn load_county_addresses() -> Clean<()> {
 #[test]
 fn load_geo_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
         .is_ok()
     {};
@@ -189,7 +189,7 @@ fn business_licenses() -> Clean<()> {
 #[cfg_attr(feature = "ci", ignore)]
 fn read_bus_licenses() -> Result<(), std::io::Error> {
     if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
         .is_ok()
     {};
@@ -232,7 +232,7 @@ fn read_bus_licenses() -> Result<(), std::io::Error> {
 #[test]
 fn match_city_address() -> Clean<()> {
     if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
         .is_ok()
     {};
@@ -242,9 +242,9 @@ fn match_city_address() -> Clean<()> {
     let city_path = "tests/test_data/addresses.data";
     let county_path = "tests/test_data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
-    assert_eq!(city_addresses.len(), 27509);
+    assert_eq!(city_addresses.len(), 27446);
     let county_addresses = SpatialAddresses::load(county_path)?;
-    assert_eq!(county_addresses.len(), 45205);
+    assert_eq!(county_addresses.len(), 45252);
     info!("Matching single address.");
     let match_records = MatchRecords::new(&city_addresses[0].clone(), &county_addresses);
     info!("Record 0 is: {:?}", match_records[0]);
@@ -255,7 +255,7 @@ fn match_city_address() -> Clean<()> {
 #[cfg_attr(feature = "ci", ignore)]
 fn match_business_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
         .is_ok()
     {};
@@ -329,7 +329,7 @@ fn filter_status() -> Clean<()> {
     let match_records = MatchRecords::compare(&city_addresses[0..1000].to_vec(), &county_addresses);
     assert_eq!(match_records.len(), 1000);
     let filtered = match_records.clone().filter("status");
-    assert_eq!(filtered.len(), 967);
+    assert_eq!(filtered.len(), 969);
     info!("Matches filtered by status.");
     Ok(())
 }
@@ -349,7 +349,7 @@ fn filter_missing() -> Clean<()> {
     let match_records = MatchRecords::compare(&city_addresses[0..1000].to_vec(), &county_addresses);
     assert_eq!(match_records.len(), 1000);
     let filtered = match_records.clone().filter("missing");
-    assert_eq!(filtered.len(), 3);
+    assert_eq!(filtered.len(), 1);
     info!("Matches filtered by missing.");
     Ok(())
 }
@@ -432,7 +432,7 @@ fn street_type_parser() {
 #[test]
 fn multi_word_parser() {
     if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
         .is_ok()
     {};
@@ -680,7 +680,7 @@ fn address_parser() -> Clean<()> {
 #[cfg_attr(feature = "ci", ignore)]
 fn load_fire_inspections() -> Clean<()> {
     if let Ok(()) = tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
     {};
     let file_path = "p:/fire_inspection.csv";
@@ -729,7 +729,7 @@ fn sort_fire_inspections() -> Clean<()> {
 #[test]
 fn load_businesses() -> Clean<()> {
     if let Ok(()) = tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
     {};
     let path = std::env::current_dir()?;
@@ -833,7 +833,7 @@ fn parse_city_address() -> Clean<()> {
 #[cfg_attr(feature = "ci", ignore)]
 fn parse_county_address() -> Clean<()> {
     if let Ok(()) = tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
     {};
     let county_path = "./tests/test_data/county_addresses.data";
@@ -865,7 +865,7 @@ fn parse_county_address() -> Clean<()> {
 #[cfg_attr(feature = "ci", ignore)]
 fn business_mailing() -> Clean<()> {
     if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .try_init()
         .is_ok()
     {};

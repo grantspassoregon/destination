@@ -392,13 +392,20 @@ fn main() -> Clean<()> {
                         "josephine_county" => {
                             target = GeoAddresses::from(
                                 &JosephineCountySpatialAddresses2024::from_csv(target_path)?[..],
-                            )
+                            );
+                            target.standardize();
                         }
                         _ => error!("Unrecognized file format."),
                     }
                 }
             }
             info!("Comparing records.");
+
+            info!("Remove retired addresses from source.");
+            info!("Source records prior: {}", source.len());
+            source = GeoAddresses::from(&source.filter("active")[..]);
+            info!("Source records post: {}", source.len());
+
             let mut match_records = MatchRecords::compare(&source, &target);
             info!("{:?} records categorized.", match_records.len());
             info!("Output file: {:?}", cli.output);

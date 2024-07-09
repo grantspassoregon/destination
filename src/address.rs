@@ -9,7 +9,6 @@ use crate::prelude::{
 use aid::prelude::*;
 use derive_more::{Deref, DerefMut};
 use indicatif::ProgressBar;
-use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ops;
@@ -236,55 +235,55 @@ pub trait Address {
         }
     }
 
-    /// The `filter_field` method returns the subset of addresses where the field `filter` is equal
-    /// to the value in `field`.
-    fn filter_field<T: Address + Clone + Send + Sync>(
-        values: &[T],
-        filter: &str,
-        field: &str,
-    ) -> Vec<T> {
-        let mut records = Vec::new();
-        match filter {
-            "label" => records.append(
-                &mut values
-                    // .iter()
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| field == record.label())
-                    .collect(),
-            ),
-            "street_name" => records.append(
-                &mut values
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| field == record.street_name())
-                    .collect(),
-            ),
-            "pre_directional" => records.append(
-                &mut values
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| {
-                        if let Some(dir) = record.directional() {
-                            field == dir.abbreviate()
-                        } else {
-                            false
-                        }
-                    })
-                    .collect(),
-            ),
-            "post_type" => records.append(
-                &mut values
-                    .par_iter()
-                    .cloned()
-                    .filter(|record| field == format!("{:?}", record.street_type()))
-                    .collect(),
-            ),
-
-            _ => info!("Invalid filter provided."),
-        }
-        records
-    }
+    // The `filter_field` method returns the subset of addresses where the field `filter` is equal
+    // to the value in `field`.
+    // fn filter_field<T: Address + Clone + Send + Sync>(
+    //     values: &[T],
+    //     filter: &str,
+    //     field: &str,
+    // ) -> Vec<T> {
+    //     let mut records = Vec::new();
+    //     match filter {
+    //         "label" => records.append(
+    //             &mut values
+    //                 // .iter()
+    //                 .par_iter()
+    //                 .cloned()
+    //                 .filter(|record| field == record.label())
+    //                 .collect(),
+    //         ),
+    //         "street_name" => records.append(
+    //             &mut values
+    //                 .par_iter()
+    //                 .cloned()
+    //                 .filter(|record| field == record.street_name())
+    //                 .collect(),
+    //         ),
+    //         "pre_directional" => records.append(
+    //             &mut values
+    //                 .par_iter()
+    //                 .cloned()
+    //                 .filter(|record| {
+    //                     if let Some(dir) = record.directional() {
+    //                         field == dir.abbreviate()
+    //                     } else {
+    //                         false
+    //                     }
+    //                 })
+    //                 .collect(),
+    //         ),
+    //         "post_type" => records.append(
+    //             &mut values
+    //                 .par_iter()
+    //                 .cloned()
+    //                 .filter(|record| field == format!("{:?}", record.street_type()))
+    //                 .collect(),
+    //         ),
+    //
+    //         _ => info!("Invalid filter provided."),
+    //     }
+    //     records
+    // }
 
     /// The `standardize` method takes county address naming conventions and converts them to city
     /// naming conventions.
@@ -373,6 +372,20 @@ where
                     bar.inc(1);
                 }
             }
+            "active" => {
+                let mut c = self.clone();
+                c.filter_field("status", "Current");
+                let mut o = self.clone();
+                o.filter_field("status", "Other");
+                c.extend(o.to_vec());
+                let mut o = self.clone();
+                o.filter_field("status", "Pending");
+                c.extend(o.to_vec());
+                let mut o = self.clone();
+                o.filter_field("status", "Temporary");
+                c.extend(o.to_vec());
+                records = c.to_vec();
+            }
             _ => error!("Invalid filter provided."),
         }
         records
@@ -384,8 +397,21 @@ where
         match filter {
             "label" => self.retain(|r| r.label() == field),
             "street_name" => self.retain(|r| r.street_name() == field),
-            "pre_directional" => self.retain(|r| format!("{:?}", r.street_name()) == field),
-            "post_type" => self.retain(|r| format!("{:?}", r.street_type()) == field),
+            "pre_directional" => {
+                if let Ok((_, dir)) = crate::parser::Parser::pre_directional(field) {
+                    self.retain(|r| r.directional() == &dir)
+                } else {
+                    tracing::info!("Could not parse pre directional.")
+                }
+            }
+            "post_type" => {
+                if let Ok((_, post)) = crate::parser::Parser::post_type(field) {
+                    self.retain(|r| r.street_type() == &post)
+                } else {
+                    tracing::info!("Could not parse post type.")
+                }
+            }
+            "status" => self.retain(|r| r.status().to_string() == field),
             _ => info!("Invalid filter provided."),
         }
     }
