@@ -148,6 +148,8 @@ pub struct MatchRecord {
     /// The `latitude` field represents the 'y' value of the address point.  Depending on the
     /// input from the caller, the value may be in decimal degrees, meters or feet.
     pub latitude: f64,
+    /// The `id` field is an internal unique id.
+    pub id: uuid::Uuid,
 }
 
 impl GeoPoint for MatchRecord {
@@ -184,6 +186,7 @@ impl MatchRecords {
         let address_label = self_address.label();
         let latitude = self_address.lat();
         let longitude = self_address.lon();
+        let id = uuid::Uuid::new_v4();
 
         let mut match_record = Vec::new();
 
@@ -204,6 +207,7 @@ impl MatchRecords {
                         status,
                         longitude,
                         latitude,
+                        id,
                     }),
                     Some(mismatches) => {
                         for mismatch in mismatches.iter() {
@@ -225,6 +229,7 @@ impl MatchRecords {
                             status,
                             longitude,
                             latitude,
+                            id,
                         })
                     }
                 }
@@ -240,6 +245,7 @@ impl MatchRecords {
                 status: None,
                 longitude,
                 latitude,
+                id,
             })
         }
         MatchRecords(match_record)
