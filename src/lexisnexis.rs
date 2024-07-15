@@ -77,6 +77,7 @@ impl LexisNexisItemBuilder {
                                     zip_code,
                                     commonplace: self.commonplace,
                                     address_number: self.address_number,
+                                    id: uuid::Uuid::new_v4(),
                                 })
                             } else {
                                 warn!("Zip code missing.");
@@ -172,6 +173,9 @@ pub struct LexisNexisItem {
     /// the LexisNexis schema.
     #[serde(rename(serialize = "StNum"))]
     pub address_number: Option<i64>,
+    /// The `id` field is an internal unique id.
+    #[serde(skip_serializing)]
+    pub id: uuid::Uuid,
 }
 
 /// The `LexisNexis` struct holds a vector of [`LexisNexisItem`] objects, for serialization into a
