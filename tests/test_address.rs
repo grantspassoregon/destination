@@ -894,3 +894,15 @@ fn business_mailing() -> Clean<()> {
     tracing::info!("Mailing list: {} records", mail.len());
     Ok(())
 }
+
+#[test]
+fn lexisnexis() -> Clean<()> {
+    if tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
+
+    Ok(())
+}

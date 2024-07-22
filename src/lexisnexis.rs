@@ -204,22 +204,59 @@ impl LexisNexis {
         include: &U,
         exclude: &U,
     ) -> Clean<LexisNexis> {
+        // List of unique street names processed so far.
         let mut seen = HashSet::new();
+        // Vector to hold Lexis Nexis results.
         let mut records = Vec::new();
+        // For each address in the inclusion list...
         for address in include.iter() {
+            // Get the complete street name.
             let comp_street = address.complete_street_name(false);
+            // Get the street name element.
             let street = address.street_name().clone();
+            // Get the street name post type element.
             let post_type = address.street_type();
+            // If comp_street is a new street name...
             if !seen.contains(&comp_street) {
+                // Add the new name to the list of seen names.
                 seen.insert(comp_street.clone());
+                // Obtain mutable clone of include group.
                 let mut inc = include.clone();
+                // Filter include group by current street name.
                 inc.filter_field("street_name", &street);
+                // Obtain mutable clone of exclude group.
                 let mut exl = exclude.clone();
+                // Filter exclude group by current street name.
                 exl.filter_field("street_name", &street);
-                inc.filter_field("post_type", &format!("{:?}", post_type));
-                exl.filter_field("post_type", &format!("{:?}", post_type));
-                inc.filter_field("pre_directional", &format!("{:?}", address.directional()));
-                exl.filter_field("pre_directional", &format!("{:?}", address.directional()));
+                tracing::trace!(
+                    "After street name filter, inc: {}, exl: {}",
+                    inc.len(),
+                    exl.len()
+                );
+                if let Some(post) = post_type {
+                    inc.filter_field("post_type", &post.to_string());
+                    exl.filter_field("post_type", &post.to_string());
+                } else {
+                    inc.filter_field("post_type", "None");
+                    exl.filter_field("post_type", "None");
+                }
+                tracing::trace!(
+                    "After post type filter, inc: {}, exl: {}",
+                    inc.len(),
+                    exl.len()
+                );
+                if let Some(directional) = address.directional() {
+                    inc.filter_field("pre_directional", &directional.to_string());
+                    exl.filter_field("pre_directional", &directional.to_string());
+                } else {
+                    inc.filter_field("pre_directional", "None");
+                    exl.filter_field("pre_directional", "None");
+                }
+                tracing::trace!(
+                    "After post directional filter, inc: {}, exl: {}",
+                    inc.len(),
+                    exl.len()
+                );
                 let items = LexisNexisRange::from_addresses(&inc, &exl);
                 let ranges = items.ranges();
                 for rng in ranges {

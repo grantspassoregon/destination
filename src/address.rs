@@ -398,7 +398,9 @@ where
             "label" => self.retain(|r| r.label() == field),
             "street_name" => self.retain(|r| r.street_name() == field),
             "pre_directional" => {
+                info!("Directional is {}", field);
                 if let Ok((_, dir)) = crate::parser::Parser::pre_directional(field) {
+                    info!("Parsed directional: {:?}", &dir);
                     self.retain(|r| r.directional() == &dir)
                 } else {
                     tracing::info!("Could not parse pre directional.")
