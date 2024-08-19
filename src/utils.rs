@@ -9,6 +9,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
 use tracing::info;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 /// Function for deserailizing ArcGIS data that may contain either empty (Null) fields, or fields
 /// with string value "\<Null\>", either of which should translate to `None`.
@@ -107,4 +108,18 @@ pub trait Portable<T> {
     fn from_csv<P: AsRef<Path>>(path: P) -> Clean<T>;
     /// The `to_csv` method attempts to serialize the data to a `csv` file at location `path`.
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()>;
+}
+
+/// The `trace_init` function initializing the tracing subscriber.
+pub fn trace_init() {
+    if tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "address=info".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .try_init()
+        .is_ok()
+    {};
+    info!("Subscriber initialized.");
 }

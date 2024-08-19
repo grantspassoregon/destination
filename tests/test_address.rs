@@ -1,4 +1,5 @@
 use address::prelude::*;
+use address::utils;
 use aid::prelude::*;
 use tracing::{info, trace};
 
@@ -11,12 +12,7 @@ struct AddressSample {
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
 fn load_ecso_addresses() -> Clean<()> {
-    if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .try_init()
-        .is_ok()
-    {};
-    info!("Subscriber initialized.");
+    utils::trace_init();
 
     trace!("Deserializing county addresses from a csv file.");
     let file = "tests/test_data/county_addresses_20240626.csv";
@@ -35,12 +31,7 @@ fn load_ecso_addresses() -> Clean<()> {
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
 fn load_city_addresses() -> Clean<()> {
-    if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .try_init()
-        .is_ok()
-    {};
-    info!("Subscriber initialized.");
+    utils::trace_init();
 
     trace!("Deserializing city addresses from a csv file.");
     let file = "tests/test_data/city_addresses_20240513.csv";
@@ -53,12 +44,7 @@ fn load_city_addresses() -> Clean<()> {
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
 fn save_city_addresses() -> Clean<()> {
-    if tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
-        .try_init()
-        .is_ok()
-    {};
-    info!("Subscriber initialized.");
+    utils::trace_init();
 
     trace!("Opening city addresses from a csv file.");
     let file = "tests/test_data/city_addresses_20240630.csv";
