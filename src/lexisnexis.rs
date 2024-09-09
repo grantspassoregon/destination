@@ -213,7 +213,8 @@ impl LexisNexis {
             // Get the complete street name.
             let comp_street = address.complete_street_name(false);
             // Get the street name element.
-            let street = address.street_name().clone();
+            let street = address.common_street_name().clone();
+            // let street = address.street_name().clone();
             // Get the street name post type element.
             let post_type = address.street_type();
             // If comp_street is a new street name...
@@ -223,11 +224,13 @@ impl LexisNexis {
                 // Obtain mutable clone of include group.
                 let mut inc = include.clone();
                 // Filter include group by current street name.
-                inc.filter_field("street_name", &street);
+                inc.filter_field("common_street_name", &street);
+                // inc.filter_field("street_name", &street);
                 // Obtain mutable clone of exclude group.
                 let mut exl = exclude.clone();
                 // Filter exclude group by current street name.
-                exl.filter_field("street_name", &street);
+                exl.filter_field("common_street_name", &street);
+                // exl.filter_field("street_name", &street);
                 tracing::trace!(
                     "After street name filter, inc: {}, exl: {}",
                     inc.len(),
@@ -264,7 +267,7 @@ impl LexisNexis {
                     builder.address_number_from = Some(rng.0);
                     builder.address_number_to = Some(rng.1);
                     builder.street_name_pre_directional = address.directional_abbreviated();
-                    builder.street_name = Some(address.street_name().clone());
+                    builder.street_name = Some(address.common_street_name().clone());
                     if let Some(street_type) = address.street_type() {
                         builder.street_name_post_type = Some(street_type.abbreviate());
                     }

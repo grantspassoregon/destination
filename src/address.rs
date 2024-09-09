@@ -210,6 +210,29 @@ pub trait Address {
         name
     }
 
+    /// The `common_street_name` method returns the street name, including any premodifier, pretype
+    /// and separator elements.
+    ///
+    /// The purpose of this method is to yield values like "UPPER RIVER" as the street name instead
+    /// of "RIVER", used in the [`LexisNexis::from_addresses`] method.
+    fn common_street_name(&self) -> String {
+        let mut name = String::new();
+        if let Some(modifier) = self.street_name_pre_modifier() {
+            name.push_str(modifier.label().as_str());
+            name.push(' ');
+        }
+        if let Some(pre_type) = self.street_name_pre_type() {
+            name.push_str(pre_type.label().as_str());
+            name.push(' ');
+        }
+        if let Some(separator) = self.street_name_separator() {
+            name.push_str(separator.label().as_str());
+            name.push(' ');
+        }
+        name.push_str(&self.street_name().to_string());
+        name
+    }
+
     /// The `complete_address_number` method returns the address number and address number suffix,
     /// if any, as a String.
     fn complete_address_number(&self) -> String {
@@ -234,56 +257,6 @@ pub trait Address {
             None => None,
         }
     }
-
-    // The `filter_field` method returns the subset of addresses where the field `filter` is equal
-    // to the value in `field`.
-    // fn filter_field<T: Address + Clone + Send + Sync>(
-    //     values: &[T],
-    //     filter: &str,
-    //     field: &str,
-    // ) -> Vec<T> {
-    //     let mut records = Vec::new();
-    //     match filter {
-    //         "label" => records.append(
-    //             &mut values
-    //                 // .iter()
-    //                 .par_iter()
-    //                 .cloned()
-    //                 .filter(|record| field == record.label())
-    //                 .collect(),
-    //         ),
-    //         "street_name" => records.append(
-    //             &mut values
-    //                 .par_iter()
-    //                 .cloned()
-    //                 .filter(|record| field == record.street_name())
-    //                 .collect(),
-    //         ),
-    //         "pre_directional" => records.append(
-    //             &mut values
-    //                 .par_iter()
-    //                 .cloned()
-    //                 .filter(|record| {
-    //                     if let Some(dir) = record.directional() {
-    //                         field == dir.abbreviate()
-    //                     } else {
-    //                         false
-    //                     }
-    //                 })
-    //                 .collect(),
-    //         ),
-    //         "post_type" => records.append(
-    //             &mut values
-    //                 .par_iter()
-    //                 .cloned()
-    //                 .filter(|record| field == format!("{:?}", record.street_type()))
-    //                 .collect(),
-    //         ),
-    //
-    //         _ => info!("Invalid filter provided."),
-    //     }
-    //     records
-    // }
 
     /// The `standardize` method takes county address naming conventions and converts them to city
     /// naming conventions.
@@ -414,6 +387,7 @@ where
                 }
             }
             "status" => self.retain(|r| r.status().to_string() == field),
+            "common_street_name" => self.retain(|r| r.common_street_name() == field),
             _ => info!("Invalid filter provided."),
         }
     }
