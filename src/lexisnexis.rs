@@ -193,6 +193,7 @@ pub struct LexisNexisItem {
     Serialize,
     Deref,
     DerefMut,
+    derive_new::new,
 )]
 pub struct LexisNexis(Vec<LexisNexisItem>);
 
@@ -204,6 +205,14 @@ impl LexisNexis {
         include: &U,
         exclude: &U,
     ) -> Clean<LexisNexis> {
+        let mut not_there = false;
+        for pt in include.iter() {
+            if pt.street_name() == "QUAIL" {
+                tracing::info!("Quail crossing included.");
+                not_there = true;
+            }
+        }
+        tracing::info!("Not there: {not_there}");
         // List of unique street names processed so far.
         let mut seen = HashSet::new();
         // Vector to hold Lexis Nexis results.
@@ -212,11 +221,6 @@ impl LexisNexis {
         for address in include.iter() {
             // Get the complete street name.
             let comp_street = address.complete_street_name(false);
-            // Get the street name element.
-            let street = address.common_street_name().clone();
-            // let street = address.street_name().clone();
-            // Get the street name post type element.
-            let post_type = address.street_type();
             // If comp_street is a new street name...
             if !seen.contains(&comp_street) {
                 // Add the new name to the list of seen names.
@@ -224,39 +228,13 @@ impl LexisNexis {
                 // Obtain mutable clone of include group.
                 let mut inc = include.clone();
                 // Filter include group by current street name.
-                inc.filter_field("common_street_name", &street);
-                // inc.filter_field("street_name", &street);
+                inc.filter_field("complete_street_name", &comp_street);
                 // Obtain mutable clone of exclude group.
                 let mut exl = exclude.clone();
                 // Filter exclude group by current street name.
-                exl.filter_field("common_street_name", &street);
-                // exl.filter_field("street_name", &street);
+                exl.filter_field("complete_street_name", &comp_street);
                 tracing::trace!(
                     "After street name filter, inc: {}, exl: {}",
-                    inc.len(),
-                    exl.len()
-                );
-                if let Some(post) = post_type {
-                    inc.filter_field("post_type", &post.to_string());
-                    exl.filter_field("post_type", &post.to_string());
-                } else {
-                    inc.filter_field("post_type", "None");
-                    exl.filter_field("post_type", "None");
-                }
-                tracing::trace!(
-                    "After post type filter, inc: {}, exl: {}",
-                    inc.len(),
-                    exl.len()
-                );
-                if let Some(directional) = address.directional() {
-                    inc.filter_field("pre_directional", &directional.to_string());
-                    exl.filter_field("pre_directional", &directional.to_string());
-                } else {
-                    inc.filter_field("pre_directional", "None");
-                    exl.filter_field("pre_directional", "None");
-                }
-                tracing::trace!(
-                    "After post directional filter, inc: {}, exl: {}",
                     inc.len(),
                     exl.len()
                 );

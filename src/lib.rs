@@ -40,7 +40,9 @@ pub mod prelude {
         JosephineCountySpatialAddress2024, JosephineCountySpatialAddresses,
         JosephineCountySpatialAddresses2024,
     };
-    pub use crate::lexisnexis::{LexisNexis, LexisNexisItem};
+    pub use crate::lexisnexis::{
+        LexisNexis, LexisNexisItem, LexisNexisItemBuilder, LexisNexisRange, LexisNexisRangeItem,
+    };
     pub use crate::parser::{deserialize_phone_number, parse_phone_number, Parser};
     pub use crate::utils::{from_csv, load_bin, save, to_csv, Portable};
 }

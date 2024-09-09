@@ -370,6 +370,9 @@ where
         match filter {
             "label" => self.retain(|r| r.label() == field),
             "street_name" => self.retain(|r| r.street_name() == field),
+            "common_street_name" => self.retain(|r| r.common_street_name() == field),
+            "complete_street_name" => self.retain(|r| r.complete_street_name(false) == field),
+            "complete_street_name_abbr" => self.retain(|r| r.complete_street_name(true) == field),
             "pre_directional" => {
                 info!("Directional is {}", field);
                 if let Ok((_, dir)) = crate::parser::Parser::pre_directional(field) {
@@ -387,7 +390,6 @@ where
                 }
             }
             "status" => self.retain(|r| r.status().to_string() == field),
-            "common_street_name" => self.retain(|r| r.common_street_name() == field),
             _ => info!("Invalid filter provided."),
         }
     }
