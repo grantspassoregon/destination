@@ -15,16 +15,15 @@ fn load_ecso_addresses() -> Clean<()> {
     utils::trace_init();
 
     trace!("Deserializing county addresses from a csv file.");
-    let file = "tests/test_data/county_addresses_20240626.csv";
+    // let file = "tests/test_data/county_addresses_ugb_20241007.csv";
+    let file = "tests/test_data/county_addresses_20241007.csv";
     let addresses = JosephineCountySpatialAddresses2024::from_csv(file)?;
-    assert_eq!(addresses.len(), 45252);
-    trace!("City addresses loaded: {} entries.", addresses.len());
+    assert_eq!(addresses.len(), 45564);
+    trace!("County addresses loaded: {} entries.", addresses.len());
     let mut spatial = SpatialAddresses::from(&addresses[..]);
     info!("Addresses loaded: {}", spatial.len());
     spatial.standardize();
     spatial.save("tests/test_data/county_addresses.data")?;
-    // let addresses = GrantsPassAddresses::from_csv(file)?;
-    // assert_eq!(addresses.records.len(), 27437);
     Ok(())
 }
 
@@ -47,9 +46,10 @@ fn save_city_addresses() -> Clean<()> {
     utils::trace_init();
 
     trace!("Opening city addresses from a csv file.");
-    let file = "tests/test_data/city_addresses_20240630.csv";
+    let file = "tests/test_data/city_addresses_20241007.csv";
     let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
     let addresses = SpatialAddresses::from(&addresses[..]);
+    assert_eq!(addresses.len(), 27818);
     trace!("Saving city addresses to binary.");
     addresses.save("tests/test_data/addresses.data")?;
     Ok(())

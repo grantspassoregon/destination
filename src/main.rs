@@ -7,7 +7,11 @@ use tracing::{error, info, trace, warn};
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    #[arg(short = 'c', long, help = "Command to execute.")]
+    #[arg(
+        short = 'c',
+        long,
+        help = "Command to execute.  Valid commands include 'compare', 'filter' and 'lexisnexis'"
+    )]
     command: String,
     #[arg(short = 's', long, help = "Path to source addresses.")]
     source: std::path::PathBuf,
