@@ -1,5 +1,5 @@
 //! The `lexisnexis` module produces address range reports for the LexisNexis dispatch service.
-use crate::prelude::{from_csv, load_bin, save, to_csv, Address, Addresses, Portable};
+use crate::{from_csv, load_bin, save, to_csv, Address, Addresses, Portable};
 use aid::prelude::*;
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};

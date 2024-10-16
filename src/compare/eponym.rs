@@ -1,6 +1,9 @@
 //! The `eponym` module is the eponymous module for `compare`.  Contains types and methods for
 //! comparing addresses.
-use crate::prelude::*;
+use crate::{
+    from_csv, load_bin, save, to_csv, Address, AddressStatus, PartialAddress, PartialAddresses,
+    Portable, SubaddressType,
+};
 use aid::prelude::Clean;
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
@@ -77,7 +80,7 @@ impl Mismatches {
 }
 
 /// The `AddressMatch` is an intermediary data structure used internally to aggregate match information from
-/// comparing types that implement [`Addresses`], for the purpose of producing ['MatchRecords'].
+/// comparing types that implement [`crate::Addresses`], for the purpose of producing [`MatchRecords`].
 #[derive(Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 pub struct AddressMatch {
     /// The `coincident` field indicates the compared addresses refer to the same location, or are
@@ -327,7 +330,7 @@ impl Portable<MatchRecords> for MatchRecords {
     }
 }
 
-/// The `MatchPartialRecord` struct contains match data for a ['PartialAddress'].
+/// The `MatchPartialRecord` struct contains match data for a [`PartialAddress`].
 #[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct MatchPartialRecord {
     /// The `match_status` field represents the match status of the partial address.

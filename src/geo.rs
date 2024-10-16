@@ -1,9 +1,8 @@
 //! The `geo` module defines spatial address types, and implements traits from the `galileo` crate for these types.
-use crate::address_components::StreetSeparator;
-use crate::prelude::{
+use crate::{
     from_csv, load_bin, save, to_csv, Address, AddressDelta, AddressDeltas, AddressStatus,
     Addresses, CommonAddress, Portable, State, StreetNamePostType, StreetNamePreDirectional,
-    StreetNamePreModifier, StreetNamePreType, SubaddressType,
+    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
 };
 use aid::prelude::Clean;
 use derive_more::{Deref, DerefMut};
@@ -19,7 +18,7 @@ use std::path::Path;
 
 /// The `Point` trait is designed to facilitate working with spatial libraries in rust.  This is an
 /// intermediary step to implementing traits from geo_types directly, and intended to be replaced
-/// by direct impls of types in other crates.  Methods like [`distance`] have more robust
+/// by direct impls of types in other crates.  Methods like [`Point::distance`] have more robust
 /// implementations in these core spatial libraries, and we should be leaning on those rather than
 /// rolling our own.
 pub trait Point {
@@ -59,7 +58,7 @@ pub trait Point {
     /// Iterates through records of `others`, calculates the distance from self
     /// to matching addresses in others, collects the results into a vector and
     /// returns the results in the records field of a new `AddressDeltas` struct. Calls
-    /// [`Address::deltas()`].
+    /// [`Point::delta`].
     fn deltas<
         T: Point + Address + Clone + Sync + Send,
         U: Point + Address + Clone + Sync + Send,

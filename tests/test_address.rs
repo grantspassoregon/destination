@@ -1,5 +1,10 @@
-use address::prelude::*;
-use address::utils;
+use address::{
+    from_csv, trace_init, Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
+    FireInspectionMatchRecords, FireInspections, GeoAddresses, GrantsPassAddresses,
+    GrantsPassSpatialAddresses, JosephineCountyAddresses, JosephineCountySpatialAddresses2024,
+    MatchRecords, Parser, PartialAddress, Portable, PostalCommunity, SpatialAddresses,
+    StreetNamePostType, StreetNamePreDirectional, SubaddressType,
+};
 use aid::prelude::*;
 use tracing::{info, trace};
 
@@ -12,7 +17,7 @@ struct AddressSample {
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
 fn load_ecso_addresses() -> Clean<()> {
-    utils::trace_init();
+    trace_init();
 
     trace!("Deserializing county addresses from a csv file.");
     // let file = "tests/test_data/county_addresses_ugb_20241007.csv";
@@ -30,7 +35,7 @@ fn load_ecso_addresses() -> Clean<()> {
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
 fn load_city_addresses() -> Clean<()> {
-    utils::trace_init();
+    trace_init();
 
     trace!("Deserializing city addresses from a csv file.");
     let file = "tests/test_data/city_addresses_20240513.csv";
@@ -43,7 +48,7 @@ fn load_city_addresses() -> Clean<()> {
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
 fn save_city_addresses() -> Clean<()> {
-    utils::trace_init();
+    trace_init();
 
     trace!("Opening city addresses from a csv file.");
     let file = "tests/test_data/city_addresses_20241007.csv";
@@ -295,7 +300,7 @@ fn match_city_addresses() -> Clean<()> {
     let county_path = "./tests/test_data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     let county_addresses = SpatialAddresses::load(county_path)?;
-    let match_records = MatchRecords::compare(&city_addresses[0..10].to_vec(), &county_addresses);
+    let match_records = MatchRecords::compare(&city_addresses[0..10], &county_addresses);
     assert_eq!(match_records.len(), 10);
     Ok(())
 }
@@ -312,7 +317,7 @@ fn filter_status() -> Clean<()> {
     let county_path = "tests/test_data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     let county_addresses = SpatialAddresses::load(county_path)?;
-    let match_records = MatchRecords::compare(&city_addresses[0..1000].to_vec(), &county_addresses);
+    let match_records = MatchRecords::compare(&city_addresses[0..1000], &county_addresses);
     assert_eq!(match_records.len(), 1000);
     let filtered = match_records.clone().filter("status");
     assert_eq!(filtered.len(), 969);
@@ -332,7 +337,7 @@ fn filter_missing() -> Clean<()> {
     let county_path = "tests/test_data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     let county_addresses = SpatialAddresses::load(county_path)?;
-    let match_records = MatchRecords::compare(&city_addresses[0..1000].to_vec(), &county_addresses);
+    let match_records = MatchRecords::compare(&city_addresses[0..1000], &county_addresses);
     assert_eq!(match_records.len(), 1000);
     let filtered = match_records.clone().filter("missing");
     assert_eq!(filtered.len(), 1);
@@ -346,15 +351,15 @@ fn address_number_parser() {
     let a2 = "100 CENTURYLINK DR";
     let a3 = "100 LEWIS AVE, Grants Pass";
     assert_eq!(
-        Parser::address_number(&a1),
+        Parser::address_number(a1),
         Ok((" FIRE MOUNTAIN WAY, Grants Pass", Some(1)))
     );
     assert_eq!(
-        Parser::address_number(&a2),
+        Parser::address_number(a2),
         Ok((" CENTURYLINK DR", Some(100)))
     );
     assert_eq!(
-        Parser::address_number(&a3),
+        Parser::address_number(a3),
         Ok((" LEWIS AVE, Grants Pass", Some(100)))
     );
 }
@@ -402,15 +407,15 @@ fn street_type_parser() {
     let a2 = "DR";
     let a3 = " AVE, Grants Pass";
     assert_eq!(
-        Parser::post_type(&a1),
+        Parser::post_type(a1),
         Ok((", Grants Pass", Some(StreetNamePostType::WAY)))
     );
     assert_eq!(
-        Parser::post_type(&a2),
+        Parser::post_type(a2),
         Ok(("", Some(StreetNamePostType::DRIVE)))
     );
     assert_eq!(
-        Parser::post_type(&a3),
+        Parser::post_type(a3),
         Ok((", Grants Pass", Some(StreetNamePostType::AVENUE)))
     );
 }
@@ -748,7 +753,7 @@ fn parse_address_sample() -> Clean<()> {
     {};
     let path = std::env::current_dir()?;
     let file_path = path.join("tests/test_data/address_sample.csv");
-    let samples: Vec<AddressSample> = address::prelude::from_csv(file_path)?;
+    let samples: Vec<AddressSample> = from_csv(file_path)?;
     // let city_path = "./tests/test_data/addresses.data";
     // let city_addresses = SpatialAddresses::load(city_path)?;
     for sample in samples {
@@ -771,7 +776,7 @@ fn address_samples() -> Clean<()> {
     {};
     let path = std::env::current_dir()?;
     let file_path = path.join("tests/test_data/address_sample.csv");
-    let samples: Vec<AddressSample> = address::prelude::from_csv(file_path)?;
+    let samples: Vec<AddressSample> = from_csv(file_path)?;
     for sample in samples {
         let (_rem, address) = Parser::address(&sample.address)?;
         tracing::info!("{}", address.mailing());

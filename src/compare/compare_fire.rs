@@ -1,5 +1,8 @@
 //!  The `compare_fire` module implements address matching and comparison for Fire Inspections.
-use crate::prelude::*;
+use crate::{
+    from_csv, to_csv, Address, FireInspection, FireInspections, MatchPartialRecord,
+    MatchPartialRecords, MatchStatus,
+};
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
@@ -50,7 +53,7 @@ impl FireInspectionMatch {
 pub struct FireInspectionMatches(Vec<FireInspectionMatch>);
 
 impl FireInspectionMatches {
-    /// The `compare` method creates a [`PartialMatchRecords`] for each business address in the
+    /// The `compare` method creates a [`FireInspectionMatch`] for each business address in the
     /// inspection record.  Used to convert [`FireInspections`] into a new instance of
     /// `FireInspectionMatches`.
     pub fn compare<T: Address + GeoPoint<Num = f64> + Send + Sync>(

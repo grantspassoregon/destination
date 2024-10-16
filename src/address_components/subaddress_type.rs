@@ -124,7 +124,7 @@ impl SubaddressType {
 
     /// Deserialization function for subaddress types.  This works if all the subaddress types in the
     /// data observe the official postal contraction.  For subaddress types with a mix of abbreviations and
-    /// alternative spellings, [`match_mixed_subaddress_type()`] will work better.
+    /// alternative spellings, [`Self::match_mixed`] will work better.
     pub fn deserialize_abbreviated<'de, D: Deserializer<'de>>(
         de: D,
     ) -> Result<Option<Self>, D::Error> {
@@ -133,7 +133,7 @@ impl SubaddressType {
     }
 
     /// Matches the target data against novel spellings of valid subaddress types.  Add any missing spelling
-    /// variants to the match statement.  Called by [`crate::parser::parse_subaddress_type()`].
+    /// variants to the match statement.  Called by [`crate::Parser::subaddress_type`].
     /// Add additional variants to accommodate alternative abbreviations as needed.
     pub fn match_mixed(input: &str) -> Option<Self> {
         match input.to_uppercase().as_str() {

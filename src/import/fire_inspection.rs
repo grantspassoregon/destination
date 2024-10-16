@@ -1,6 +1,6 @@
 //! The `fire_inspections` module imports data from fire inspections into the library to facilitate
 //! address matching.
-use crate::prelude::*;
+use crate::{from_csv, Parser, PartialAddress};
 use aid::prelude::*;
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};

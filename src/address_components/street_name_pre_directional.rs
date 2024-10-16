@@ -51,7 +51,7 @@ impl StreetNamePreDirectional {
     /// Matches the target data against the official postal abbreviation for street name
     /// prediretionals.
     pub fn match_abbreviated(input: &str) -> Option<Self> {
-        match input {
+        match input.to_uppercase().as_str() {
             "NE" => Some(Self::NORTHEAST),
             "NW" => Some(Self::NORTHWEST),
             "SE" => Some(Self::SOUTHEAST),
@@ -66,7 +66,7 @@ impl StreetNamePreDirectional {
 
     /// Deserialization function for street name predirectionals.  This works if all the predirectionals in the
     /// data observe the official postal contraction.  For predirectionals with a mix of abbreviations and
-    /// alternative spellings, [`deserialize_mixed_pre_directional()`] will work better.
+    /// alternative spellings, [`Self::deserialize_mixed`] will work better.
     pub fn deserialize_abbreviated<'de, D: Deserializer<'de>>(
         de: D,
     ) -> Result<Option<Self>, D::Error> {

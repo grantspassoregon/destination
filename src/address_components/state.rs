@@ -3,7 +3,7 @@ use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 
 /// The `State` enum holds variants for state and territory names in the US used by the FAA.
-/// https://www.faa.gov/air_traffic/publications/atpubs/cnt_html/appendix_a.html
+/// <https://www.faa.gov/air_traffic/publications/atpubs/cnt_html/appendix_a.html>
 #[allow(missing_docs)]
 #[derive(
     Debug,

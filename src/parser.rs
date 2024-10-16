@@ -1,6 +1,6 @@
 //! The `parser` module contains functions for parsing unstructured text into address components.
 use crate::address_components::{StreetNamePreModifier, StreetSeparator};
-use crate::prelude::{
+use crate::{
     PartialAddress, PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional,
     StreetNamePreType, SubaddressType,
 };

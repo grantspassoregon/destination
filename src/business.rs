@@ -1,6 +1,9 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
-use crate::prelude::*;
+use crate::{
+    deserialize_phone_number, from_csv, to_csv, Address, MatchStatus, Parser, StreetNamePostType,
+    StreetNamePreDirectional,
+};
 use aid::prelude::Clean;
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
@@ -542,7 +545,7 @@ impl BusinessLicenses {
         BusinessLicenses(records)
     }
 
-    /// The `detype_subaddresses` method calls the [`detype_subaddress`] method on each record in
+    /// The `detype_subaddresses` method calls the [`BusinessLicense::detype_subaddress`] method on each record in
     /// `records`.
     pub fn detype_subaddresses(&mut self) -> Clean<()> {
         self.iter_mut()

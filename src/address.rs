@@ -1,8 +1,8 @@
 //! The `address` module defines the library data standard for a valid address, and provides
 //! implementation blocks to convert data from import types to the valid address format.
-use crate::prelude::{
+use crate::{
     from_csv, load_bin, save, to_csv, AddressMatch, AddressStatus, FireInspections, LexisNexis,
-    Mismatch, Point, Portable, PostalCommunity, State, StreetNamePostType,
+    Mismatch, Parser, Point, Portable, PostalCommunity, State, StreetNamePostType,
     StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType, StreetSeparator,
     SubaddressType,
 };
@@ -319,7 +319,8 @@ where
     Self: ops::Deref<Target = Vec<T>> + ops::DerefMut<Target = Vec<T>> + Clone,
 {
     /// The `filter` method returns the subset of addresses that match the filter.  Current values
-    /// include "duplicate", which retains addresses that contain a duplicate in the set.
+    /// include "duplicate", which retains addresses that contain a duplicate in the set, and
+    /// "active", which retains addresses that are not retired.
     fn filter(&self, filter: &str) -> Vec<T> {
         let mut records = Vec::new();
         // let values = self.values();
@@ -375,7 +376,7 @@ where
             "complete_street_name_abbr" => self.retain(|r| r.complete_street_name(true) == field),
             "pre_directional" => {
                 info!("Directional is {}", field);
-                if let Ok((_, dir)) = crate::parser::Parser::pre_directional(field) {
+                if let Ok((_, dir)) = Parser::pre_directional(field) {
                     info!("Parsed directional: {:?}", &dir);
                     self.retain(|r| r.directional() == &dir)
                 } else {
@@ -383,7 +384,7 @@ where
                 }
             }
             "post_type" => {
-                if let Ok((_, post)) = crate::parser::Parser::post_type(field) {
+                if let Ok((_, post)) = Parser::post_type(field) {
                     self.retain(|r| r.street_type() == &post)
                 } else {
                     tracing::info!("Could not parse post type.")
