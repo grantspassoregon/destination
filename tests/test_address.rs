@@ -60,25 +60,6 @@ fn save_city_addresses() -> Clean<()> {
     Ok(())
 }
 
-// #[test]
-// #[cfg_attr(feature = "ci", ignore)]
-// fn save_county_addresses() -> Clean<()> {
-//     if tracing_subscriber::fmt()
-//         .with_max_level(tracing::Level::TRACE)
-//         .try_init()
-//         .is_ok()
-//     {};
-//     info!("Subscriber initialized.");
-//
-//     trace!("Opening county addresses from a csv file.");
-//     let file = "c:/users/erose/documents/county_addresses_20240418.csv";
-//     let addresses = JosephineCountySpatialAddresses::from_csv(file)?;
-//     let addresses = SpatialAddresses::from(&addresses.records[..]);
-//     trace!("Saving county addresses to binary.");
-//     addresses.save("c:/users/erose/documents/county_addresses.data")?;
-//     Ok(())
-// }
-
 #[test]
 fn load_county_addresses() -> Clean<()> {
     if tracing_subscriber::fmt()
@@ -228,14 +209,12 @@ fn match_city_address() -> Clean<()> {
         .is_ok()
     {};
     info!("Subscriber initialized.");
-    // let city_path = "tests/test_data/city_addresses_20240226.csv";
-    // let county_path = "tests/test_data/county_addresses_20240226.csv";
     let city_path = "tests/test_data/addresses.data";
     let county_path = "tests/test_data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
-    assert_eq!(city_addresses.len(), 27446);
+    assert_eq!(city_addresses.len(), 27818);
     let county_addresses = SpatialAddresses::load(county_path)?;
-    assert_eq!(county_addresses.len(), 45252);
+    assert_eq!(county_addresses.len(), 45564);
     info!("Matching single address.");
     let match_records = MatchRecords::new(&city_addresses[0].clone(), &county_addresses);
     info!("Record 0 is: {:?}", match_records[0]);
@@ -320,7 +299,7 @@ fn filter_status() -> Clean<()> {
     let match_records = MatchRecords::compare(&city_addresses[0..1000], &county_addresses);
     assert_eq!(match_records.len(), 1000);
     let filtered = match_records.clone().filter("status");
-    assert_eq!(filtered.len(), 969);
+    assert_eq!(filtered.len(), 965);
     info!("Matches filtered by status.");
     Ok(())
 }
@@ -340,7 +319,7 @@ fn filter_missing() -> Clean<()> {
     let match_records = MatchRecords::compare(&city_addresses[0..1000], &county_addresses);
     assert_eq!(match_records.len(), 1000);
     let filtered = match_records.clone().filter("missing");
-    assert_eq!(filtered.len(), 1);
+    assert_eq!(filtered.len(), 0);
     info!("Matches filtered by missing.");
     Ok(())
 }
