@@ -319,8 +319,7 @@ where
     Self: ops::Deref<Target = Vec<T>> + ops::DerefMut<Target = Vec<T>> + Clone,
 {
     /// The `filter` method returns the subset of addresses that match the filter.  Current values
-    /// include "duplicate", which retains addresses that contain a duplicate in the set, and
-    /// "active", which retains addresses that are not retired.
+    /// include "duplicate", which retains addresses that contain a duplicate in the set.
     fn filter(&self, filter: &str) -> Vec<T> {
         let mut records = Vec::new();
         // let values = self.values();
@@ -346,20 +345,6 @@ where
                     bar.inc(1);
                 }
             }
-            "active" => {
-                let mut c = self.clone();
-                c.filter_field("status", "Current");
-                let mut o = self.clone();
-                o.filter_field("status", "Other");
-                c.extend(o.to_vec());
-                let mut o = self.clone();
-                o.filter_field("status", "Pending");
-                c.extend(o.to_vec());
-                let mut o = self.clone();
-                o.filter_field("status", "Temporary");
-                c.extend(o.to_vec());
-                records = c.to_vec();
-            }
             _ => error!("Invalid filter provided."),
         }
         records
@@ -369,6 +354,7 @@ where
     /// to the value in `field`.
     fn filter_field(&mut self, filter: &str, field: &str) {
         match filter {
+            "active" => self.retain(|r| r.status() != &AddressStatus::Retired),
             "label" => self.retain(|r| r.label() == field),
             "street_name" => self.retain(|r| r.street_name() == field),
             "common_street_name" => self.retain(|r| r.common_street_name() == field),

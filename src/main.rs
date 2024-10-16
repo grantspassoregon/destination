@@ -413,7 +413,8 @@ fn main() -> Clean<()> {
 
             info!("Remove retired addresses from source.");
             info!("Source records prior: {}", source.len());
-            source = GeoAddresses::from(&source.filter("active")[..]);
+            source.filter_field("active", "");
+            // source = GeoAddresses::from(&source.filter("active")[..]);
             info!("Source records post: {}", source.len());
 
             let mut match_records = MatchRecords::compare(&source, &target);
