@@ -38,7 +38,7 @@ fn load_city_addresses() -> Clean<()> {
     trace_init();
 
     trace!("Deserializing city addresses from a csv file.");
-    let file = "tests/test_data/city_addresses_20240513.csv";
+    let file = "data/city_addresses_20240513.csv";
     let addresses = GrantsPassAddresses::from_csv(file)?;
     assert_eq!(addresses.len(), 27509);
     trace!("City addresses loaded: {} entries.", addresses.len());
@@ -51,7 +51,7 @@ fn save_city_addresses() -> Clean<()> {
     trace_init();
 
     trace!("Opening city addresses from a csv file.");
-    let file = "tests/test_data/city_addresses_20241007.csv";
+    let file = "data/city_addresses_20241007.csv";
     let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
     let addresses = SpatialAddresses::from(&addresses[..]);
     assert_eq!(addresses.len(), 27818);
@@ -70,7 +70,7 @@ fn load_county_addresses() -> Clean<()> {
     info!("Subscriber initialized.");
 
     trace!("Deserializing county addresses from a csv file.");
-    let file = "tests/test_data/county_addresses_20240226.csv";
+    let file = "data/county_addresses_20240226.csv";
     let addresses = JosephineCountyAddresses::from_csv(file)?;
     assert_eq!(addresses.len(), 45134);
     trace!("County addresses loaded: {} entries.", addresses.len());
@@ -86,7 +86,7 @@ fn load_geo_addresses() -> Clean<()> {
     {};
     info!("Subscriber initialized.");
 
-    let file = "tests/test_data/city_addresses_20240513.csv";
+    let file = "data/city_addresses_20240513.csv";
     let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
     let geo_addresses = GeoAddresses::from(&addresses[..]);
     assert_eq!(addresses.len(), geo_addresses.len());
@@ -209,8 +209,8 @@ fn match_city_address() -> Clean<()> {
         .is_ok()
     {};
     info!("Subscriber initialized.");
-    let city_path = "tests/test_data/addresses.data";
-    let county_path = "tests/test_data/county_addresses.data";
+    let city_path = "data/addresses.data";
+    let county_path = "data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     assert_eq!(city_addresses.len(), 27818);
     let county_addresses = SpatialAddresses::load(county_path)?;
@@ -231,8 +231,8 @@ fn match_business_addresses() -> Clean<()> {
     {};
     info!("Subscriber initialized.");
     // let business_path = "tests/test_data/active_business_licenses.csv";
-    let business_path = "tests/test_data/business_licenses_20240520.csv";
-    let city_path = "tests/test_data/city_addresses_20240513.csv";
+    let business_path = "data/business_licenses_20240520.csv";
+    let city_path = "data/city_addresses_20240513.csv";
     let business_addresses = BusinessLicenses::from_csv(business_path)?;
     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
     let match_records = BusinessMatchRecords::compare(&business_addresses, &city_addresses);
@@ -275,8 +275,8 @@ fn match_city_addresses() -> Clean<()> {
         .is_ok()
     {};
     info!("Subscriber initialized.");
-    let city_path = "./tests/test_data/addresses.data";
-    let county_path = "./tests/test_data/county_addresses.data";
+    let city_path = "data/addresses.data";
+    let county_path = "data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     let county_addresses = SpatialAddresses::load(county_path)?;
     let match_records = MatchRecords::compare(&city_addresses[0..10], &county_addresses);
@@ -292,8 +292,8 @@ fn filter_status() -> Clean<()> {
         .is_ok()
     {};
     info!("Subscriber initialized.");
-    let city_path = "tests/test_data/addresses.data";
-    let county_path = "tests/test_data/county_addresses.data";
+    let city_path = "data/addresses.data";
+    let county_path = "data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     let county_addresses = SpatialAddresses::load(county_path)?;
     let match_records = MatchRecords::compare(&city_addresses[0..1000], &county_addresses);
@@ -312,8 +312,8 @@ fn filter_missing() -> Clean<()> {
         .is_ok()
     {};
     info!("Subscriber initialized.");
-    let city_path = "tests/test_data/addresses.data";
-    let county_path = "tests/test_data/county_addresses.data";
+    let city_path = "data/addresses.data";
+    let county_path = "data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     let county_addresses = SpatialAddresses::load(county_path)?;
     let match_records = MatchRecords::compare(&city_addresses[0..1000], &county_addresses);
@@ -427,74 +427,6 @@ fn multi_word_parser() {
         Ok(("LN", Some("TOO LONG NAME".to_string())))
     );
 }
-
-// #[test]
-// fn recursive_post_type_parser() {
-//     let a1 = " VIEW LN,";
-//     let a2 = " GARDEN RD";
-//     let a3 = " VIEW AVE Food Trailer";
-//     assert_eq!(
-//         Parser::post_type(a1),
-//         Ok((
-//             ",",
-//             vec![StreetNamePostType::VIEW, StreetNamePostType::LANE]
-//         ))
-//     );
-//     assert_eq!(
-//         recursive_post_type(a2),
-//         Ok((
-//             "",
-//             vec![StreetNamePostType::GARDEN, StreetNamePostType::ROAD]
-//         ))
-//     );
-//     assert_eq!(
-//         recursive_post_type(a3),
-//         Ok((
-//             " Food Trailer",
-//             vec![StreetNamePostType::VIEW, StreetNamePostType::AVENUE]
-//         ))
-//     );
-// }
-
-// #[test]
-// fn complete_street_name_parser() {
-//     let a1 = " FIRE MOUNTAIN WAY";
-//     let a2 = " NW CENTURYLINK DR";
-//     let a3 = " MOUNTAIN VIEW AVE, Grants Pass";
-//     let a4 = " MOUNTAIN VIEW AVE Food Trailer, Grants Pass";
-//     assert_eq!(
-//         parse_complete_street_name(a1),
-//         Ok((
-//             "",
-//             (None, vec!["FIRE", "MOUNTAIN"], StreetNamePostType::WAY)
-//         ))
-//     );
-//     assert_eq!(
-//         parse_complete_street_name(a2),
-//         Ok((
-//             "",
-//             (
-//                 Some(StreetNamePreDirectional::NORTHWEST),
-//                 vec!["CENTURYLINK"],
-//                 StreetNamePostType::DRIVE
-//             )
-//         ))
-//     );
-//     assert_eq!(
-//         parse_complete_street_name(a3),
-//         Ok((
-//             ", Grants Pass",
-//             (None, vec!["MOUNTAIN", "VIEW"], StreetNamePostType::AVENUE)
-//         ))
-//     );
-//     assert_eq!(
-//         parse_complete_street_name(a4),
-//         Ok((
-//             " Food Trailer, Grants Pass",
-//             (None, vec!["MOUNTAIN", "VIEW"], StreetNamePostType::AVENUE)
-//         ))
-//     );
-// }
 
 #[test]
 fn subaddress_type_parser() {
@@ -703,7 +635,7 @@ fn load_businesses() -> Clean<()> {
         .try_init()
     {};
     let path = std::env::current_dir()?;
-    let file_path = path.join("tests/test_data/business_points.csv");
+    let file_path = path.join("data/business_points.csv");
     let data = Businesses::from_csv(file_path)?;
     assert_eq!(
         Some("C".to_owned()),
@@ -731,7 +663,7 @@ fn parse_address_sample() -> Clean<()> {
         .try_init()
     {};
     let path = std::env::current_dir()?;
-    let file_path = path.join("tests/test_data/address_sample.csv");
+    let file_path = path.join("data/address_sample.csv");
     let samples: Vec<AddressSample> = from_csv(file_path)?;
     // let city_path = "./tests/test_data/addresses.data";
     // let city_addresses = SpatialAddresses::load(city_path)?;
@@ -754,7 +686,7 @@ fn address_samples() -> Clean<()> {
         .try_init()
     {};
     let path = std::env::current_dir()?;
-    let file_path = path.join("tests/test_data/address_sample.csv");
+    let file_path = path.join("data/address_sample.csv");
     let samples: Vec<AddressSample> = from_csv(file_path)?;
     for sample in samples {
         let (_rem, address) = Parser::address(&sample.address)?;
@@ -784,7 +716,7 @@ fn parse_city_address() -> Clean<()> {
         .with_max_level(tracing::Level::INFO)
         .try_init()
     {};
-    let city_path = "./tests/test_data/addresses.data";
+    let city_path = "data/addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     for sample in city_addresses.iter() {
         let label = Address::label(sample);
@@ -806,7 +738,7 @@ fn parse_county_address() -> Clean<()> {
         .with_max_level(tracing::Level::INFO)
         .try_init()
     {};
-    let county_path = "./tests/test_data/county_addresses.data";
+    let county_path = "data/county_addresses.data";
     let county_addresses = SpatialAddresses::load(county_path)?;
 
     tracing::info!("Standardizing county addresses.");
@@ -841,7 +773,7 @@ fn business_mailing() -> Clean<()> {
     {};
     info!("Subscriber initialized.");
 
-    let situs = "tests/test_data/business_licenses_20240520.csv";
+    let situs = "data/business_licenses_20240520.csv";
     let situs = BusinessLicenses::from_csv(situs)?;
     info!("Business licenses loaded: {} entries.", situs.len());
     let mut situs = situs.deduplicate();
