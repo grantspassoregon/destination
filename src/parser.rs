@@ -536,12 +536,12 @@ impl Parser {
                 let (rem, _) = space0(rem)?;
                 remain = rem;
                 // If there is no subaddress, we expect the city name next.
-                // let (_, comm) = Self::is_postal_community(rem)?;
+                let (_, comm) = Self::is_postal_community(rem)?;
                 // Could be a state name instead of a subaddress.
                 // let (_, state) = Self::is_state(rem)?;
                 // Could be a zip code.
                 let (_, zip) = Self::is_zip(rem)?;
-                cond |= zip;
+                cond |= zip | comm;
                 // cond = comm | state | zip;
                 // End loop if at end of input.
                 if combinator::eof::<&str, nom::error::Error<_>>(rem).is_ok() {
