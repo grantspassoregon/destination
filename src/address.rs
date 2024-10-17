@@ -96,6 +96,7 @@ pub trait Address {
     /// location.  If the addresses are coincident, but details (such as the floor number or
     /// address status) differ, then the differences are recorded as a vector of type [`Mismatch`].
     /// The results are converted to type [`AddressMatch`].
+    #[tracing::instrument(skip_all)]
     fn coincident<T: Address>(&self, other: &T) -> AddressMatch {
         let mut coincident = false;
         let mut mismatches = Vec::new();
@@ -137,6 +138,7 @@ pub trait Address {
 
     /// Returns a String representing the address label, consisting of the complete address number,
     /// complete street name and complete subaddress, used to produce map or mailing labels.
+    #[tracing::instrument(skip_all)]
     fn label(&self) -> String {
         let complete_address_number = match &self.number_suffix() {
             Some(suffix) => format!("{} {}", self.number(), suffix),
@@ -175,6 +177,7 @@ pub trait Address {
     }
 
     /// The `complete_street_name` method returns the complete street name of the address.
+    #[tracing::instrument(skip_all)]
     fn complete_street_name(&self, abbreviate: bool) -> String {
         let mut name = String::new();
         if let Some(directional) = self.directional() {
@@ -216,6 +219,7 @@ pub trait Address {
     ///
     /// The purpose of this method is to yield values like "UPPER RIVER" as the street name instead
     /// of "RIVER", used in the [`LexisNexis::from_addresses`] method.
+    #[tracing::instrument(skip_all)]
     fn common_street_name(&self) -> String {
         let mut name = String::new();
         if let Some(modifier) = self.street_name_pre_modifier() {
@@ -236,6 +240,7 @@ pub trait Address {
 
     /// The `complete_address_number` method returns the address number and address number suffix,
     /// if any, as a String.
+    #[tracing::instrument(skip_all)]
     fn complete_address_number(&self) -> String {
         match self.number_suffix() {
             Some(suf) => format!("{} {}", self.number(), suf),
@@ -245,6 +250,7 @@ pub trait Address {
 
     /// The `pre_directional` field represents the street name predirectional component of the
     /// complete street name.  This function returns the cloned value of the field.
+    #[tracing::instrument(skip_all)]
     fn directional_abbreviated(&self) -> Option<String> {
         match self.directional() {
             Some(StreetNamePreDirectional::NORTH) => Some("N".to_string()),
@@ -261,6 +267,7 @@ pub trait Address {
 
     /// The `standardize` method takes county address naming conventions and converts them to city
     /// naming conventions.
+    #[tracing::instrument(skip_all)]
     fn standardize(&mut self) {
         let comp = self.street_name().clone();
         if comp == "AZALEA DRIVE" {
@@ -385,6 +392,7 @@ where
 {
     /// The `filter` method returns the subset of addresses that match the filter.  Current values
     /// include "duplicate", which retains addresses that contain a duplicate in the set.
+    #[tracing::instrument(skip_all)]
     fn filter(&self, filter: &str) -> Vec<T> {
         let mut records = Vec::new();
         // let values = self.values();
@@ -417,6 +425,7 @@ where
 
     /// The `filter_field` method returns the subset of addresses where the field `filter` is equal
     /// to the value in `field`.
+    #[tracing::instrument(skip_all)]
     fn filter_field(&mut self, filter: &str, field: &str) {
         match filter {
             "active" => self.retain(|r| r.status() != &AddressStatus::Retired),
@@ -448,6 +457,7 @@ where
 
     /// Compares the complete street name of an address to the value in `street`, returning true if
     /// equal.
+    #[tracing::instrument(skip_all)]
     fn contains_street(&self, street: &String) -> bool {
         let mut contains = false;
         for address in self.iter() {
@@ -461,6 +471,7 @@ where
 
     /// The `orphan_streets` method returns the list of complete street names that are contained in
     /// self but are not present in `other`.
+    #[tracing::instrument(skip_all)]
     fn orphan_streets<V: Address + Clone + Send + Sync, U: Addresses<V>>(
         &self,
         other: &U,
@@ -481,6 +492,7 @@ where
 
     /// The `citify` method takes county address naming conventions and converts them to city
     /// naming conventions.
+    #[tracing::instrument(skip_all)]
     fn citify(&mut self) {
         trace!("Running Citify");
         for address in self.iter_mut() {
@@ -530,12 +542,14 @@ where
 
     /// The `LexisNexis` method produces the LexisNexis table showing dispatch jurisdiction for
     /// address ranges within the City of Grants Pass.
+    #[tracing::instrument(skip_all)]
     fn lexis_nexis(&self, other: &Self) -> Clean<LexisNexis> {
         LexisNexis::from_addresses(self, other)
     }
 
     /// The `standardize` method takes county address naming conventions and converts them to city
     /// naming conventions.
+    #[tracing::instrument(skip_all)]
     fn standardize(&mut self) {
         trace!("Running standardize");
         self.iter_mut().map(|v| v.standardize()).for_each(drop);

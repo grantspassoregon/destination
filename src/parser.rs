@@ -4,13 +4,9 @@ use crate::{
     PartialAddress, PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional,
     StreetNamePreType, SubaddressType,
 };
-use nom::branch;
 use nom::bytes::complete::{tag, take_until};
-use nom::character::complete;
-use nom::character::complete::{alpha1, alphanumeric1, digit1, space0};
-use nom::character::is_alphanumeric;
-use nom::combinator;
-use nom::IResult;
+use nom::character::{complete, is_alphanumeric};
+use nom::{branch, combinator, IResult};
 use serde::de::{Deserialize, Deserializer};
 
 /// The `Parser` struct holds methods for parsing addresses.
@@ -22,7 +18,7 @@ impl Parser {
     /// TODO: 2501-2503 address range should read as 2501 and discard remainder of range.
     pub fn address_number(input: &str) -> IResult<&str, Option<i64>> {
         // Strip preceding whitespace
-        let (remaining, _) = space0(input)?;
+        let (remaining, _) = complete::space0(input)?;
         // Digit1 takes one or more digits.
         // Map the digits to str::parse to convert them from str to i64
         if let Ok((rem, num)) = combinator::map_res(
@@ -45,9 +41,10 @@ impl Parser {
     ///
     /// Note this approach is not valid for address number suffixes that do not conform to the
     /// indicated pattern.
+    #[tracing::instrument(skip_all)]
     pub fn address_number_suffix(input: &str) -> IResult<&str, Option<&str>> {
         // Strip preceding whitespace
-        let (remaining, _) = space0(input)?;
+        let (remaining, _) = complete::space0(input)?;
         // Assumes no commas or dashes, space delimited from the street name
         if let Ok((rem, suffix)) = take_until::<&str, &str, nom::error::Error<_>>(" ")(remaining) {
             if suffix.len() > 1 {
@@ -72,16 +69,17 @@ impl Parser {
     /// [`StreetNamePreDirectional`].  If a [`StreetNamePreDirectional`] is present, the function
     /// returns the value and the remainder of the input.  If not present, the function returns `None`
     /// as the directional and gives the full input back.
+    #[tracing::instrument(skip_all)]
     pub fn pre_directional(input: &str) -> IResult<&str, Option<StreetNamePreDirectional>> {
         // Strip preceding whitespace.
-        let (rem, _) = space0(input)?;
+        let (rem, _) = complete::space0(input)?;
         // Take one or more alphabetic character.
-        if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+        if let Ok((rem, result)) = complete::alpha1::<&str, nom::error::Error<_>>(rem) {
             tracing::trace!("Predir read: {}", result);
             // Strip trailing period after directional.
             let (rem, _) = combinator::opt(tag("."))(rem)?;
             // Strip preceding whitespace on next word.
-            let (rem, _) = space0(rem)?;
+            let (rem, _) = complete::space0(rem)?;
             // Save remainder input if next word does not parse as directional.
             let remaining = rem;
             // Match against valid directional values.
@@ -91,7 +89,8 @@ impl Parser {
                 Some(value) => match value {
                     // If North or South, need to check for trailing W or E.
                     StreetNamePreDirectional::NORTH => {
-                        if let Ok((rem, res)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+                        if let Ok((rem, res)) = complete::alpha1::<&str, nom::error::Error<_>>(rem)
+                        {
                             let trailing = StreetNamePreDirectional::match_mixed(res);
                             tracing::trace!("Trailing: {:?}", trailing);
                             tracing::trace!("Remaining: {}", rem);
@@ -128,7 +127,8 @@ impl Parser {
                         }
                     }
                     StreetNamePreDirectional::SOUTH => {
-                        if let Ok((rem, res)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+                        if let Ok((rem, res)) = complete::alpha1::<&str, nom::error::Error<_>>(rem)
+                        {
                             if StreetNamePostType::match_mixed(res)
                                 == Some(StreetNamePostType::STREET)
                             {
@@ -170,7 +170,7 @@ impl Parser {
                         }
                     }
                     StreetNamePreDirectional::WEST => {
-                        if let Ok((_, res)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+                        if let Ok((_, res)) = complete::alpha1::<&str, nom::error::Error<_>>(rem) {
                             if StreetNamePostType::match_mixed(res)
                                 == Some(StreetNamePostType::STREET)
                             {
@@ -197,11 +197,12 @@ impl Parser {
 
     /// The `pre_modifier` method attempts to parse the next word in the input as a
     /// [`StreetNamePreModifier`] variant.  Returns the full input in no pre-modifier is present.
+    #[tracing::instrument(skip_all)]
     pub fn pre_modifier(input: &str) -> IResult<&str, Option<StreetNamePreModifier>> {
         // Strip preceding whitespace.
-        let (rem, _) = space0(input)?;
+        let (rem, _) = complete::space0(input)?;
         // Take one or more alphabetic character.
-        if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+        if let Ok((rem, result)) = complete::alpha1::<&str, nom::error::Error<_>>(rem) {
             // Attempt to read as pre-modifier.
             let check = StreetNamePreModifier::match_mixed(result);
             match check {
@@ -218,11 +219,12 @@ impl Parser {
 
     /// The `pre_type` method attempts to parse the next word in the input as a
     /// [`StreetNamePreType`] variant.  Returns the full input if no pre-type is present.
+    #[tracing::instrument(skip_all)]
     pub fn pre_type(input: &str) -> IResult<&str, Option<StreetNamePreType>> {
         // Strip preceding whitespace.
-        let (rem, _) = space0(input)?;
+        let (rem, _) = complete::space0(input)?;
         // Take one or more alphabetic character.
-        if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+        if let Ok((rem, result)) = complete::alpha1::<&str, nom::error::Error<_>>(rem) {
             // Attempt to read as pre-type.
             let check = StreetNamePreType::match_mixed(result);
             match check {
@@ -239,15 +241,16 @@ impl Parser {
 
     /// The `separator` method attempts to parse the next word in the input as a
     /// [`StreetSeparator`] variant.  Returns the full input if no separator is present.
+    #[tracing::instrument(skip_all)]
     pub fn separator(input: &str) -> IResult<&str, Option<StreetSeparator>> {
         // Strip preceding whitespace.
-        let (rem, _) = space0(input)?;
+        let (rem, _) = complete::space0(input)?;
         // Take one or more alphabetic character.
-        if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+        if let Ok((rem, result)) = complete::alpha1::<&str, nom::error::Error<_>>(rem) {
             if result.to_lowercase().as_str() == "of" {
                 // Strip preceding whitespace.
-                let (rem, _) = space0(rem)?;
-                if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+                let (rem, _) = complete::space0(rem)?;
+                if let Ok((rem, result)) = complete::alpha1::<&str, nom::error::Error<_>>(rem) {
                     if result.to_lowercase().as_str() == "the" {
                         Ok((rem, Some(StreetSeparator::OfThe)))
                     } else {
@@ -276,11 +279,12 @@ impl Parser {
     /// directional: None, street name: West, street type: Street.
     /// TODO: Only checks for two post types in succession, but streets like Park Plaza Drive have
     /// three.
+    #[tracing::instrument(skip_all)]
     pub fn street_name(input: &str) -> IResult<&str, Option<String>> {
         // On the initial pass, we read the first word of the street name.
         let mut name = String::new();
         // Strip preceding whitespace.
-        let (rem, _) = space0(input)?;
+        let (rem, _) = complete::space0(input)?;
         let mut remaining = rem;
         // The next word of remaining may be part of the street name.
         // It could also be a post type, subaddress, city, state or zip.
@@ -298,7 +302,7 @@ impl Parser {
                 // First word is a post-type, second is not, third is.
                 // If the second word is not a post-type, check that the third is not as well.
                 tracing::trace!("First is {first}");
-                let (second, _) = space0(first)?;
+                let (second, _) = complete::space0(first)?;
                 // if !second.is_empty() {
                 //     tracing::trace!("Second is {second}");
                 //     let (second, _) = space0(second)?;
@@ -309,11 +313,11 @@ impl Parser {
                 //         cond = false;
                 //     }
                 // }
-                match alphanumeric1::<&str, nom::error::Error<_>>(second) {
+                match complete::alphanumeric1::<&str, nom::error::Error<_>>(second) {
                     Ok((second, _)) => {
                         tracing::trace!("Second is {second}");
-                        let (second, _) = space0(second)?;
-                        let (_, second) = alphanumeric1(second)?;
+                        let (second, _) = complete::space0(second)?;
+                        let (_, second) = complete::alphanumeric1(second)?;
                         let (_, next) = Self::is_post_type(second)?;
                         if next {
                             tracing::trace!("Post type confirmed.");
@@ -341,18 +345,18 @@ impl Parser {
             tracing::trace!("Eof detected.");
             cond = true;
         // Break if input is not alphanumeric.
-        } else if alphanumeric1::<&str, nom::error::Error<_>>(rem).is_err() {
+        } else if complete::alphanumeric1::<&str, nom::error::Error<_>>(rem).is_err() {
             tracing::trace!("Nonalphanumeric characters detected: {}", rem);
             cond = true;
         }
         tracing::trace!("Initial condition is {}", cond);
         while !cond {
             // Strip preceding whitespace.
-            let (rem, _) = space0(remaining)?;
+            let (rem, _) = complete::space0(remaining)?;
             // Take one or more alphabetic character.
-            if let Ok((rem, result)) = alphanumeric1::<&str, nom::error::Error<_>>(rem) {
+            if let Ok((rem, result)) = complete::alphanumeric1::<&str, nom::error::Error<_>>(rem) {
                 // Strip preceding whitespace.
-                let (rem, _) = space0(rem)?;
+                let (rem, _) = complete::space0(rem)?;
                 // Read has succeeded, reset remainder.
                 remaining = rem;
                 if !name.is_empty() {
@@ -369,7 +373,7 @@ impl Parser {
                     name.push_str(value);
                     // Could probably just tack on an 'S' here.
                     // Skipping check for other types because it follows an apostrophe.
-                    if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+                    if let Ok((rem, result)) = complete::alpha1::<&str, nom::error::Error<_>>(rem) {
                         name.push_str(result);
                         remaining = rem;
                     }
@@ -400,7 +404,7 @@ impl Parser {
                     tracing::trace!("Eof detected.");
                     cond = true;
                 // Break if input is not alphanumeric.
-                } else if alphanumeric1::<&str, nom::error::Error<_>>(rem).is_err() {
+                } else if complete::alphanumeric1::<&str, nom::error::Error<_>>(rem).is_err() {
                     tracing::trace!("Nonalphanumeric characters detected.");
                     cond = true;
                 }
@@ -420,10 +424,11 @@ impl Parser {
     /// type evaluates to None, this is not a hard error, because the post type is not a required field
     /// according to the FGDC standard, and partner agencies such as ECSO may have valid addresses
     /// without a street name post type (e.g. "Broadway").
+    #[tracing::instrument(skip_all)]
     pub fn post_type(input: &str) -> IResult<&str, Option<StreetNamePostType>> {
         tracing::trace!("Calling post_type on {}", input);
-        let (remaining, _) = space0(input)?;
-        if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(remaining) {
+        let (remaining, _) = complete::space0(input)?;
+        if let Ok((rem, result)) = complete::alpha1::<&str, nom::error::Error<_>>(remaining) {
             tracing::trace!("Post type check on {:#?}", &result);
             let post_type = StreetNamePostType::match_mixed(result);
             match post_type {
@@ -438,6 +443,7 @@ impl Parser {
 
     /// The `is_post_type` function returns true if the input parses to a valid [`StreetNamePostType`].
     /// Peeks at the data without consuming it.
+    #[tracing::instrument(skip_all)]
     pub fn is_post_type(input: &str) -> IResult<&str, bool> {
         tracing::trace!("Calling is_post_type");
         if let Ok((_, post)) = Self::post_type(input) {
@@ -453,16 +459,17 @@ impl Parser {
     /// type and preceding the postal community.  If a word is present, and parses to a subaddress
     /// type, the function will return the type and the remainder.  If no subaddress type is present,
     /// the function will return the full input.
+    #[tracing::instrument(skip_all)]
     pub fn subaddress_type(input: &str) -> IResult<&str, Option<SubaddressType>> {
         tracing::trace!("Calling subaddress_type on {}", input);
         // Strip preceding period.
         let (rem, _) = combinator::opt(tag("."))(input)?;
         // Strip preceding whitespace.
-        let (rem, _) = space0(rem)?;
+        let (rem, _) = complete::space0(rem)?;
         // Strip preceding number sign.
         let (rem, _) = combinator::opt(tag("#"))(rem)?;
         // Take one or more alphabetic character.
-        if let Ok((rem, result)) = alphanumeric1::<&str, nom::error::Error<_>>(rem) {
+        if let Ok((rem, result)) = complete::alphanumeric1::<&str, nom::error::Error<_>>(rem) {
             // Attempt to read as subaddress type.
             let check = SubaddressType::match_mixed(result);
             match check {
@@ -481,18 +488,19 @@ impl Parser {
     /// type and preceding the postal community.  If a word is present, and parses to a subaddress
     /// type, the function will return the type and the remainder.  If no subaddress type is present,
     /// the function will return the full input.
+    #[tracing::instrument(skip_all)]
     pub fn subaddress_id(input: &str) -> IResult<&str, Option<String>> {
         tracing::trace!("Calling subaddress_id on {}", input);
         // Strip preceding period.
         let (rem, _) = combinator::opt(tag("."))(input)?;
         // Strip preceding whitespace.
-        let (rem, _) = space0(rem)?;
+        let (rem, _) = complete::space0(rem)?;
         // Strip common subaddress identifier symbols.
         let (rem, _) = combinator::opt(tag("#"))(rem)?;
         let (rem, _) = combinator::opt(tag("&"))(rem)?;
         let (rem, _) = combinator::opt(tag("-"))(rem)?;
         // Strip whitespace between symbol and id.
-        let (rem, _) = space0(rem)?;
+        let (rem, _) = complete::space0(rem)?;
         // If there is no subaddress, we expect the city name next.
         let (_, mut cond) = Self::is_postal_community(rem)?;
         // Could be a state name instead of a subaddress.
@@ -515,7 +523,8 @@ impl Parser {
             tracing::trace!("Cond is {}", cond);
             tracing::trace!("Rem: {}", &rem);
             // Take one or more alphanumeric characters.
-            if let Ok((rem, result)) = alphanumeric1::<&str, nom::error::Error<_>>(remain) {
+            if let Ok((rem, result)) = complete::alphanumeric1::<&str, nom::error::Error<_>>(remain)
+            {
                 // Add the value to the subaddress string.
                 if !id.is_empty() {
                     id.push(' ');
@@ -526,14 +535,14 @@ impl Parser {
 
                 // Second pass.
                 // Strip preceding whitespace.
-                let (rem, _) = space0(rem)?;
+                let (rem, _) = complete::space0(rem)?;
                 // Strip common subaddress identifier symbols.
                 let (rem, _) = combinator::opt(tag("#"))(rem)?;
                 let (rem, _) = combinator::opt(tag("&"))(rem)?;
                 let (rem, _) = combinator::opt(tag("-"))(rem)?;
                 let (rem, _) = combinator::opt(tag(","))(rem)?;
                 // Strip whitespace between symbol and id.
-                let (rem, _) = space0(rem)?;
+                let (rem, _) = complete::space0(rem)?;
                 remain = rem;
                 // If there is no subaddress, we expect the city name next.
                 let (_, comm) = Self::is_postal_community(rem)?;
@@ -563,6 +572,7 @@ impl Parser {
 
     /// The `postal_community` function attempts to parse the next word in the input as a
     /// [`PostalCommunity`] value.
+    #[tracing::instrument(skip_all)]
     #[allow(clippy::single_match)]
     pub fn postal_community(input: &str) -> IResult<&str, Option<PostalCommunity>> {
         tracing::trace!("Calling postal_community on {}", input);
@@ -570,11 +580,11 @@ impl Parser {
         let mut comm = String::new();
         let (rem, _) = combinator::opt(tag(","))(input)?;
         // Strip preceding whitespace.
-        let (remaining, _) = space0(rem)?;
+        let (remaining, _) = complete::space0(rem)?;
         // Take one or more alphanumeric characters.
-        if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(remaining) {
+        if let Ok((rem, result)) = complete::alpha1::<&str, nom::error::Error<_>>(remaining) {
             // Strip preceding whitespace.
-            let (mut rem, _) = space0(rem)?;
+            let (mut rem, _) = complete::space0(rem)?;
             // Add first word to community name.
             comm.push_str(result);
             tracing::trace!("Postal community check on {:#?}", &result);
@@ -584,7 +594,8 @@ impl Parser {
                 "grants" => {
                     tracing::trace!("Attempting to match remainder: {}", rem);
                     // Add the next word to community name.
-                    if let Ok((remain, next)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+                    if let Ok((remain, next)) = complete::alpha1::<&str, nom::error::Error<_>>(rem)
+                    {
                         tracing::trace!("Next is {}", next);
                         comm.push(' ');
                         comm.push_str(next);
@@ -605,6 +616,7 @@ impl Parser {
 
     /// The `is_postal_community` function returns true if the input parses to a valid [`PostalCommunity`].
     /// Peeks at the data without consuming it.
+    #[tracing::instrument(skip_all)]
     pub fn is_postal_community(input: &str) -> IResult<&str, bool> {
         tracing::trace!("Calling is_postal_community");
         if let Ok((_, post)) = Self::postal_community(input) {
@@ -618,14 +630,15 @@ impl Parser {
 
     /// The `state` function attempts to parse the next word in the input as a
     /// [`State`] value.
+    #[tracing::instrument(skip_all)]
     pub fn state(input: &str) -> IResult<&str, Option<State>> {
         tracing::trace!("Calling state on {}", input);
         // Strip preceding comma.
         let (rem, _) = combinator::opt(tag(","))(input)?;
         // Strip preceding whitespace.
-        let (remaining, _) = space0(rem)?;
+        let (remaining, _) = complete::space0(rem)?;
         // State name is alphabetic
-        if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(remaining) {
+        if let Ok((rem, result)) = complete::alpha1::<&str, nom::error::Error<_>>(remaining) {
             tracing::trace!("State check on {:#?}", &result);
             if let Some(state) = State::match_mixed(result) {
                 Ok((rem, Some(state)))
@@ -640,6 +653,7 @@ impl Parser {
 
     /// The `is_state` function returns true if the input parses to a valid [`State`].
     /// Peeks at the data without consuming it.
+    #[tracing::instrument(skip_all)]
     pub fn is_state(input: &str) -> IResult<&str, bool> {
         tracing::trace!("Calling is_state");
         if let Ok((_, state)) = Self::state(input) {
@@ -653,14 +667,15 @@ impl Parser {
 
     /// The `zip` function attempts to parse the next word in the input as a
     /// postal zip code.
+    #[tracing::instrument(skip_all)]
     pub fn zip(input: &str) -> IResult<&str, Option<i64>> {
         tracing::trace!("Calling zip on {}", input);
         // Strip preceding comma.
         let (rem, _) = combinator::opt(tag(","))(input)?;
         // Strip preceding whitespace.
-        let (remaining, _) = space0(rem)?;
+        let (remaining, _) = complete::space0(rem)?;
         // Zip code is an integer.
-        if let Ok((rem, result)) = digit1::<&str, nom::error::Error<_>>(remaining) {
+        if let Ok((rem, result)) = complete::digit1::<&str, nom::error::Error<_>>(remaining) {
             tracing::trace!("Zip check on {:#?}", &result);
             // Zip code must have 5 digits
             if result.len() == 5 {
@@ -683,6 +698,7 @@ impl Parser {
 
     /// The `is_zip` function returns true if the input parses to a valid zip code.
     /// Peeks at the data without consuming it.
+    #[tracing::instrument(skip_all)]
     pub fn is_zip(input: &str) -> IResult<&str, bool> {
         tracing::trace!("Calling is_zip");
         if let Ok((_, zip)) = Self::zip(input) {
@@ -696,6 +712,7 @@ impl Parser {
 
     /// The `address` function attempts to read the complete address and parse it into its
     /// constituent components.
+    #[tracing::instrument(skip_all)]
     pub fn address(input: &str) -> IResult<&str, PartialAddress> {
         // When reading a partial address, any field can fail, so we cannot use the question mark
         // operator or it will short circuit cases where we correctly infer None when given an
@@ -761,6 +778,7 @@ impl Parser {
 
 /// The parse_phone_number function expects a phone number that may optionally include parenthesis
 /// around the area code, and the use of periods or a hyphen as a separator.
+#[tracing::instrument(skip_all)]
 pub fn parse_phone_number(input: &str) -> IResult<&str, String> {
     // Strip a leading parenthesis if present.
     let (rem, _) = combinator::opt(tag("("))(input)?;
@@ -769,15 +787,15 @@ pub fn parse_phone_number(input: &str) -> IResult<&str, String> {
     // Strip the closing parenthesis or a period if present.
     let (rem, _) = combinator::opt(branch::alt((tag(")"), tag("."))))(rem)?;
     // Strip any whitespace.
-    let (rem, _) = space0(rem)?;
+    let (rem, _) = complete::space0(rem)?;
     // Takes one or more numbers, targeting the first three of the primary seven.
     let (rem, first) = nom::character::complete::digit1(rem)?;
     // Strip any whitespace used before the separator.
-    let (rem, _) = space0(rem)?;
+    let (rem, _) = complete::space0(rem)?;
     // Remove a hyphen or dot separator.
     let (rem, _) = combinator::opt(branch::alt((tag("-"), tag("."))))(rem)?;
     // Strip any whitespace used after the separator.
-    let (rem, _) = space0(rem)?;
+    let (rem, _) = complete::space0(rem)?;
     // Takes one or more numbers, targeting the last four of the primary seven.
     let (rem, second) = nom::character::complete::digit1(rem)?;
     // Empty string to receive digits pulled from input.
@@ -792,6 +810,7 @@ pub fn parse_phone_number(input: &str) -> IResult<&str, String> {
 /// The `deserialize_phone_number` function deserializes text input into an integer representation
 /// of a phone number.  Strips parentheses around the area code, as well as periods or a hyphen
 /// used as a separator.
+#[tracing::instrument(skip_all)]
 pub fn deserialize_phone_number<'de, D: Deserializer<'de>>(de: D) -> Result<Option<i64>, D::Error> {
     let intermediate = Deserialize::deserialize(de)?;
     let mut res = None;
