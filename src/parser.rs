@@ -129,6 +129,12 @@ impl Parser {
                     }
                     StreetNamePreDirectional::SOUTH => {
                         if let Ok((rem, res)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+                            if StreetNamePostType::match_mixed(res)
+                                == Some(StreetNamePostType::STREET)
+                            {
+                                // Special casing for South Street
+                                return Ok((input, None));
+                            }
                             let trailing = StreetNamePreDirectional::match_mixed(res);
                             tracing::trace!("Trailing: {:?}", trailing);
                             tracing::trace!("Remaining: {}", rem);
@@ -158,6 +164,20 @@ impl Parser {
                                 // No additional directional found, return first value of
                                 // riectional and original "remaining" instead of "rem".
                                 None => Ok((remaining, Some(value))),
+                            }
+                        } else {
+                            Ok((remaining, Some(value)))
+                        }
+                    }
+                    StreetNamePreDirectional::WEST => {
+                        if let Ok((_, res)) = alpha1::<&str, nom::error::Error<_>>(rem) {
+                            if StreetNamePostType::match_mixed(res)
+                                == Some(StreetNamePostType::STREET)
+                            {
+                                // special casing for West Street
+                                Ok((input, None))
+                            } else {
+                                Ok((remaining, Some(value)))
                             }
                         } else {
                             Ok((remaining, Some(value)))
@@ -254,130 +274,9 @@ impl Parser {
     /// street type as a street name, because we do not check for post-type on the first pass.
     /// Eg. West Street parses as directional: West, street name: Street.  Should parse as
     /// directional: None, street name: West, street type: Street.
-    pub fn street_name(input: &str) -> IResult<&str, Option<String>> {
-        // On the initial pass, we read the first word of the street name.
-        let mut name = String::new();
-        // Strip preceding whitespace.
-        let (rem, _) = space0(input)?;
-        // Try to take the first word.
-        if let Ok((rem, result)) = alphanumeric1::<&str, nom::error::Error<_>>(rem) {
-            // Push the word to the empty name variable.
-            name.push_str(result);
-            tracing::trace!("Working name: {}", name);
-            // Strip preceding whitespace from the remainder.
-            let (rem, _) = space0(rem)?;
-            // Save the remainder to possibly return later.
-            let mut remaining = rem;
-            // Capture apostrophes in street names.
-            tracing::trace!("Apostrophe check on {}", remaining);
-            let (rem, apostrophe) = combinator::opt(tag("'"))(remaining)?;
-            if let Some(value) = apostrophe {
-                tracing::trace!("Apostrophe found, rem: {}", rem);
-                name.push_str(value);
-                // Could probably just tack on an 'S' here.
-                // Skipping check for other types because it follows an apostrophe.
-                if let Ok((rem, result)) = alpha1::<&str, nom::error::Error<_>>(rem) {
-                    name.push_str(result);
-                    remaining = rem;
-                }
-            }
-            // The next word of remaining may be part of the street name.
-            // It could also be a post type, subaddress, city, state or zip.
-            // Check if the next word parses as a post type.
-            let (_, mut cond) = Self::is_post_type(remaining)?;
-            // If a post type is found, check to see if it is followed by a post type.
-            if cond {
-                let (first, _) = Self::post_type(remaining)?;
-                let (_, next) = Self::is_post_type(first)?;
-                if next {
-                    // If so, only the last type is the post type.
-                    cond = false;
-                }
-                // If the post type could also be a subaddress, parse as post type and not part of
-                // the street name.
-                if let Ok((_, Some(_))) = Self::subaddress_type(first) {
-                    cond = true;
-                }
-            }
-            // Check if the next word parses as a postal community.
-            let (_, check) = Self::is_postal_community(remaining)?;
-            if check {
-                // Cond is the variable that will control the while loop
-                cond = true;
-            }
-            // If cond is false because input is empty, set to true
-            if combinator::eof::<&str, nom::error::Error<_>>(remaining).is_ok() {
-                tracing::trace!("Eof detected.");
-                cond = true;
-            // Break if input is not alphanumeric.
-            } else if alphanumeric1::<&str, nom::error::Error<_>>(remaining).is_err() {
-                tracing::trace!("Nonalphanumeric characters detected: {}", remaining);
-                cond = true;
-            }
-            tracing::trace!("Initial condition is {}", cond);
-            while !cond {
-                // Strip preceding whitespace.
-                let (rem, _) = space0(remaining)?;
-                // Take one or more alphabetic character.
-                if let Ok((rem, result)) = alphanumeric1::<&str, nom::error::Error<_>>(rem) {
-                    // Strip preceding whitespace.
-                    let (rem, _) = space0(rem)?;
-                    // Read has succeeded, reset remainder.
-                    remaining = rem;
-                    // Push parsed word to street name.
-                    name.push(' ');
-                    name.push_str(result);
-                    tracing::trace!("Working name: {}", name);
-                    // If next word is a post type, end loop.
-                    (_, cond) = Self::is_post_type(rem)?;
-                    // If a post type is found, check to see if it is followed by a post type.
-                    if cond {
-                        let (first, _) = Self::post_type(rem)?;
-                        let (_, next) = Self::is_post_type(first)?;
-                        if next {
-                            // If so, only the last type is the post type.
-                            cond = false;
-                        }
-                        // If the post type could also be a subaddress, parse as post type and not part of
-                        // the street name.
-                        if let Ok((_, Some(_))) = Self::subaddress_type(first) {
-                            cond = true;
-                        }
-                    }
-                    // If next word is a postal community, end loop.
-                    let (_, check) = Self::is_postal_community(rem)?;
-                    if check {
-                        cond = true;
-                    }
-                    // End loop if at end of input.
-                    if combinator::eof::<&str, nom::error::Error<_>>(rem).is_ok() {
-                        tracing::trace!("Eof detected.");
-                        cond = true;
-                    // Break if input is not alphanumeric.
-                    } else if alphanumeric1::<&str, nom::error::Error<_>>(rem).is_err() {
-                        tracing::trace!("Nonalphanumeric characters detected.");
-                        cond = true;
-                    }
-                }
-            }
-            tracing::trace!("Rem: {}", remaining);
-            Ok((remaining, Some(name.to_uppercase())))
-        } else {
-            Ok((input, None))
-        }
-    }
-
-    /// The `street_name` method attempts to parse the next sequence of words in the input as a
-    /// street name.  After finding at least one word, will return if the next word in `input` is a
-    /// street name post type.
-    /// Screen for PO Boxes?
-    /// TODO: If no street name is present, but street type is present, this will categorize the
-    /// street type as a street name, because we do not check for post-type on the first pass.
-    /// Eg. West Street parses as directional: West, street name: Street.  Should parse as
-    /// directional: None, street name: West, street type: Street.
     /// TODO: Only checks for two post types in succession, but streets like Park Plaza Drive have
     /// three.
-    pub fn street_name1(input: &str) -> IResult<&str, Option<String>> {
+    pub fn street_name(input: &str) -> IResult<&str, Option<String>> {
         // On the initial pass, we read the first word of the street name.
         let mut name = String::new();
         // Strip preceding whitespace.
@@ -394,7 +293,37 @@ impl Parser {
             if next {
                 // If so, only the last type is the post type.
                 cond = false;
+            } else {
+                // Example: GARDEN VALLEY WAY
+                // First word is a post-type, second is not, third is.
+                // If the second word is not a post-type, check that the third is not as well.
+                tracing::trace!("First is {first}");
+                let (second, _) = space0(first)?;
+                // if !second.is_empty() {
+                //     tracing::trace!("Second is {second}");
+                //     let (second, _) = space0(second)?;
+                //     let (_, second) = alphanumeric1(second)?;
+                //     let (_, next) = Self::is_post_type(second)?;
+                //     if next {
+                //         tracing::trace!("Post type confirmed.");
+                //         cond = false;
+                //     }
+                // }
+                match alphanumeric1::<&str, nom::error::Error<_>>(second) {
+                    Ok((second, _)) => {
+                        tracing::trace!("Second is {second}");
+                        let (second, _) = space0(second)?;
+                        let (_, second) = alphanumeric1(second)?;
+                        let (_, next) = Self::is_post_type(second)?;
+                        if next {
+                            tracing::trace!("Post type confirmed.");
+                            cond = false;
+                        }
+                    }
+                    Err(e) => tracing::trace!("{}", e.to_string()),
+                }
             }
+
             // If the post type could also be a subaddress, parse as post type and not part of
             // the street name.
             if let Ok((_, Some(_))) = Self::subaddress_type(first) {
@@ -402,11 +331,11 @@ impl Parser {
             }
         }
         // Check if the next word parses as a postal community.
-        let (_, check) = Self::is_postal_community(rem)?;
-        if check {
-            // Cond is the variable that will control the while loop
-            cond = true;
-        }
+        // let (_, check) = Self::is_postal_community(rem)?;
+        // if check {
+        //     // Cond is the variable that will control the while loop
+        //     cond = true;
+        // }
         // If cond is false because input is empty, set to true
         if combinator::eof::<&str, nom::error::Error<_>>(rem).is_ok() {
             tracing::trace!("Eof detected.");
@@ -567,10 +496,11 @@ impl Parser {
         // If there is no subaddress, we expect the city name next.
         let (_, mut cond) = Self::is_postal_community(rem)?;
         // Could be a state name instead of a subaddress.
-        let (_, state) = Self::is_state(rem)?;
+        // let (_, state) = Self::is_state(rem)?;
         // Could be a zip code.
         let (_, zip) = Self::is_zip(rem)?;
-        cond = cond | state | zip;
+        cond |= zip;
+        // cond = cond | state | zip;
         // End loop if at end of input.
         if combinator::eof::<&str, nom::error::Error<_>>(rem).is_ok() {
             tracing::trace!("Eof detected.");
@@ -606,12 +536,13 @@ impl Parser {
                 let (rem, _) = space0(rem)?;
                 remain = rem;
                 // If there is no subaddress, we expect the city name next.
-                let (_, comm) = Self::is_postal_community(rem)?;
+                // let (_, comm) = Self::is_postal_community(rem)?;
                 // Could be a state name instead of a subaddress.
-                let (_, state) = Self::is_state(rem)?;
+                // let (_, state) = Self::is_state(rem)?;
                 // Could be a zip code.
                 let (_, zip) = Self::is_zip(rem)?;
-                cond = comm | state | zip;
+                cond |= zip;
+                // cond = comm | state | zip;
                 // End loop if at end of input.
                 if combinator::eof::<&str, nom::error::Error<_>>(rem).is_ok() {
                     tracing::trace!("Eof detected.");
@@ -773,27 +704,39 @@ impl Parser {
         let mut address = PartialAddress::default();
         // attempt to read the complete address number
         let (rem, address_number) = Self::address_number(input)?;
-        tracing::trace!("Address number: {:?}", &address_number);
+        if let Some(num) = &address_number {
+            tracing::trace!("Address number: {num}");
+        }
         // we avoid an if let clause because address_number is none if not present.
         address.address_number = address_number;
         let (rem, suffix) = Self::address_number_suffix(rem)?;
-        tracing::trace!("Address number suffix: {:#?}", &suffix);
+        if let Some(s) = &suffix {
+            tracing::trace!("Address number suffix: {s}");
+        } else {
+            tracing::trace!("No address number suffix detected.");
+        }
         address.set_address_number_suffix(suffix);
+        tracing::trace!("Reading pre directional.");
         let (rem, directional) = Self::pre_directional(rem)?;
         tracing::trace!("Street name pre-directional: {:#?}", &directional);
         address.street_name_pre_directional = directional;
+        tracing::trace!("Reading pre modifier.");
         let (rem, premod) = Self::pre_modifier(rem)?;
         tracing::trace!("Street name pre-modifier: {:#?}", &premod);
         address.pre_modifier = premod;
+        tracing::trace!("Reading pre type.");
         let (rem, pretype) = Self::pre_type(rem)?;
         tracing::trace!("Street name pre-type: {:#?}", &pretype);
         address.pre_type = pretype;
+        tracing::trace!("Reading pre type separator.");
         let (rem, separator) = Self::separator(rem)?;
         tracing::trace!("Street name separator: {:#?}", &separator);
         address.separator = separator;
-        let (rem, name) = Self::street_name1(rem)?;
+        tracing::trace!("Reading street name.");
+        let (rem, name) = Self::street_name(rem)?;
         tracing::trace!("Street name element: {:#?}", &name);
         address.street_name = name;
+        tracing::trace!("Reading post type.");
         let (rem, post_type) = Self::post_type(rem)?;
         tracing::trace!("Street name post-type: {:#?}", &post_type);
         address.street_name_post_type = post_type;

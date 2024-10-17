@@ -9,6 +9,7 @@ use crate::{
 use aid::prelude::*;
 use derive_more::{Deref, DerefMut};
 use indicatif::ProgressBar;
+use nom::bytes::complete::tag;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ops;
@@ -290,6 +291,11 @@ pub trait Address {
             *self.street_name_mut() = "HILLTOP".to_string();
             *self.street_type_mut() = Some(StreetNamePostType::VIEW);
         }
+        if comp == "TENNESSEE VIEW" {
+            trace!("Fixing Tennessee View");
+            *self.street_name_mut() = "TENNESSEE".to_string();
+            *self.street_type_mut() = Some(StreetNamePostType::VIEW);
+        }
         if comp == "MARILEE ROW" {
             trace!("Fixing Marilee Row");
             *self.street_name_mut() = "MARILEE".to_string();
@@ -298,6 +304,11 @@ pub trait Address {
         if comp == "MEADOW GLEN" {
             trace!("Fixing Meadow Glen");
             *self.street_name_mut() = "MEADOW".to_string();
+            *self.street_type_mut() = Some(StreetNamePostType::GLEN);
+        }
+        if comp == "GENVERNA GLEN" {
+            trace!("Fixing Genverna Glen");
+            *self.street_name_mut() = "GENVERNA".to_string();
             *self.street_type_mut() = Some(StreetNamePostType::GLEN);
         }
         if comp == "ROBERTSON CREST" {
@@ -309,6 +320,60 @@ pub trait Address {
             trace!("Fixing Quail Crossing");
             *self.street_name_mut() = "QUAIL".to_string();
             *self.street_type_mut() = Some(StreetNamePostType::CROSSING);
+        }
+        if comp == "SIDE ROAD" && *self.directional() == Some(StreetNamePreDirectional::WEST) {
+            trace!("Fixing West Side Road");
+            *self.directional_mut() = None;
+            *self.street_name_mut() = "WEST SIDE".to_string();
+        }
+        if comp == "SOUTH SHORE DRIVE"
+            && *self.directional() == Some(StreetNamePreDirectional::SOUTH)
+        {
+            trace!("Fixing South Shore Drive");
+            *self.directional_mut() = None;
+            *self.street_name_mut() = "SOUTH SHORE".to_string();
+        }
+
+        if let Some(comp) = self.subaddress_id().clone() {
+            trace!("Fixing Laundry");
+            if comp == "LAUNDRY" {
+                *self.subaddress_id_mut() = None;
+                *self.subaddress_type_mut() = Some(SubaddressType::Laundry);
+            }
+            trace!("Fixing Office");
+            if comp == "OFFICE" {
+                *self.subaddress_id_mut() = None;
+                *self.subaddress_type_mut() = Some(SubaddressType::Office);
+            }
+            trace!("Fixing Rec");
+            if comp == "REC" {
+                *self.subaddress_id_mut() = None;
+                *self.subaddress_type_mut() = Some(SubaddressType::Rec);
+            }
+            trace!("Fixing Trailer");
+            if comp == "TRLR" {
+                *self.subaddress_id_mut() = None;
+                *self.subaddress_type_mut() = Some(SubaddressType::Trailer);
+            }
+            trace!("Fixing Floor 4");
+            if comp == "FLOOR 4" {
+                *self.subaddress_id_mut() = Some("4".to_string());
+                *self.subaddress_type_mut() = Some(SubaddressType::Floor);
+            }
+            if comp.contains("APT") {
+                let (_, id) =
+                    tag::<&str, &str, nom::error::Error<_>>("APT")(comp.as_str()).unwrap();
+                *self.subaddress_id_mut() = Some(id.to_string());
+            }
+            if comp.contains("RV") {
+                let (_, id) = tag::<&str, &str, nom::error::Error<_>>("RV")(comp.as_str()).unwrap();
+                *self.subaddress_id_mut() = Some(id.to_string());
+            }
+            if comp.contains("CABIN") {
+                let (_, id) =
+                    tag::<&str, &str, nom::error::Error<_>>("CABIN")(comp.as_str()).unwrap();
+                *self.subaddress_id_mut() = Some(id.to_string());
+            }
         }
     }
 }
@@ -1020,67 +1085,94 @@ impl PartialAddress {
     /// The `standardize` method takes county address naming conventions and converts them to city
     /// naming conventions.
     pub fn standardize(&mut self) {
-        trace!("Running standardize");
-        if self.street_name_pre_directional() == Some(StreetNamePreDirectional::WEST)
-            && self.street_name() == Some("SIDE".to_string())
-        {
-            self.street_name_pre_directional = None;
-            self.street_name = Some("WEST SIDE".to_string());
+        tracing::trace!("Standardizing partial address.");
+        if let Some(comp) = self.street_name().clone() {
+            // if comp == "AZALEA DRIVE" {
+            //     trace!("Fixing Azalea Drive Cutoff");
+            //     self.set_street_name("AZALEA");
+            //     self.set_post_type(&StreetNamePostType::DriveCutoff);
+            // }
+            //
+            // if let Some(sub) = self.subaddress_identifier() {
+            //     if comp == "LEWIS" && sub == "OFFICE" {
+            //         info!("Fixing Lewis Ave Office");
+            //         self.subaddress_identifier = None;
+            //         self.set_subaddress_type(&SubaddressType::Office);
+            //     }
+            // }
+            // if comp == "BEAVILLA VIEW" {
+            //     trace!("Fixing Beavilla View");
+            //     self.set_street_name("BEAVILLA");
+            //     self.set_post_type(&StreetNamePostType::VIEW);
+            // }
+            // if comp == "COLUMBIA CREST" {
+            //     trace!("Fixing Columbia Crest");
+            //     self.set_street_name("COLUMBIA");
+            //     self.set_post_type(&StreetNamePostType::CREST);
+            // }
+            // if comp == "HILLTOP VIEW" {
+            //     trace!("Fixing Hilltop View");
+            //     self.set_street_name("HILLTOP");
+            //     self.set_post_type(&StreetNamePostType::VIEW);
+            // }
+            // if comp == "TENNESSEE VIEW" {
+            //     trace!("Fixing Tennessee View");
+            //     self.set_street_name("TENNESSEE");
+            //     self.set_post_type(&StreetNamePostType::VIEW);
+            // }
+            // if comp == "MARILEE ROW" {
+            //     trace!("Fixing Marilee Row");
+            //     self.set_street_name("MARILEE");
+            //     self.set_post_type(&StreetNamePostType::ROW);
+            // }
+            // if comp == "MEADOW GLEN" {
+            //     trace!("Fixing Meadow Glen");
+            //     self.set_street_name("MEADOW");
+            //     self.set_post_type(&StreetNamePostType::GLEN);
+            // }
+            // if comp == "GENVERNA GLEN" {
+            //     trace!("Fixing Genverna Glen");
+            //     self.set_street_name("GENVERNA");
+            //     self.set_post_type(&StreetNamePostType::GLEN);
+            // }
+            // if comp == "ROBERTSON CREST" {
+            //     trace!("Fixing Robertson Crest");
+            //     self.set_street_name("ROBERTSON");
+            //     self.set_post_type(&StreetNamePostType::CREST);
+            // }
+            // if comp == "QUAIL CROSSING" {
+            //     trace!("Fixing Quail Crossing");
+            //     self.set_street_name("QUAIL");
+            //     self.set_post_type(&StreetNamePostType::CROSSING);
+            // }
+            if comp == "SIDE"
+                && self.street_name_pre_directional() == Some(StreetNamePreDirectional::WEST)
+            {
+                trace!("Fixing West Side Road");
+                self.street_name_pre_directional = None;
+                self.set_street_name("WEST SIDE");
+            }
+            if comp == "SHORE"
+                && self.street_name_pre_directional() == Some(StreetNamePreDirectional::SOUTH)
+            {
+                trace!("Fixing South Shore Drive");
+                self.street_name_pre_directional = None;
+                self.set_street_name("SOUTH SHORE");
+            }
         }
-        if self.street_name_pre_directional() == Some(StreetNamePreDirectional::WEST)
-            && self.street_name().is_none()
-        {
-            tracing::info!("Fixing West Street");
-            self.street_name_pre_directional = None;
-            self.street_name = Some("WEST".to_string());
-        }
-
-        // if let Some(sub) = self.subaddress_id() {
-        //     if comp_street == "LEWIS AVE" && sub == "OFFICE" {
-        //         info!("Fixing Lewis Ave");
-        //         *self.subaddress_id_mut() = None;
-        //         *self.subaddress_type_mut() = Some(SubaddressType::Office);
-        //     }
+        // trace!("Running standardize");
+        // if self.street_name_pre_directional() == Some(StreetNamePreDirectional::WEST)
+        //     && self.street_name() == Some("SIDE".to_string())
+        // {
+        //     self.street_name_pre_directional = None;
+        //     self.street_name = Some("WEST SIDE".to_string());
         // }
-        // if comp_street == "NE BEAVILLA VIEW" {
-        //     trace!("Fixing Beavilla View");
-        //     *self.street_name_mut() = "BEAVILLA".to_string();
-        //     *self.street_type_mut() = Some(StreetNamePostType::VIEW);
-        // }
-        // if comp_street == "COLUMBIA CREST" {
-        //     trace!("Fixing Columbia Crest");
-        //     *self.street_name_mut() = "COLUMBIA".to_string();
-        //     *self.street_type_mut() = Some(StreetNamePostType::CREST);
-        // }
-        // if comp_street == "SE FORMOSA GARDENS" {
-        //     trace!("Fixing Formosa Gardens");
-        //     *self.street_name_mut() = "FORMOSA".to_string();
-        //     *self.street_type_mut() = Some(StreetNamePostType::GARDENS);
-        // }
-        // if comp_street == "SE HILLTOP VIEW" {
-        //     trace!("Fixing Hilltop View");
-        //     *self.street_name_mut() = "HILLTOP".to_string();
-        //     *self.street_type_mut() = Some(StreetNamePostType::VIEW);
-        // }
-        // if comp_street == "MARILEE ROW" {
-        //     trace!("Fixing Marilee Row");
-        //     *self.street_name_mut() = "MARILEE".to_string();
-        //     *self.street_type_mut() = Some(StreetNamePostType::ROW);
-        // }
-        // if comp_street == "MEADOW GLEN" {
-        //     trace!("Fixing Meadow Glen");
-        //     *self.street_name_mut() = "MEADOW".to_string();
-        //     *self.street_type_mut() = Some(StreetNamePostType::GLEN);
-        // }
-        // if comp_street == "ROBERTSON CREST" {
-        //     trace!("Fixing Robertson Crest");
-        //     *self.street_name_mut() = "ROBERTSON".to_string();
-        //     *self.street_type_mut() = Some(StreetNamePostType::CREST);
-        // }
-        // if comp_street == "NE QUAIL CROSSING" {
-        //     trace!("Fixing Quail Crossing");
-        //     *self.street_name_mut() = "QUAIL".to_string();
-        //     *self.street_type_mut() = Some(StreetNamePostType::CROSSING);
+        // if self.street_name_pre_directional() == Some(StreetNamePreDirectional::WEST)
+        //     && self.street_name().is_none()
+        // {
+        //     tracing::info!("Fixing West Street");
+        //     self.street_name_pre_directional = None;
+        //     self.street_name = Some("WEST".to_string());
         // }
     }
 }

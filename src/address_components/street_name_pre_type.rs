@@ -25,7 +25,7 @@ use serde::{Deserialize, Serialize};
 )]
 pub enum StreetNamePreType {
     Avenue,
-    Fork,
+    // Fork,
     #[default]
     Highway,
     Interstate,
@@ -38,7 +38,7 @@ impl StreetNamePreType {
     pub fn label(&self) -> String {
         let label = match self {
             Self::Avenue => "AVENUE",
-            Self::Fork => "FORK",
+            // Self::Fork => "FORK",
             Self::Highway => "HIGHWAY",
             Self::Interstate => "INTERSTATE",
             Self::Mount => "MOUNT",
@@ -52,7 +52,7 @@ impl StreetNamePreType {
         match input.to_lowercase().as_str() {
             "avenue" => Some(Self::Avenue),
             "ave" => Some(Self::Avenue),
-            "fork" => Some(Self::Fork),
+            // "fork" => Some(Self::Fork),
             "highway" => Some(Self::Highway),
             "hwy" => Some(Self::Highway),
             "interstate" => Some(Self::Interstate),
