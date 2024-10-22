@@ -1,3 +1,4 @@
 /target
 /tests/test_data/active_business_licenses.csv
 tags
+.env
