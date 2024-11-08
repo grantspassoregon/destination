@@ -21,7 +21,7 @@ struct AddressSample {
 fn load_ecso_addresses() -> Clean<()> {
     trace!("Deserializing county addresses from a csv file.");
     // let file = "tests/test_data/county_addresses_ugb_20241007.csv";
-    let file = "tests/test_data/county_addresses_20241007.csv";
+    let file = "data/county_addresses_20241007.csv";
     let addresses = JosephineCountySpatialAddresses2024::from_csv(file)?;
     assert_eq!(addresses.len(), 45564);
     trace!("County addresses loaded: {} entries.", addresses.len());
@@ -119,7 +119,7 @@ fn business_licenses() -> Clean<()> {
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
 fn read_bus_licenses() -> Result<(), std::io::Error> {
-    let file = "tests/test_data/active_business_licenses.csv";
+    let file = "data/active_business_licenses.csv";
     let licenses = BusinessLicenses::from_csv(file)?;
     info!("Business licenses loaded: {} entries.", licenses.len());
     // info!("Record 171:");

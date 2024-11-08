@@ -473,7 +473,9 @@ impl MatchPartialRecord {
 }
 
 /// The `MatchPartialRecords` struct holds a vector of type [`MatchPartialRecord`].
-#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize, Deref, DerefMut)]
+#[derive(
+    Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize, Deref, DerefMut, derive_new::new,
+)]
 pub struct MatchPartialRecords(Vec<MatchPartialRecord>);
 
 impl MatchPartialRecords {

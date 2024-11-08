@@ -1,8 +1,8 @@
 use address::{
     trace_init, Addresses, BusinessLicenses, BusinessMatchRecords, Cli, CommonAddresses,
     GeoAddresses, GrantsPassAddresses, GrantsPassSpatialAddresses, JosephineCountyAddresses,
-    JosephineCountyAddresses2024, JosephineCountySpatialAddresses2024, LexisNexis, MatchRecords,
-    Point, Portable, SpatialAddress, SpatialAddresses,
+    JosephineCountyAddresses2024, JosephineCountySpatialAddresses2024, LexisNexis,
+    MatchPartialRecords, MatchRecords, Point, Portable, SpatialAddress, SpatialAddresses,
 };
 use aid::prelude::*;
 use clap::Parser;
@@ -16,18 +16,31 @@ fn main() -> Clean<()> {
         "filter" => {
             if let Some(filter) = cli.filter {
                 info!("Filtering records.");
-                if cli.business {
-                    let match_records = BusinessMatchRecords::from_csv(cli.source.clone())?;
-                    info!("Source records read: {} entries.", match_records.len());
-                    let mut filtered = match_records.filter(&filter);
-                    info!("Records remaining: {} entries.", filtered.len());
-                    filtered.to_csv(cli.output)?;
-                } else {
-                    let match_records = MatchRecords::from_csv(cli.source.clone())?;
-                    info!("Source records read: {} entries.", match_records.len());
-                    let mut filtered = match_records.clone().filter(&filter);
-                    info!("Records remaining: {} entries.", filtered.len());
-                    filtered.to_csv(cli.output)?;
+                if let Some(source) = cli.source_type {
+                    match source.as_str() {
+                        "business" => {
+                            let match_records = BusinessMatchRecords::from_csv(cli.source.clone())?;
+                            info!("Source records read: {} entries.", match_records.len());
+                            let mut filtered = match_records.filter(&filter);
+                            info!("Records remaining: {} entries.", filtered.len());
+                            filtered.to_csv(cli.output)?;
+                        }
+                        "partial" => {
+                            let match_records = MatchPartialRecords::from_csv(cli.source.clone())?;
+                            info!("Source records read: {} entries.", match_records.len());
+                            let mut filtered = match_records.clone().filter(&filter);
+                            info!("Records remaining: {} entries.", filtered.len());
+                            filtered.to_csv(cli.output)?;
+                        }
+                        "full" => {
+                            let match_records = MatchRecords::from_csv(cli.source.clone())?;
+                            info!("Source records read: {} entries.", match_records.len());
+                            let mut filtered = match_records.clone().filter(&filter);
+                            info!("Records remaining: {} entries.", filtered.len());
+                            filtered.to_csv(cli.output)?;
+                        }
+                        _ => warn!("Unrecognized source type: {source}"),
+                    }
                 }
             } else {
                 warn!("Filter parameter (-f or --filter) must be set.");
