@@ -20,6 +20,12 @@ duplicates file="data/city_addresses_20241007.csv" type="grants_pass" out="dupli
 
 business file="data/business_licenses_20240520.csv" compare="data/city_addresses_20241007.csv":
   cargo run --release -- -c business -s {{file}} -t {{compare}} -z grants_pass -o c:/users/erose/documents/business_match.csv
-  cargo run --release -- -c filter -b -s c:/users/erose/documents/business_match.csv -f matching -o c:/users/erose/documents/business_matching.csv
-  cargo run --release -- -c filter -b -s c:/users/erose/documents/business_match.csv -f divergent -o c:/users/erose/documents/business_divergent.csv
-  cargo run --release -- -c filter -b -s c:/users/erose/documents/business_match.csv -f missing -o c:/users/erose/documents/business_missing.csv
+  cargo run --release -- -c filter -s c:/users/erose/documents/business_match.csv -k "business" -f matching -o c:/users/erose/documents/business_matching.csv
+  cargo run --release -- -c filter -s c:/users/erose/documents/business_match.csv -k "business" -f divergent -o c:/users/erose/documents/business_divergent.csv
+  cargo run --release -- -c filter -s c:/users/erose/documents/business_match.csv -k "business" -f missing -o c:/users/erose/documents/business_missing.csv
+
+filter_parcels parcels="../../documents/compare_parcels.csv":
+  cargo run --release -- -c filter -s {{parcels}} -k "partial" -f matching -o ../../documents/compare_parcels_matching.csv
+  cargo run --release -- -c filter -s {{parcels}} -k "partial" -f divergent -o ../../documents/compare_parcels_divergent.csv
+  cargo run --release -- -c filter -s {{parcels}} -k "partial" -f missing -o ../../documents/compare_parcels_missing.csv
+
