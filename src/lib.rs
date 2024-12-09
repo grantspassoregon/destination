@@ -10,6 +10,7 @@ mod address_components;
 mod business;
 mod cli;
 mod compare;
+mod error;
 mod geo;
 mod import;
 mod lexisnexis;
@@ -32,6 +33,7 @@ pub use compare::{
     FireInspectionMatches, MatchPartialRecord, MatchPartialRecords, MatchRecord, MatchRecords,
     MatchStatus, Mismatch,
 };
+pub use error::{AddressError, AddressErrorKind, Builder, Csv, Io, Nom};
 pub use geo::{GeoAddress, GeoAddresses, Point, SpatialAddress, SpatialAddresses};
 pub use import::{
     Business, Businesses, FireInspection, FireInspectionRaw, FireInspections, GrantsPassAddress,
@@ -44,4 +46,7 @@ pub use lexisnexis::{
     LexisNexis, LexisNexisItem, LexisNexisItemBuilder, LexisNexisRange, LexisNexisRangeItem,
 };
 pub use parser::{deserialize_phone_number, parse_phone_number, Parser};
-pub use utils::{deserialize_arcgis_data, from_csv, load_bin, save, to_csv, trace_init, Portable};
+pub use utils::{
+    deserialize_arcgis_data, from_csv, load_bin, save, to_csv, trace_init, IntoBin, IntoCsv,
+    Portable, _from_csv, _load_bin, _save, _to_csv,
+};

@@ -1,6 +1,5 @@
-use derive_more::Display;
-use serde::de::Deserializer;
-use serde::{Deserialize, Serialize};
+use convert_case::Casing;
+use serde::de::{Deserialize, Deserializer};
 
 /// The `PostalCommunity` enum holds valid variants for the postal community field of an address.
 /// The list of valid postal communities is limited to the set of communities encountered locally,
@@ -14,15 +13,17 @@ use serde::{Deserialize, Serialize};
     Copy,
     Clone,
     Debug,
-    Deserialize,
-    Serialize,
     PartialEq,
     Eq,
     PartialOrd,
     Ord,
     Default,
     Hash,
-    Display,
+    serde::Deserialize,
+    serde::Serialize,
+    derive_more::Display,
+    derive_more::FromStr,
+    strum::EnumIter,
 )]
 pub enum PostalCommunity {
     /// The City of Grants Pass, an incorporated municipality.
@@ -35,8 +36,16 @@ pub enum PostalCommunity {
 }
 
 impl PostalCommunity {
+    /// The `upper` method converts the variant name to `UPPERCASE` case using
+    /// [`convert_case::Case::Upper`].
+    #[tracing::instrument]
+    pub fn upper(&self) -> String {
+        self.to_string().to_case(convert_case::Case::Upper)
+    }
+
     /// The `label` method returns the name of the community in all caps with spaces, for printing
     /// labels.
+    #[tracing::instrument]
     pub fn label(&self) -> String {
         let label = match self {
             Self::GrantsPass => "GRANTS PASS",
@@ -48,6 +57,7 @@ impl PostalCommunity {
 
     /// The `match_mixed` method attempts to match the string `input` against a variant of
     /// `PostalCommunity`.
+    #[tracing::instrument]
     pub fn match_mixed(input: &str) -> Option<Self> {
         match input.to_lowercase().as_str() {
             "grants pass" => Some(Self::GrantsPass),
@@ -60,8 +70,24 @@ impl PostalCommunity {
 
     /// The `deserialize_mixed` method attempts to match the input to a valid postal community
     /// variant.
+    #[tracing::instrument(skip_all)]
     pub fn deserialize_mixed<'de, D: Deserializer<'de>>(de: D) -> Result<Option<Self>, D::Error> {
         let intermediate = Deserialize::deserialize(de)?;
         Ok(Self::match_mixed(intermediate))
     }
+}
+
+#[test]
+/// Establishes equality between the output of the two methods, before replacing the old with the
+/// new.
+#[tracing::instrument]
+fn community_labels() -> Result<(), String> {
+    use strum::IntoEnumIterator;
+    for comm in PostalCommunity::iter() {
+        let label = comm.label();
+        let upper = comm.upper();
+        assert_eq!(label, upper);
+    }
+
+    Ok(())
 }

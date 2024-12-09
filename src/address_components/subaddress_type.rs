@@ -1,6 +1,6 @@
-use derive_more::Display;
+use convert_case::Casing;
+use derive_more::FromStr;
 use serde::de::Deserializer;
-use serde::{Deserialize, Serialize};
 
 /// The `SubaddressType` enum represents the subaddress type of an address.  Valid type
 /// designations include the list of secondary unit designators in Appendix C2 of the United States
@@ -10,15 +10,17 @@ use serde::{Deserialize, Serialize};
     Copy,
     Clone,
     Debug,
-    Deserialize,
-    Serialize,
     PartialEq,
     Eq,
     PartialOrd,
     Ord,
     Default,
     Hash,
-    Display,
+    serde::Deserialize,
+    serde::Serialize,
+    derive_more::Display,
+    derive_more::FromStr,
+    strum::EnumIter,
 )]
 pub enum SubaddressType {
     Apartment,
@@ -53,8 +55,16 @@ pub enum SubaddressType {
 }
 
 impl SubaddressType {
+    /// The `upper` method converts the variant name to `UPPERCASE` case using
+    /// [`convert_case::Case::Upper`].
+    #[tracing::instrument]
+    pub fn upper(&self) -> String {
+        self.to_string().to_case(convert_case::Case::Upper)
+    }
+
     /// The `abbreviate` method returns a String with the postal abbreviation of the subaddress
     /// type.
+    #[tracing::instrument]
     pub fn abbreviate(&self) -> String {
         let str = match self {
             SubaddressType::Apartment => "apt",
@@ -90,6 +100,7 @@ impl SubaddressType {
     /// Matches subaddress types in the
     /// data that observe the official postal contraction.  For subaddress types with a mix of abbreviations and
     /// alternative spellings, the `match_mixed` method will work better.
+    #[tracing::instrument]
     pub fn match_abbreviated(input: &str) -> Option<Self> {
         match input.to_uppercase().as_ref() {
             "APT" => Some(SubaddressType::Apartment),
@@ -125,69 +136,57 @@ impl SubaddressType {
     /// Deserialization function for subaddress types.  This works if all the subaddress types in the
     /// data observe the official postal contraction.  For subaddress types with a mix of abbreviations and
     /// alternative spellings, [`Self::match_mixed`] will work better.
+    #[tracing::instrument(skip_all)]
     pub fn deserialize_abbreviated<'de, D: Deserializer<'de>>(
         de: D,
     ) -> Result<Option<Self>, D::Error> {
-        let intermediate = Deserialize::deserialize(de)?;
+        let intermediate = serde::Deserialize::deserialize(de)?;
         Ok(Self::match_abbreviated(intermediate))
     }
 
     /// Matches the target data against novel spellings of valid subaddress types.  Add any missing spelling
     /// variants to the match statement.  Called by [`crate::Parser::subaddress_type`].
     /// Add additional variants to accommodate alternative abbreviations as needed.
+    #[tracing::instrument]
     pub fn match_mixed(input: &str) -> Option<Self> {
-        match input.to_uppercase().as_str() {
-            "APT" => Some(Self::Apartment),
-            "APARTMENT" => Some(Self::Apartment),
-            "BSMT" => Some(Self::Basement),
-            "BASEMENT" => Some(Self::Basement),
-            "BLDG" => Some(Self::Building),
-            "BUILDING" => Some(Self::Building),
-            "DEPT" => Some(Self::Department),
-            "DEPARTMENT" => Some(Self::Department),
-            "FL" => Some(Self::Floor),
-            "FLOOR" => Some(Self::Floor),
-            "FRNT" => Some(Self::Front),
-            "FRONT" => Some(Self::Front),
-            "HNGR" => Some(Self::Hanger),
-            "HANGER" => Some(Self::Hanger),
-            "KEY" => Some(Self::Key),
-            "LBBY" => Some(Self::Lobby),
-            "LOBBY" => Some(Self::Lobby),
-            "LOT" => Some(Self::Lot),
-            "LOWR" => Some(Self::Lower),
-            "LOWER" => Some(Self::Lower),
-            "OFC" => Some(Self::Office),
-            "OFFICE" => Some(Self::Office),
-            "PH" => Some(Self::Penthouse),
-            "PENTHOUSE" => Some(Self::Penthouse),
-            "PIER" => Some(Self::Pier),
-            "REAR" => Some(Self::Rear),
-            "RM" => Some(Self::Room),
-            "ROOM" => Some(Self::Room),
-            "SIDE" => Some(Self::Side),
-            "SLIP" => Some(Self::Slip),
-            "SPC" => Some(Self::Space),
-            "SPACE" => Some(Self::Space),
-            "STOP" => Some(Self::Stop),
-            "STE" => Some(Self::Suite),
-            "SUITE" => Some(Self::Suite),
-            "TRLR" => Some(Self::Trailer),
-            "TRAILER" => Some(Self::Trailer),
-            "UNIT" => Some(Self::Unit),
-            "UPPR" => Some(Self::Upper),
-            "UPPER" => Some(Self::Upper),
-            "REC" => Some(Self::Rec),
-            "LAUN" => Some(Self::Laundry),
-            "LAUNDRY" => Some(Self::Laundry),
-            _ => None,
+        let pascal = input.to_string().to_case(convert_case::Case::Pascal);
+        if let Ok(sub) = Self::from_str(&pascal) {
+            Some(sub)
+        } else {
+            Self::match_abbreviated(input)
         }
+        // } else if let Some(sub) = Self::match_abbreviated(input) {
+        //     Some(sub)
+        // } else {
+        //     None
+        // match input.to_uppercase().as_str() {
+        //     "APARTMENT" => Some(Self::Apartment),
+        //     "BASEMENT" => Some(Self::Basement),
+        //     "BUILDING" => Some(Self::Building),
+        //     "DEPARTMENT" => Some(Self::Department),
+        //     "FLOOR" => Some(Self::Floor),
+        //     "FRONT" => Some(Self::Front),
+        //     "HANGER" => Some(Self::Hanger),
+        //     "LOBBY" => Some(Self::Lobby),
+        //     "LOWER" => Some(Self::Lower),
+        //     "OFFICE" => Some(Self::Office),
+        //     "PENTHOUSE" => Some(Self::Penthouse),
+        //     "ROOM" => Some(Self::Room),
+        //     "SPACE" => Some(Self::Space),
+        //     "SUITE" => Some(Self::Suite),
+        //     "TRAILER" => Some(Self::Trailer),
+        //     "UPPER" => Some(Self::Upper),
+        //     "LAUNDRY" => Some(Self::Laundry),
+        //     _ => None,
+        // }
+        // }
     }
 
     /// The `deserialize_mixed_subaddress_type` function attempts to deserialize the input data into a
     /// `SubaddressType`.
+    #[tracing::instrument(skip_all)]
     pub fn deserialize_mixed<'de, D: Deserializer<'de>>(de: D) -> Result<Option<Self>, D::Error> {
-        let intermediate = Deserialize::deserialize(de)?;
+        let intermediate = serde::Deserialize::deserialize(de)?;
         Ok(Self::match_mixed(intermediate))
     }
 }

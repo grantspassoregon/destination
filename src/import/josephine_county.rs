@@ -1,9 +1,10 @@
 //! The `josephine_county` module contains data types for importing addresses from ECSO and
 //! Josephine County.
 use crate::{
-    deserialize_arcgis_data, from_csv, load_bin, save, to_csv, zero_floor, Address, AddressStatus,
-    Addresses, Point, Portable, State, StreetNamePostType, StreetNamePreDirectional,
-    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
+    deserialize_arcgis_data, from_csv, load_bin, save, to_csv, zero_floor, Address, AddressError,
+    AddressErrorKind, AddressStatus, Addresses, IntoBin, IntoCsv, Io, Point, Portable, State,
+    StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType,
+    StreetSeparator, SubaddressType, _from_csv, _load_bin, _save, _to_csv,
 };
 use aid::prelude::*;
 use derive_more::{Deref, DerefMut};
@@ -249,6 +250,33 @@ impl Portable<JosephineCountyAddresses2024> for JosephineCountyAddresses2024 {
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
         Ok(to_csv(&mut self.0, path.as_ref().into())?)
+    }
+}
+
+impl IntoBin<JosephineCountyAddresses2024> for JosephineCountyAddresses2024 {
+    fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        match _load_bin(path) {
+            Ok(records) => {
+                let decode: Self = bincode::deserialize(&records)?;
+                Ok(decode)
+            }
+            Err(source) => Err(AddressErrorKind::from(source).into()),
+        }
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
+        _save(self, path)
+    }
+}
+
+impl IntoCsv<JosephineCountyAddresses2024> for JosephineCountyAddresses2024 {
+    fn from_csv<P: AsRef<Path>>(path: P) -> Result<Self, Io> {
+        let records = _from_csv(path)?;
+        Ok(Self(records))
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Result<(), AddressError> {
+        _to_csv(&mut self.0, path.as_ref().into())
     }
 }
 
@@ -527,6 +555,33 @@ impl Portable<JosephineCountySpatialAddresses2024> for JosephineCountySpatialAdd
     }
 }
 
+impl IntoBin<JosephineCountySpatialAddresses2024> for JosephineCountySpatialAddresses2024 {
+    fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        match _load_bin(path) {
+            Ok(records) => {
+                let decode: Self = bincode::deserialize(&records)?;
+                Ok(decode)
+            }
+            Err(source) => Err(AddressErrorKind::from(source).into()),
+        }
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
+        _save(self, path)
+    }
+}
+
+impl IntoCsv<JosephineCountySpatialAddresses2024> for JosephineCountySpatialAddresses2024 {
+    fn from_csv<P: AsRef<Path>>(path: P) -> Result<Self, Io> {
+        let records = _from_csv(path)?;
+        Ok(Self(records))
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Result<(), AddressError> {
+        _to_csv(&mut self.0, path.as_ref().into())
+    }
+}
+
 /// The `JosephineCountyAddress` struct represents an address site point for Josephine County,
 /// prior to the schema adopted by the agency in April of 2024.
 #[derive(Clone, Debug, Default, PartialEq, PartialOrd, Deserialize, Serialize)]
@@ -770,6 +825,33 @@ impl Portable<JosephineCountyAddresses> for JosephineCountyAddresses {
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
         Ok(to_csv(&mut self.0, path.as_ref().into())?)
+    }
+}
+
+impl IntoBin<JosephineCountyAddresses> for JosephineCountyAddresses {
+    fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        match _load_bin(path) {
+            Ok(records) => {
+                let decode: Self = bincode::deserialize(&records)?;
+                Ok(decode)
+            }
+            Err(source) => Err(AddressErrorKind::from(source).into()),
+        }
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
+        _save(self, path)
+    }
+}
+
+impl IntoCsv<JosephineCountyAddresses> for JosephineCountyAddresses {
+    fn from_csv<P: AsRef<Path>>(path: P) -> Result<Self, Io> {
+        let records = _from_csv(path)?;
+        Ok(Self(records))
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Result<(), AddressError> {
+        _to_csv(&mut self.0, path.as_ref().into())
     }
 }
 
@@ -1052,5 +1134,32 @@ impl Portable<JosephineCountySpatialAddresses> for JosephineCountySpatialAddress
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
         Ok(to_csv(&mut self.0, path.as_ref().into())?)
+    }
+}
+
+impl IntoBin<JosephineCountySpatialAddresses> for JosephineCountySpatialAddresses {
+    fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        match _load_bin(path) {
+            Ok(records) => {
+                let decode: Self = bincode::deserialize(&records)?;
+                Ok(decode)
+            }
+            Err(source) => Err(AddressErrorKind::from(source).into()),
+        }
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
+        _save(self, path)
+    }
+}
+
+impl IntoCsv<JosephineCountySpatialAddresses> for JosephineCountySpatialAddresses {
+    fn from_csv<P: AsRef<Path>>(path: P) -> Result<Self, Io> {
+        let records = _from_csv(path)?;
+        Ok(Self(records))
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Result<(), AddressError> {
+        _to_csv(&mut self.0, path.as_ref().into())
     }
 }

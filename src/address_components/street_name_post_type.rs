@@ -1,6 +1,4 @@
-use derive_more::Display;
 use serde::de::Deserializer;
-use serde::{Deserialize, Serialize};
 
 /// The `StreetNamePostType` represents the street name post type of an address.  Acceptable post
 /// types include the list of recognized street suffix names in Appendix C1 of the United States
@@ -10,15 +8,17 @@ use serde::{Deserialize, Serialize};
     Copy,
     Clone,
     Debug,
-    Deserialize,
-    Serialize,
     PartialEq,
     Eq,
     Default,
     PartialOrd,
     Ord,
     Hash,
-    Display,
+    serde::Deserialize,
+    serde::Serialize,
+    derive_more::Display,
+    derive_more::FromStr,
+    strum::EnumIter,
 )]
 pub enum StreetNamePostType {
     ALLEY,
@@ -236,6 +236,7 @@ pub enum StreetNamePostType {
 impl StreetNamePostType {
     /// The `abbreviate` method returns the standard postal abbreviation for a street name post
     /// type.
+    #[tracing::instrument]
     pub fn abbreviate(&self) -> String {
         match self {
             Self::ALLEY => "ALY".to_string(),
@@ -447,6 +448,7 @@ impl StreetNamePostType {
 
     /// Matches the target data against novel spellings of valid post types.  Add any missing spelling
     /// variants to the match statement.
+    #[tracing::instrument]
     pub fn match_mixed(input: &str) -> Option<Self> {
         match input.to_uppercase().as_str() {
             "ALY" => Some(Self::ALLEY),
@@ -678,8 +680,9 @@ impl StreetNamePostType {
 
     /// Deserialization function for post type abbreviations.
     /// Calls [`Self::match_mixed`].
+    #[tracing::instrument(skip_all)]
     pub fn deserialize_mixed<'de, D: Deserializer<'de>>(de: D) -> Result<Option<Self>, D::Error> {
-        let intermediate = Deserialize::deserialize(de)?;
+        let intermediate = serde::Deserialize::deserialize(de)?;
         Ok(Self::match_mixed(intermediate))
     }
 }

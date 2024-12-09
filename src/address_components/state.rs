@@ -1,6 +1,4 @@
-use derive_more::Display;
 use serde::de::Deserializer;
-use serde::{Deserialize, Serialize};
 
 /// The `State` enum holds variants for state and territory names in the US used by the FAA.
 /// <https://www.faa.gov/air_traffic/publications/atpubs/cnt_html/appendix_a.html>
@@ -15,9 +13,11 @@ use serde::{Deserialize, Serialize};
     PartialOrd,
     Ord,
     Hash,
-    Deserialize,
-    Serialize,
-    Display,
+    serde::Deserialize,
+    serde::Serialize,
+    derive_more::Display,
+    derive_more::FromStr,
+    strum::EnumIter,
 )]
 pub enum State {
     Alabama,
@@ -83,6 +83,7 @@ pub enum State {
 impl State {
     /// The `abbreviate` method returns the two-character standard postal abbreviation for a state
     /// or territory.
+    #[tracing::instrument]
     pub fn abbreviate(&self) -> String {
         let abbr = match self {
             Self::Alabama => "AL",
@@ -148,6 +149,7 @@ impl State {
 
     /// The `match_abbreviated` method matches the `input` str against valid abbreviations for a US
     /// state or territory.
+    #[tracing::instrument]
     pub fn match_abbreviated(input: &str) -> Option<Self> {
         match input.to_lowercase().as_str() {
             "al" => Some(Self::Alabama),
@@ -215,15 +217,17 @@ impl State {
     /// abbreviation for a US state or territory to a variant of the `State` enum.
     /// Use this method when the input field for state is sanitized and failure to map to a variant
     /// is an error.
+    #[tracing::instrument(skip_all)]
     pub fn deserialize_abbreviated<'de, D: Deserializer<'de>>(
         de: D,
     ) -> Result<Option<Self>, D::Error> {
-        let intermediate = Deserialize::deserialize(de)?;
+        let intermediate = serde::Deserialize::deserialize(de)?;
         Ok(Self::match_abbreviated(intermediate))
     }
 
     /// The `match_mixed` method attempts to convert the str in `input` to a variant of the
     /// `State` enum.  As we encounter additional mappings of non-standard spellings to valid variants, we add them to the match statement here.
+    #[tracing::instrument]
     pub fn match_mixed(input: &str) -> Option<Self> {
         if let Some(state) = Self::match_abbreviated(input) {
             Some(state)
@@ -242,8 +246,9 @@ impl State {
     /// Use this method when the input field for state is not sanitized and failure to map to a variant
     /// is an acceptable or anticipated outcome.
     /// TODO: Eliminate unwrap.
+    #[tracing::instrument(skip_all)]
     pub fn deserialize_mixed<'de, D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
-        let intermediate = Deserialize::deserialize(de)?;
+        let intermediate = serde::Deserialize::deserialize(de)?;
         let result = Self::match_mixed(intermediate).unwrap();
         Ok(result)
     }

@@ -24,11 +24,12 @@ pub struct FireInspectionMatch {
 impl FireInspectionMatch {
     /// The `compare` method wraps [`MatchPartialRecord::compare`], taking the business address
     /// from the fire inspection and comparing it against a set of fully-specified addresses.
+    #[tracing::instrument(skip_all)]
     pub fn compare<T: Address + GeoPoint<Num = f64>>(
         inspection: &FireInspection,
         addresses: &[T],
     ) -> Self {
-        let record = MatchPartialRecord::compare(&inspection.address(), addresses);
+        let record = MatchPartialRecord::compare(inspection.address(), addresses);
         FireInspectionMatch {
             inspection: inspection.clone(),
             record,
@@ -144,7 +145,7 @@ impl FireInspectionMatchRecords {
 impl From<&FireInspectionMatch> for FireInspectionMatchRecords {
     fn from(inspection: &FireInspectionMatch) -> Self {
         let mut records = Vec::new();
-        let name = inspection.inspection().name();
+        let name = inspection.inspection().name().clone();
         let address_label = inspection.inspection().address().label();
         for record in inspection.record().iter() {
             records.push(FireInspectionMatchRecord {

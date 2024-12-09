@@ -1,8 +1,9 @@
 //! The `geo` module defines spatial address types, and implements traits from the `galileo` crate for these types.
 use crate::{
-    from_csv, load_bin, save, to_csv, Address, AddressDelta, AddressDeltas, AddressStatus,
-    Addresses, CommonAddress, Portable, State, StreetNamePostType, StreetNamePreDirectional,
-    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
+    from_csv, load_bin, save, to_csv, Address, AddressDelta, AddressDeltas, AddressError,
+    AddressErrorKind, AddressStatus, Addresses, CommonAddress, IntoBin, Portable, State,
+    StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType,
+    StreetSeparator, SubaddressType, _load_bin, _save,
 };
 use aid::prelude::Clean;
 use derive_more::{Deref, DerefMut};
@@ -263,6 +264,22 @@ pub struct GeoAddresses(Vec<GeoAddress>);
 
 impl Addresses<GeoAddress> for GeoAddresses {}
 
+impl IntoBin<GeoAddress> for GeoAddress {
+    fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        match _load_bin(path) {
+            Ok(records) => {
+                let decode: Self = bincode::deserialize(&records)?;
+                Ok(decode)
+            }
+            Err(source) => Err(AddressErrorKind::from(source).into()),
+        }
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
+        _save(self, path)
+    }
+}
+
 impl Portable<GeoAddresses> for GeoAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
         let records = load_bin(path)?;
@@ -479,6 +496,22 @@ impl<T: Address + Point + Clone> From<&T> for AddressPoint {
 pub struct AddressPoints(Vec<AddressPoint>);
 
 impl Addresses<AddressPoint> for AddressPoints {}
+
+impl IntoBin<AddressPoint> for AddressPoint {
+    fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        match _load_bin(path) {
+            Ok(records) => {
+                let decode: Self = bincode::deserialize(&records)?;
+                Ok(decode)
+            }
+            Err(source) => Err(AddressErrorKind::from(source).into()),
+        }
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
+        _save(self, path)
+    }
+}
 
 impl Portable<AddressPoints> for AddressPoints {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
@@ -719,6 +752,22 @@ impl<T: Address + Point + GeoPoint<Num = f64> + Clone> From<&T> for SpatialAddre
 pub struct SpatialAddresses(Vec<SpatialAddress>);
 
 impl Addresses<SpatialAddress> for SpatialAddresses {}
+
+impl IntoBin<SpatialAddresses> for SpatialAddresses {
+    fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        match _load_bin(path) {
+            Ok(records) => {
+                let decode: Self = bincode::deserialize(&records)?;
+                Ok(decode)
+            }
+            Err(source) => Err(AddressErrorKind::from(source).into()),
+        }
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
+        _save(self, path)
+    }
+}
 
 impl Portable<SpatialAddresses> for SpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {

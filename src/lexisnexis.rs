@@ -1,5 +1,8 @@
 //! The `lexisnexis` module produces address range reports for the LexisNexis dispatch service.
-use crate::{from_csv, load_bin, save, to_csv, Address, Addresses, Portable};
+use crate::{
+    from_csv, load_bin, save, to_csv, Address, AddressError, AddressErrorKind, Addresses, Builder,
+    IntoBin, IntoCsv, Io, Portable, _from_csv, _load_bin, _save, _to_csv,
+};
 use aid::prelude::*;
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
@@ -51,6 +54,80 @@ impl LexisNexisItemBuilder {
     /// *build*.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// The `build` method converts a `LexisNexisItemBuilder` into a [`LexisNexisItem`].  Returns
+    /// an error if a required field is missing, or set to None when a value is required.
+    pub fn _build(self) -> Result<LexisNexisItem, Builder> {
+        let target = "LexisNexisItem".to_string();
+        let address_number_from = if let Some(num) = self.address_number_from {
+            num
+        } else {
+            tracing::warn!("Missing address number from.");
+            let error = Builder::new(
+                "address_number_from field is None".to_string(),
+                target.clone(),
+            );
+            return Err(error);
+        };
+        let address_number_to = if let Some(num) = self.address_number_to {
+            num
+        } else {
+            tracing::warn!("Missing address number to.");
+            let error = Builder::new(
+                "address_number_to field is None".to_string(),
+                target.clone(),
+            );
+            return Err(error);
+        };
+        let street_name = if let Some(s) = self.street_name {
+            s
+        } else {
+            tracing::warn!("Missing street name.");
+            let error = Builder::new("street_name field is None".to_string(), target.clone());
+            return Err(error);
+        };
+        let street_name_post_type = if let Some(s) = self.street_name_post_type {
+            s
+        } else {
+            tracing::warn!("Street name post type missing.");
+            let error = Builder::new(
+                "street_name_post_type field is None".to_string(),
+                target.clone(),
+            );
+            return Err(error);
+        };
+        let postal_community = if let Some(s) = self.postal_community {
+            s
+        } else {
+            tracing::warn!("Postal community missing.");
+            let error = Builder::new("postal_community field is None".to_string(), target.clone());
+            return Err(error);
+        };
+        let zip_code = if let Some(num) = self.zip_code {
+            num
+        } else {
+            tracing::warn!("Zip code missing.");
+            let error = Builder::new("zip_code field is None".to_string(), target.clone());
+            return Err(error);
+        };
+        Ok(LexisNexisItem {
+            address_number_from,
+            address_number_to,
+            street_name_pre_directional: self.street_name_pre_directional,
+            street_name,
+            street_name_post_type,
+            street_name_post_directional: self.street_name_post_directional,
+            postal_community,
+            beat: self.beat,
+            area: self.area,
+            district: self.district,
+            zone: self.zone,
+            zip_code,
+            commonplace: self.commonplace,
+            address_number: self.address_number,
+            id: uuid::Uuid::new_v4(),
+        })
     }
 
     /// The `build` method converts a `LexisNexisItemBuilder` into a [`LexisNexisItem`].  Returns
@@ -259,6 +336,60 @@ impl LexisNexis {
         }
         Ok(LexisNexis(records))
     }
+
+    /// The `from_addresses` method creates a [`LexisNexis`] struct from a set of addresses to
+    /// include in the range selection `include`, and a set of addresses to exclude from the range
+    /// selection `exclude`.
+    pub fn _from_addresses<T: Address + Clone + Send + Sync, U: Addresses<T>>(
+        include: &U,
+        exclude: &U,
+    ) -> Result<LexisNexis, Builder> {
+        // List of unique street names processed so far.
+        let mut seen = HashSet::new();
+        // Vector to hold Lexis Nexis results.
+        let mut records = Vec::new();
+        // For each address in the inclusion list...
+        for address in include.iter() {
+            // Get the complete street name.
+            let comp_street = address.complete_street_name(false);
+            // If comp_street is a new street name...
+            if !seen.contains(&comp_street) {
+                // Add the new name to the list of seen names.
+                seen.insert(comp_street.clone());
+                // Obtain mutable clone of include group.
+                let mut inc = include.clone();
+                // Filter include group by current street name.
+                inc.filter_field("complete_street_name", &comp_street);
+                // Obtain mutable clone of exclude group.
+                let mut exl = exclude.clone();
+                // Filter exclude group by current street name.
+                exl.filter_field("complete_street_name", &comp_street);
+                tracing::trace!(
+                    "After street name filter, inc: {}, exl: {}",
+                    inc.len(),
+                    exl.len()
+                );
+                let items = LexisNexisRange::from_addresses(&inc, &exl);
+                let ranges = items.ranges();
+                for rng in ranges {
+                    let mut builder = LexisNexisItemBuilder::new();
+                    builder.address_number_from = Some(rng.0);
+                    builder.address_number_to = Some(rng.1);
+                    builder.street_name_pre_directional = address.directional_abbreviated();
+                    builder.street_name = Some(address.common_street_name().clone());
+                    if let Some(street_type) = address.street_type() {
+                        builder.street_name_post_type = Some(street_type.abbreviate());
+                    }
+                    builder.postal_community = Some(address.postal_community().clone());
+                    builder.zip_code = Some(address.zip());
+                    if let Ok(built) = builder._build() {
+                        records.push(built);
+                    }
+                }
+            }
+        }
+        Ok(LexisNexis(records))
+    }
 }
 
 impl Portable<LexisNexis> for LexisNexis {
@@ -279,6 +410,33 @@ impl Portable<LexisNexis> for LexisNexis {
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
         Ok(to_csv(&mut self.0, path.as_ref().into())?)
+    }
+}
+
+impl IntoBin<LexisNexis> for LexisNexis {
+    fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        match _load_bin(path) {
+            Ok(records) => {
+                let decode: Self = bincode::deserialize(&records)?;
+                Ok(decode)
+            }
+            Err(source) => Err(AddressErrorKind::from(source).into()),
+        }
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
+        _save(self, path)
+    }
+}
+
+impl IntoCsv<LexisNexis> for LexisNexis {
+    fn from_csv<P: AsRef<Path>>(path: P) -> Result<Self, Io> {
+        let records = _from_csv(path)?;
+        Ok(Self(records))
+    }
+
+    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Result<(), AddressError> {
+        _to_csv(&mut self.0, path.as_ref().into())
     }
 }
 

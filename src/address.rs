@@ -1,8 +1,8 @@
 //! The `address` module defines the library data standard for a valid address, and provides
 //! implementation blocks to convert data from import types to the valid address format.
 use crate::{
-    from_csv, load_bin, save, to_csv, AddressMatch, AddressStatus, FireInspections, LexisNexis,
-    Mismatch, Parser, Point, Portable, PostalCommunity, State, StreetNamePostType,
+    from_csv, load_bin, save, to_csv, AddressMatch, AddressStatus, Builder, FireInspections,
+    LexisNexis, Mismatch, Parser, Point, Portable, PostalCommunity, State, StreetNamePostType,
     StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType, StreetSeparator,
     SubaddressType,
 };
@@ -191,15 +191,15 @@ pub trait Address {
             name.push(' ');
         }
         if let Some(modifier) = self.street_name_pre_modifier() {
-            name.push_str(modifier.label().as_str());
+            name.push_str(modifier.upper().as_str());
             name.push(' ');
         }
         if let Some(pre_type) = self.street_name_pre_type() {
-            name.push_str(pre_type.label().as_str());
+            name.push_str(pre_type.upper().as_str());
             name.push(' ');
         }
         if let Some(separator) = self.street_name_separator() {
-            name.push_str(separator.label().as_str());
+            name.push_str(separator.upper().as_str());
             name.push(' ');
         }
         name.push_str(&self.street_name().to_string());
@@ -223,15 +223,15 @@ pub trait Address {
     fn common_street_name(&self) -> String {
         let mut name = String::new();
         if let Some(modifier) = self.street_name_pre_modifier() {
-            name.push_str(modifier.label().as_str());
+            name.push_str(modifier.upper().as_str());
             name.push(' ');
         }
         if let Some(pre_type) = self.street_name_pre_type() {
-            name.push_str(pre_type.label().as_str());
+            name.push_str(pre_type.upper().as_str());
             name.push(' ');
         }
         if let Some(separator) = self.street_name_separator() {
-            name.push_str(separator.label().as_str());
+            name.push_str(separator.upper().as_str());
             name.push(' ');
         }
         name.push_str(&self.street_name().to_string());
@@ -545,6 +545,13 @@ where
     #[tracing::instrument(skip_all)]
     fn lexis_nexis(&self, other: &Self) -> Clean<LexisNexis> {
         LexisNexis::from_addresses(self, other)
+    }
+
+    /// The `LexisNexis` method produces the LexisNexis table showing dispatch jurisdiction for
+    /// address ranges within the City of Grants Pass.
+    #[tracing::instrument(skip_all)]
+    fn _lexis_nexis(&self, other: &Self) -> Result<LexisNexis, Builder> {
+        LexisNexis::_from_addresses(self, other)
     }
 
     /// The `standardize` method takes county address naming conventions and converts them to city
@@ -994,15 +1001,15 @@ impl PartialAddress {
         }
         if let Some(modifier) = self.pre_modifier() {
             address.push(' ');
-            address.push_str(&modifier.label());
+            address.push_str(&modifier.upper());
         }
         if let Some(pre_type) = self.pre_type() {
             address.push(' ');
-            address.push_str(&pre_type.label());
+            address.push_str(&pre_type.upper());
         }
         if let Some(separator) = self.separator() {
             address.push(' ');
-            address.push_str(&separator.label());
+            address.push_str(&separator.upper());
         }
         if let Some(street_name) = self.street_name() {
             address.push(' ');
@@ -1036,7 +1043,7 @@ impl PartialAddress {
         let mut address = self.label();
         if let Some(post_comm) = self.postal_community {
             address.push_str(", ");
-            address.push_str(&post_comm.label());
+            address.push_str(&post_comm.upper());
         }
         if let Some(state) = self.state_name {
             address.push_str(", ");
@@ -1067,15 +1074,15 @@ impl PartialAddress {
         }
         if let Some(modifier) = self.pre_modifier() {
             address.push(' ');
-            address.push_str(&modifier.label());
+            address.push_str(&modifier.upper());
         }
         if let Some(pre_type) = self.pre_type() {
             address.push(' ');
-            address.push_str(&pre_type.label());
+            address.push_str(&pre_type.upper());
         }
         if let Some(separator) = self.separator() {
             address.push(' ');
-            address.push_str(&separator.label());
+            address.push_str(&separator.upper());
         }
         if let Some(street_name) = self.street_name() {
             address.push(' ');
@@ -1249,7 +1256,7 @@ impl From<&FireInspections> for PartialAddresses {
         PartialAddresses::from(
             fire_inspections
                 .iter()
-                .map(|r| r.address())
+                .map(|r| r.address().clone())
                 .collect::<Vec<PartialAddress>>(),
         )
     }

@@ -544,7 +544,7 @@ fn sort_fire_inspections() -> Clean<()> {
 fn load_businesses() -> Clean<()> {
     let path = std::env::current_dir()?;
     let file_path = path.join("data/business_points.csv");
-    let data = Businesses::from_csv(file_path)?;
+    let data = Businesses::from_raw_csv(file_path)?;
     assert_eq!(
         Some("C".to_owned()),
         data[18].address().subaddress_identifier()

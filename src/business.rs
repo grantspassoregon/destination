@@ -1,8 +1,8 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
 use crate::{
-    deserialize_phone_number, from_csv, to_csv, Address, MatchStatus, Parser, StreetNamePostType,
-    StreetNamePreDirectional,
+    deserialize_phone_number, from_csv, to_csv, Address, AddressError, IntoCsv, Io, MatchStatus,
+    Nom, Parser, StreetNamePostType, StreetNamePreDirectional, _from_csv, _to_csv,
 };
 use aid::prelude::Clean;
 use derive_more::{Deref, DerefMut};
@@ -301,6 +301,17 @@ impl BusinessMatchRecords {
     }
 }
 
+impl IntoCsv<BusinessMatchRecords> for BusinessMatchRecords {
+    fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
+        let records = _from_csv(path)?;
+        Ok(Self(records))
+    }
+
+    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressError> {
+        _to_csv(&mut self.0, path.as_ref().into())
+    }
+}
+
 /// The `BusinessLicense` struct is designed to deserialize CSV data produced by querying the
 /// EnerGov SQL database for active business licenses.  If the structure of the SQL query changes,
 /// this function will need to change to match the resulting fields in the CSV.
@@ -504,6 +515,34 @@ impl BusinessLicense {
         }
         Ok(())
     }
+
+    /// EnerGov has a single field for entering a subaddress id, and staff sometimes include the
+    /// subaddress type.  This method strips the type information from the id, so we can compare
+    /// the id to addresses in the city.
+    pub fn _detype_subaddress(&mut self) -> Result<(), Nom> {
+        if let Some(val) = &self.subaddress_identifier {
+            match Parser::subaddress_type(val) {
+                Ok((rem, _)) => match Parser::subaddress_id(rem) {
+                    Ok((_, element)) => {
+                        if let Some(id) = element {
+                            self.subaddress_identifier = Some(id.to_string());
+                        }
+                    }
+                    Err(source) => {
+                        let description = format!("parsing subaddress id from {}", rem);
+                        let source = Nom::new(description, source);
+                        return Err(source);
+                    }
+                },
+                Err(source) => {
+                    let description = format!("parsing subaddress type from {}", val);
+                    let source = Nom::new(description, source);
+                    return Err(source);
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 /// The `BusinessLicenses` struct holds a `records` field containing a vector of type
@@ -552,5 +591,25 @@ impl BusinessLicenses {
             .map(BusinessLicense::detype_subaddress)
             .for_each(drop);
         Ok(())
+    }
+
+    /// The `detype_subaddresses` method calls the [`BusinessLicense::detype_subaddress`] method on each record in
+    /// `records`.
+    pub fn _detype_subaddresses(&mut self) -> Result<(), Nom> {
+        self.iter_mut()
+            .map(BusinessLicense::_detype_subaddress)
+            .for_each(drop);
+        Ok(())
+    }
+}
+
+impl IntoCsv<BusinessLicenses> for BusinessLicenses {
+    fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
+        let records = _from_csv(path)?;
+        Ok(Self(records))
+    }
+
+    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressError> {
+        _to_csv(&mut self.0, path.as_ref().into())
     }
 }
