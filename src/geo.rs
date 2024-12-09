@@ -1,11 +1,9 @@
 //! The `geo` module defines spatial address types, and implements traits from the `galileo` crate for these types.
 use crate::{
-    from_csv, load_bin, save, to_csv, Address, AddressDelta, AddressDeltas, AddressError,
-    AddressErrorKind, AddressStatus, Addresses, CommonAddress, IntoBin, Portable, State,
-    StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType,
-    StreetSeparator, SubaddressType, _load_bin, _save,
+    Address, AddressDelta, AddressDeltas, AddressError, AddressErrorKind, AddressStatus, Addresses,
+    CommonAddress, IntoBin, State, StreetNamePostType, StreetNamePreDirectional,
+    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType, _load_bin, _save,
 };
-use aid::prelude::Clean;
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::cartesian::CartesianPoint2d;
 use galileo::galileo_types::geo::GeoPoint;
@@ -280,27 +278,6 @@ impl IntoBin<GeoAddress> for GeoAddress {
     }
 }
 
-impl Portable<GeoAddresses> for GeoAddresses {
-    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = load_bin(path)?;
-        let decode: Self = bincode::deserialize(&records[..])?;
-        Ok(decode)
-    }
-
-    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        save(self, path)
-    }
-
-    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = from_csv(path)?;
-        Ok(Self(records))
-    }
-
-    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.0, path.as_ref().into())?)
-    }
-}
-
 impl<T: Address + GeoPoint<Num = f64> + Clone + Sized> From<&[T]> for GeoAddresses {
     fn from(addresses: &[T]) -> Self {
         let records = addresses
@@ -510,27 +487,6 @@ impl IntoBin<AddressPoint> for AddressPoint {
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
         _save(self, path)
-    }
-}
-
-impl Portable<AddressPoints> for AddressPoints {
-    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = load_bin(path)?;
-        let decode: Self = bincode::deserialize(&records[..])?;
-        Ok(decode)
-    }
-
-    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        save(self, path)
-    }
-
-    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = from_csv(path)?;
-        Ok(Self(records))
-    }
-
-    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 
@@ -766,27 +722,6 @@ impl IntoBin<SpatialAddresses> for SpatialAddresses {
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
         _save(self, path)
-    }
-}
-
-impl Portable<SpatialAddresses> for SpatialAddresses {
-    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = load_bin(path)?;
-        let decode: Self = bincode::deserialize(&records[..])?;
-        Ok(decode)
-    }
-
-    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        save(self, path)
-    }
-
-    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = from_csv(path)?;
-        Ok(Self(records))
-    }
-
-    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.0, path.as_ref().into())?)
     }
 }
 

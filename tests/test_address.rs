@@ -1,11 +1,10 @@
 use address::{
-    from_csv, Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
+    Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
     FireInspectionMatchRecords, FireInspections, GeoAddresses, GrantsPassAddresses,
-    GrantsPassSpatialAddresses, JosephineCountyAddresses, MatchRecords, Parser, PartialAddress,
-    Portable, PostalCommunity, SpatialAddresses, StreetNamePostType, StreetNamePreDirectional,
-    SubaddressType,
+    GrantsPassSpatialAddresses, IntoBin, IntoCsv, Io, JosephineCountyAddresses, MatchRecords, Nom,
+    Parser, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
+    StreetNamePreDirectional, SubaddressType, _from_csv,
 };
-use aid::prelude::*;
 use test_log::test;
 use tracing::{info, trace};
 
@@ -35,7 +34,7 @@ struct AddressSample {
 
 #[test]
 // Loads city addresses and prints the length
-fn load_city_addresses() -> Clean<()> {
+fn load_city_addresses() -> anyhow::Result<()> {
     trace!("Deserializing city addresses from a csv file.");
     let file = "data/city_addresses_20240513.csv";
     let addresses = GrantsPassAddresses::from_csv(file)?;
@@ -61,7 +60,7 @@ fn load_city_addresses() -> Clean<()> {
 
 // Load JosephineCountyAddresses type
 #[test]
-fn load_county_addresses() -> Clean<()> {
+fn load_county_addresses() -> anyhow::Result<()> {
     trace!("Deserializing county addresses from a csv file.");
     let file = "data/county_addresses_20240226.csv";
     let addresses = JosephineCountyAddresses::from_csv(file)?;
@@ -72,7 +71,7 @@ fn load_county_addresses() -> Clean<()> {
 
 // Load city addresses as GeoAddresses
 #[test]
-fn load_geo_addresses() -> Clean<()> {
+fn load_geo_addresses() -> anyhow::Result<()> {
     let file = "data/city_addresses_20240513.csv";
     let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
     let geo_addresses = GeoAddresses::from(&addresses[..]);
@@ -119,7 +118,7 @@ fn load_geo_addresses() -> Clean<()> {
 // }
 
 #[test]
-fn read_bus_licenses() -> Result<(), std::io::Error> {
+fn read_bus_licenses() -> Result<(), Io> {
     let file = "data/active_business_licenses.csv";
     let licenses = BusinessLicenses::from_csv(file)?;
     info!("Business licenses loaded: {} entries.", licenses.len());
@@ -155,7 +154,7 @@ fn read_bus_licenses() -> Result<(), std::io::Error> {
 }
 
 #[test]
-fn match_city_address() -> Clean<()> {
+fn match_city_address() -> anyhow::Result<()> {
     let city_path = "data/addresses.data";
     let county_path = "data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
@@ -169,7 +168,7 @@ fn match_city_address() -> Clean<()> {
 }
 
 #[test]
-fn match_business_addresses() -> Clean<()> {
+fn match_business_addresses() -> anyhow::Result<()> {
     let business_path = "data/business_licenses_20240520.csv";
     let city_path = "data/city_addresses_20240513.csv";
     let business_addresses = BusinessLicenses::from_csv(business_path)?;
@@ -207,7 +206,7 @@ fn match_business_addresses() -> Clean<()> {
 // }
 
 #[test]
-fn match_city_addresses() -> Clean<()> {
+fn match_city_addresses() -> anyhow::Result<()> {
     let city_path = "data/addresses.data";
     let county_path = "data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
@@ -218,7 +217,7 @@ fn match_city_addresses() -> Clean<()> {
 }
 
 #[test]
-fn filter_status() -> Clean<()> {
+fn filter_status() -> anyhow::Result<()> {
     let city_path = "data/addresses.data";
     let county_path = "data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
@@ -232,7 +231,7 @@ fn filter_status() -> Clean<()> {
 }
 
 #[test]
-fn filter_missing() -> Clean<()> {
+fn filter_missing() -> anyhow::Result<()> {
     let city_path = "data/addresses.data";
     let county_path = "data/county_addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
@@ -418,7 +417,7 @@ fn subaddress_identifiers_parser() {
 }
 
 #[test]
-fn address_parser() -> Clean<()> {
+fn address_parser() -> anyhow::Result<()> {
     let a1 = "1002 RAMSEY AVE, GRANTS PASS";
     let a2 = "1012 NW 6TH ST";
     let a3 = "1035 NE 6TH ST #B, GRANTS PASS";
@@ -496,7 +495,7 @@ fn address_parser() -> Clean<()> {
 
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
-fn load_fire_inspections() -> Clean<()> {
+fn load_fire_inspections() -> anyhow::Result<()> {
     let file_path = "p:/fire_inspection.csv";
     let fire = FireInspections::from_csv(file_path)?;
     info!("First address: {:?}", fire[0]);
@@ -525,7 +524,7 @@ fn load_fire_inspections() -> Clean<()> {
 
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
-fn sort_fire_inspections() -> Clean<()> {
+fn sort_fire_inspections() -> anyhow::Result<()> {
     let file_path = "p:/fire_inspections_matched.csv";
     let compared = FireInspectionMatchRecords::from_csv(file_path)?;
     let mut matching = compared.clone();
@@ -534,14 +533,14 @@ fn sort_fire_inspections() -> Clean<()> {
     divergent.filter("divergent");
     let mut missing = compared.clone();
     missing.filter("missing");
-    matching.to_csv("p:/fire_inspections_matching.csv".into())?;
-    divergent.to_csv("p:/fire_inspections_divergent.csv".into())?;
-    missing.to_csv("p:/fire_inspections_missing.csv".into())?;
+    matching.to_csv("p:/fire_inspections_matching.csv")?;
+    divergent.to_csv("p:/fire_inspections_divergent.csv")?;
+    missing.to_csv("p:/fire_inspections_missing.csv")?;
     Ok(())
 }
 
 #[test]
-fn load_businesses() -> Clean<()> {
+fn load_businesses() -> anyhow::Result<()> {
     let path = std::env::current_dir()?;
     let file_path = path.join("data/business_points.csv");
     let data = Businesses::from_raw_csv(file_path)?;
@@ -565,14 +564,18 @@ fn load_businesses() -> Clean<()> {
 
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
-fn parse_address_sample() -> Clean<()> {
+fn parse_address_sample() -> anyhow::Result<()> {
     let path = std::env::current_dir()?;
     let file_path = path.join("data/address_sample.csv");
-    let samples: Vec<AddressSample> = from_csv(file_path)?;
+    let samples: Vec<AddressSample> = _from_csv(file_path)?;
     for sample in samples {
-        let (_, address) = Parser::address(&sample.address)?;
-        tracing::info!("{}", address.label());
-        tracing::info!("{}", address.mailing());
+        match Parser::address(&sample.address) {
+            Ok((_, address)) => {
+                tracing::info!("{}", address.label());
+                tracing::info!("{}", address.mailing());
+            }
+            Err(source) => return Err(Nom::new(sample.address.clone(), source).into()),
+        }
     }
     Ok(())
 }
@@ -580,17 +583,21 @@ fn parse_address_sample() -> Clean<()> {
 // Checks that city address labels parse back to their parent address
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
-fn parse_city_address() -> Clean<()> {
+fn parse_city_address() -> anyhow::Result<()> {
     let city_path = "data/addresses.data";
     let city_addresses = SpatialAddresses::load(city_path)?;
     for sample in city_addresses.iter() {
         // if sample.street_name().as_str() == "GARDEN VALLEY" {
         let label = Address::label(sample);
-        let (_, address) = Parser::address(&label)?;
-        let address_label = address.label();
-        if label != address_label {
-            tracing::info!("{}", label);
-            tracing::info!("{}", address_label);
+        match Parser::address(&label) {
+            Ok((_, address)) => {
+                let address_label = address.label();
+                if label != address_label {
+                    tracing::info!("{}", label);
+                    tracing::info!("{}", address_label);
+                }
+            }
+            Err(source) => return Err(Nom::new(label.clone(), source).into()),
         }
         // }
         // assert_eq!(label, address.label());
@@ -601,7 +608,7 @@ fn parse_city_address() -> Clean<()> {
 // Checks that county address labels parse back to their parent address
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
-fn parse_county_address() -> Clean<()> {
+fn parse_county_address() -> anyhow::Result<()> {
     let county_path = "data/county_addresses.data";
     let mut county_addresses = SpatialAddresses::load(county_path)?;
     tracing::info!("Standardizing county addresses.");
@@ -610,40 +617,41 @@ fn parse_county_address() -> Clean<()> {
     for sample in county_addresses.iter() {
         // if sample.street_name().as_str() == "REDWOOD" && sample.number() == 3345 {
         let label = Address::label(sample);
-        let (_, mut address) = Parser::address(&label)?;
-        address.standardize();
-        let address_label = address.label();
-        if label != address_label {
-            // tracing::info!("Street name: {:?}", sample.street_name());
-            // tracing::info!("Street directional: {:?}", sample.directional());
-            tracing::info!("OG Address: {:?}", sample);
-            tracing::info!("Parsed Address: {:?}", address);
-            // Native label
-            tracing::info!("{}", label);
-            // Parsed label
-            tracing::info!("{}", address_label);
+        match Parser::address(&label) {
+            Ok((_, mut address)) => {
+                address.standardize();
+                let address_label = address.label();
+                if label != address_label {
+                    // tracing::info!("Street name: {:?}", sample.street_name());
+                    // tracing::info!("Street directional: {:?}", sample.directional());
+                    tracing::info!("OG Address: {:?}", sample);
+                    tracing::info!("Parsed Address: {:?}", address);
+                    // Native label
+                    tracing::info!("{}", label);
+                    // Parsed label
+                    tracing::info!("{}", address_label);
+                }
+            }
+            Err(source) => return Err(Nom::new(label.clone(), source).into()),
         }
-        // tracing::info!("{:#?}", sample);
-        // }
-        // assert_eq!(label, address.label());
     }
     Ok(())
 }
 
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
-fn business_mailing() -> Clean<()> {
+fn business_mailing() -> anyhow::Result<()> {
     let situs = "data/business_licenses_20240520.csv";
     let situs = BusinessLicenses::from_csv(situs)?;
     info!("Business licenses loaded: {} entries.", situs.len());
     let mut situs = situs.deduplicate();
-    situs.detype_subaddresses()?;
+    situs._detype_subaddresses()?;
     info!("Business licenses deduplicated: {} entries.", situs.len());
     let mailing = "c:/users/erose/documents/business_licenses_mailing_20240530.csv";
     let mailing = BusinessLicenses::from_csv(mailing)?;
     info!("Business licenses loaded: {} entries.", mailing.len());
     let mut mailing = mailing.deduplicate();
-    mailing.detype_subaddresses()?;
+    mailing._detype_subaddresses()?;
     info!("Business licenses deduplicated: {} entries.", mailing.len());
 
     let mut mail = Vec::new();

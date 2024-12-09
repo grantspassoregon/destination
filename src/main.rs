@@ -1,14 +1,13 @@
 use address::{
     trace_init, Addresses, BusinessLicenses, BusinessMatchRecords, Cli, CommonAddresses,
-    GeoAddresses, GrantsPassAddresses, GrantsPassSpatialAddresses, JosephineCountyAddresses,
-    JosephineCountyAddresses2024, JosephineCountySpatialAddresses2024, LexisNexis,
-    MatchPartialRecords, MatchRecords, Point, Portable, SpatialAddress, SpatialAddresses,
+    GeoAddresses, GrantsPassAddresses, GrantsPassSpatialAddresses, IntoBin, IntoCsv,
+    JosephineCountyAddresses, JosephineCountyAddresses2024, JosephineCountySpatialAddresses2024,
+    LexisNexis, MatchPartialRecords, MatchRecords, Point, SpatialAddress, SpatialAddresses,
 };
-use aid::prelude::*;
 use clap::Parser;
 use tracing::{error, info, trace, warn};
 
-fn main() -> Clean<()> {
+fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     trace_init();
 
@@ -143,7 +142,7 @@ fn main() -> Clean<()> {
                 "Exclusion records read: {} entries.",
                 target_addresses.len()
             );
-            let mut lx = LexisNexis::from_addresses(&source_addresses, &target_addresses)?;
+            let mut lx = LexisNexis::_from_addresses(&source_addresses, &target_addresses)?;
             lx.to_csv(cli.output)?;
         }
         "save" => {
@@ -253,7 +252,7 @@ fn main() -> Clean<()> {
             let source_addresses = BusinessLicenses::from_csv(cli.source.clone())?;
             info!("Source records read: {} entries.", source_addresses.len());
             let mut source_addresses = source_addresses.deduplicate();
-            source_addresses.detype_subaddresses()?;
+            source_addresses._detype_subaddresses()?;
             info!(
                 "Records deduplicated: {} remaining.",
                 source_addresses.len()

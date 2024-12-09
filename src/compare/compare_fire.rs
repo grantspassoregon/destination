@@ -1,7 +1,7 @@
 //!  The `compare_fire` module implements address matching and comparison for Fire Inspections.
 use crate::{
-    from_csv, to_csv, Address, FireInspection, FireInspections, MatchPartialRecord,
-    MatchPartialRecords, MatchStatus,
+    Address, AddressErrorKind, FireInspection, FireInspections, IntoCsv, Io, MatchPartialRecord,
+    MatchPartialRecords, MatchStatus, _from_csv, _to_csv,
 };
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
@@ -117,18 +117,11 @@ impl FireInspectionMatchRecord {
 pub struct FireInspectionMatchRecords(Vec<FireInspectionMatchRecord>);
 
 impl FireInspectionMatchRecords {
-    /// Writes the contents of the struct to a csv file at location `title`.
-    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        to_csv(self, title)?;
-        Ok(())
-    }
-
-    /// Reads the contents of the struct from a csv file at location `path`.
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let records = from_csv(path)?;
-        Ok(FireInspectionMatchRecords(records))
-    }
-
+    ///// Read records from a csv file at `path`.
+    //pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
+    //    let records = _from_csv(path)?;
+    //    Ok(Self(records))
+    //}
     /// The `filter` method returns the subset of records that match the filter.  Current values
     /// for the `filter` field include "missing", "divergent", "matching", which filter by address
     /// match status.
@@ -139,6 +132,17 @@ impl FireInspectionMatchRecords {
             "matching" => self.retain(|r| r.status() == MatchStatus::Matching),
             _ => info!("Invalid filter provided."),
         }
+    }
+}
+
+impl IntoCsv<FireInspectionMatchRecords> for FireInspectionMatchRecords {
+    fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
+        let records = _from_csv(path)?;
+        Ok(Self(records))
+    }
+
+    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
+        _to_csv(&mut self.0, path.as_ref().into())
     }
 }
 

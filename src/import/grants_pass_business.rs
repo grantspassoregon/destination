@@ -1,10 +1,9 @@
 //! The `grants_pass_business` module contains data types for importing business license reports
 //! for the City of Grants Pass.
 use crate::{
-    from_csv, AddressError, AddressErrorKind, IntoBin, IntoCsv, Io, Parser, PartialAddress,
-    _from_csv, _load_bin, _save, _to_csv,
+    AddressError, AddressErrorKind, IntoBin, IntoCsv, Io, Nom, Parser, PartialAddress, _from_csv,
+    _load_bin, _save, _to_csv,
 };
-use aid::prelude::*;
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
 
@@ -36,12 +35,6 @@ pub struct BusinessRaw {
 pub struct BusinessesRaw(Vec<BusinessRaw>);
 
 impl BusinessesRaw {
-    /// Writes the contents of the struct to a csv file at location `path`.
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let records = from_csv(path)?;
-        Ok(BusinessesRaw(records))
-    }
-
     /// Writes the contents of the struct to a csv file at location `path`.
     pub fn _from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
         let records = _from_csv(path)?;
@@ -154,7 +147,7 @@ impl Business {
 }
 
 impl TryFrom<BusinessRaw> for Business {
-    type Error = Bandage;
+    type Error = Nom;
 
     // The `try_from` method does the heavy lifting converting a [`BusinessRaw`] struct to a
     // [`Business`] type.  Errors if the address parsing fails.
@@ -178,7 +171,7 @@ impl TryFrom<BusinessRaw> for Business {
                 district: raw.district,
             }),
             // Throw an error if parsing fails.
-            Err(_) => Err(Bandage::Parse),
+            Err(source) => Err(Nom::new(raw.street_address_label.clone(), source)),
         }
     }
 }
@@ -192,8 +185,8 @@ pub struct Businesses(Vec<Business>);
 
 impl Businesses {
     /// Writes the contents to a csv file at location `path`.
-    pub fn from_raw_csv<P: AsRef<std::path::Path>>(path: P) -> Clean<Self> {
-        let raw = BusinessesRaw::from_csv(path)?;
+    pub fn from_raw_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressErrorKind> {
+        let raw = BusinessesRaw::_from_csv(path)?;
         let mut records = Vec::new();
         for record in raw.iter() {
             records.push(Business::try_from(record.clone())?);
@@ -224,7 +217,7 @@ impl IntoCsv<Businesses> for Businesses {
         Ok(Self(records))
     }
 
-    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressError> {
+    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
         _to_csv(&mut self.0, path.as_ref().into())
     }
 }

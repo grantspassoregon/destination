@@ -1,17 +1,15 @@
 //! The `eponym` module is the eponymous module for `compare`.  Contains types and methods for
 //! comparing addresses.
 use crate::{
-    from_csv, load_bin, save, to_csv, Address, AddressStatus, PartialAddress, PartialAddresses,
-    Portable, SubaddressType,
+    Address, AddressErrorKind, AddressStatus, IntoCsv, Io, PartialAddress, PartialAddresses,
+    SubaddressType, _from_csv, _to_csv,
 };
-use aid::prelude::Clean;
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
 use galileo::galileo_types::geometry_type::{GeoSpace2d, GeometryType, PointGeometryType};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use tracing::info;
 
 /// The `Mismatch` enum tracks the fields of an address that can diverge while still potentially
@@ -309,24 +307,14 @@ impl MatchRecords {
     }
 }
 
-impl Portable<MatchRecords> for MatchRecords {
-    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = load_bin(path)?;
-        let decode: Self = bincode::deserialize(&records[..])?;
-        Ok(decode)
-    }
-
-    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        save(self, path)
-    }
-
-    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = from_csv(path)?;
+impl IntoCsv<MatchRecords> for MatchRecords {
+    fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
+        let records = _from_csv(path)?;
         Ok(Self(records))
     }
 
-    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.0, path.as_ref().into())?)
+    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
+        _to_csv(&mut self.0, path.as_ref().into())
     }
 }
 
@@ -517,23 +505,13 @@ impl MatchPartialRecords {
     }
 }
 
-impl Portable<MatchPartialRecords> for MatchPartialRecords {
-    fn load<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = load_bin(path)?;
-        let decode: Self = bincode::deserialize(&records[..])?;
-        Ok(decode)
-    }
-
-    fn save<P: AsRef<Path>>(&self, path: P) -> Clean<()> {
-        save(self, path)
-    }
-
-    fn from_csv<P: AsRef<Path>>(path: P) -> Clean<Self> {
-        let records = from_csv(path)?;
+impl IntoCsv<MatchPartialRecords> for MatchPartialRecords {
+    fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
+        let records = _from_csv(path)?;
         Ok(Self(records))
     }
 
-    fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Clean<()> {
-        Ok(to_csv(&mut self.0, path.as_ref().into())?)
+    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
+        _to_csv(&mut self.0, path.as_ref().into())
     }
 }

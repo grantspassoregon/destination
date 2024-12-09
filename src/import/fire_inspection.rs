@@ -1,7 +1,6 @@
 //! The `fire_inspections` module imports data from fire inspections into the library to facilitate
 //! address matching.
-use crate::{from_csv, Io, Parser, PartialAddress};
-use aid::prelude::*;
+use crate::{AddressErrorKind, Io, Nom, Parser, PartialAddress};
 
 /// The `FireInspectionRaw` struct functions as a builder for a [`FireInspection`] struct.
 /// The fields correspond to the csv of fire inspection data from the fire department.
@@ -40,13 +39,6 @@ pub struct FireInspectionsRaw(Vec<FireInspectionRaw>);
 impl FireInspectionsRaw {
     /// Used to read fire inspection data in from the csv source file.
     #[tracing::instrument(skip_all)]
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let records = from_csv(path)?;
-        Ok(FireInspectionsRaw(records))
-    }
-
-    /// Used to read fire inspection data in from the csv source file.
-    #[tracing::instrument(skip_all)]
     pub fn _from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
         let records = crate::_from_csv(path)?;
         Ok(FireInspectionsRaw(records))
@@ -81,7 +73,7 @@ pub struct FireInspection {
 }
 
 impl TryFrom<FireInspectionRaw> for FireInspection {
-    type Error = Bandage;
+    type Error = Nom;
 
     fn try_from(raw: FireInspectionRaw) -> Result<Self, Self::Error> {
         match Parser::address(&raw.address) {
@@ -97,7 +89,7 @@ impl TryFrom<FireInspectionRaw> for FireInspection {
                     subclass: raw.subclass,
                 })
             }
-            Err(_) => Err(Bandage::Parse),
+            Err(source) => Err(Nom::new(raw.address.clone(), source)),
         }
     }
 }
@@ -122,9 +114,9 @@ impl FireInspections {
     /// Reads in the data as a raw fire inspections, attempts to parse each address, returning a
     /// `FireInspections` if successful.
     #[tracing::instrument(skip_all)]
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Clean<Self> {
+    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressErrorKind> {
         // Try to read in as raw.
-        let raw = FireInspectionsRaw::from_csv(path)?;
+        let raw = FireInspectionsRaw::_from_csv(path)?;
         let mut records = Vec::new();
         for record in raw.iter() {
             // Parse the raw address.

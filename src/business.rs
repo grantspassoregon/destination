@@ -1,10 +1,9 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
 use crate::{
-    deserialize_phone_number, from_csv, to_csv, Address, AddressError, IntoCsv, Io, MatchStatus,
-    Nom, Parser, StreetNamePostType, StreetNamePreDirectional, _from_csv, _to_csv,
+    deserialize_phone_number, Address, AddressErrorKind, IntoCsv, Io, MatchStatus, Nom, Parser,
+    StreetNamePostType, StreetNamePreDirectional, _from_csv, _to_csv,
 };
-use aid::prelude::Clean;
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
@@ -285,20 +284,20 @@ impl BusinessMatchRecords {
         self
     }
 
-    /// Writes the contents of `BusinessMatchRecords` to a CSV file at location `title`.  Each element in
-    /// the vector of type [`BusinessMatchRecord`] maps to a row of data on the CSV.
-    pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
-        to_csv(self, title)?;
-        Ok(())
-    }
-
-    /// Creates a new `BusinessMatchRecords` struct from a CSV file located at `path`.  This method
-    /// does not parse raw business license data, and should only be used to read files output from
-    /// [`BusinessMatchRecords::to_csv()`].
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let records = from_csv(path)?;
-        Ok(BusinessMatchRecords(records))
-    }
+    // /// Writes the contents of `BusinessMatchRecords` to a CSV file at location `title`.  Each element in
+    // /// the vector of type [`BusinessMatchRecord`] maps to a row of data on the CSV.
+    // pub fn to_csv(&mut self, title: std::path::PathBuf) -> Result<(), std::io::Error> {
+    //     to_csv(self, title)?;
+    //     Ok(())
+    // }
+    //
+    // /// Creates a new `BusinessMatchRecords` struct from a CSV file located at `path`.  This method
+    // /// does not parse raw business license data, and should only be used to read files output from
+    // /// [`BusinessMatchRecords::to_csv()`].
+    // pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
+    //     let records = from_csv(path)?;
+    //     Ok(BusinessMatchRecords(records))
+    // }
 }
 
 impl IntoCsv<BusinessMatchRecords> for BusinessMatchRecords {
@@ -307,7 +306,7 @@ impl IntoCsv<BusinessMatchRecords> for BusinessMatchRecords {
         Ok(Self(records))
     }
 
-    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressError> {
+    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
         _to_csv(&mut self.0, path.as_ref().into())
     }
 }
@@ -505,20 +504,6 @@ impl BusinessLicense {
     /// EnerGov has a single field for entering a subaddress id, and staff sometimes include the
     /// subaddress type.  This method strips the type information from the id, so we can compare
     /// the id to addresses in the city.
-    pub fn detype_subaddress(&mut self) -> Clean<()> {
-        if let Some(val) = &self.subaddress_identifier {
-            let (rem, _) = Parser::subaddress_type(val)?;
-            let (_, element) = Parser::subaddress_id(rem)?;
-            if let Some(id) = element {
-                self.subaddress_identifier = Some(id.to_string());
-            }
-        }
-        Ok(())
-    }
-
-    /// EnerGov has a single field for entering a subaddress id, and staff sometimes include the
-    /// subaddress type.  This method strips the type information from the id, so we can compare
-    /// the id to addresses in the city.
     pub fn _detype_subaddress(&mut self) -> Result<(), Nom> {
         if let Some(val) = &self.subaddress_identifier {
             match Parser::subaddress_type(val) {
@@ -552,8 +537,8 @@ pub struct BusinessLicenses(Vec<BusinessLicense>);
 
 impl BusinessLicenses {
     /// Creates a new `BusinessLicenses` struct from a CSV file located at `path`.
-    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, std::io::Error> {
-        let records = from_csv(path)?;
+    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
+        let records = _from_csv(path)?;
         Ok(BusinessLicenses(records))
     }
 
@@ -586,15 +571,6 @@ impl BusinessLicenses {
 
     /// The `detype_subaddresses` method calls the [`BusinessLicense::detype_subaddress`] method on each record in
     /// `records`.
-    pub fn detype_subaddresses(&mut self) -> Clean<()> {
-        self.iter_mut()
-            .map(BusinessLicense::detype_subaddress)
-            .for_each(drop);
-        Ok(())
-    }
-
-    /// The `detype_subaddresses` method calls the [`BusinessLicense::detype_subaddress`] method on each record in
-    /// `records`.
     pub fn _detype_subaddresses(&mut self) -> Result<(), Nom> {
         self.iter_mut()
             .map(BusinessLicense::_detype_subaddress)
@@ -609,7 +585,7 @@ impl IntoCsv<BusinessLicenses> for BusinessLicenses {
         Ok(Self(records))
     }
 
-    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressError> {
+    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
         _to_csv(&mut self.0, path.as_ref().into())
     }
 }

@@ -15,10 +15,7 @@ name = "address"
 ci = []
 
 [dependencies]
-aid = { git = "https://github.com/grantspassoregon/aid.git", default-features = false, features = [
-  "bin",
-  "parse",
-] }
+anyhow = "1.0.94"
 bincode = "1.3.3"
 clap = { version = "4.5.23", features = ["derive"] }
 convert_case = "0.6.0"
