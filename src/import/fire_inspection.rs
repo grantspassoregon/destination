@@ -39,8 +39,8 @@ pub struct FireInspectionsRaw(Vec<FireInspectionRaw>);
 impl FireInspectionsRaw {
     /// Used to read fire inspection data in from the csv source file.
     #[tracing::instrument(skip_all)]
-    pub fn _from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
-        let records = crate::_from_csv(path)?;
+    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
+        let records = crate::from_csv(path)?;
         Ok(FireInspectionsRaw(records))
     }
 }
@@ -116,7 +116,7 @@ impl FireInspections {
     #[tracing::instrument(skip_all)]
     pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressErrorKind> {
         // Try to read in as raw.
-        let raw = FireInspectionsRaw::_from_csv(path)?;
+        let raw = FireInspectionsRaw::from_csv(path)?;
         let mut records = Vec::new();
         for record in raw.iter() {
             // Parse the raw address.

@@ -47,5 +47,5 @@ pub use lexisnexis::{
 };
 pub use parser::{deserialize_phone_number, parse_phone_number, Parser};
 pub use utils::{
-    deserialize_arcgis_data, trace_init, IntoBin, IntoCsv, _from_csv, _load_bin, _save, _to_csv,
+    deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, trace_init, IntoBin, IntoCsv,
 };

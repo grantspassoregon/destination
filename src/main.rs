@@ -142,7 +142,7 @@ fn main() -> anyhow::Result<()> {
                 "Exclusion records read: {} entries.",
                 target_addresses.len()
             );
-            let mut lx = LexisNexis::_from_addresses(&source_addresses, &target_addresses)?;
+            let mut lx = LexisNexis::from_addresses(&source_addresses, &target_addresses)?;
             lx.to_csv(cli.output)?;
         }
         "save" => {
@@ -252,7 +252,7 @@ fn main() -> anyhow::Result<()> {
             let source_addresses = BusinessLicenses::from_csv(cli.source.clone())?;
             info!("Source records read: {} entries.", source_addresses.len());
             let mut source_addresses = source_addresses.deduplicate();
-            source_addresses._detype_subaddresses()?;
+            source_addresses.detype_subaddresses()?;
             info!(
                 "Records deduplicated: {} remaining.",
                 source_addresses.len()

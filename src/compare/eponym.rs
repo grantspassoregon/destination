@@ -1,8 +1,8 @@
 //! The `eponym` module is the eponymous module for `compare`.  Contains types and methods for
 //! comparing addresses.
 use crate::{
-    Address, AddressErrorKind, AddressStatus, IntoCsv, Io, PartialAddress, PartialAddresses,
-    SubaddressType, _from_csv, _to_csv,
+    from_csv, to_csv, Address, AddressErrorKind, AddressStatus, IntoCsv, Io, PartialAddress,
+    PartialAddresses, SubaddressType,
 };
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
@@ -309,12 +309,12 @@ impl MatchRecords {
 
 impl IntoCsv<MatchRecords> for MatchRecords {
     fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
-        let records = _from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
-        _to_csv(&mut self.0, path.as_ref().into())
+        to_csv(&mut self.0, path.as_ref().into())
     }
 }
 
@@ -507,11 +507,11 @@ impl MatchPartialRecords {
 
 impl IntoCsv<MatchPartialRecords> for MatchPartialRecords {
     fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
-        let records = _from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
-        _to_csv(&mut self.0, path.as_ref().into())
+        to_csv(&mut self.0, path.as_ref().into())
     }
 }

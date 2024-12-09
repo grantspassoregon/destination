@@ -1,7 +1,7 @@
 //!  The `compare_fire` module implements address matching and comparison for Fire Inspections.
 use crate::{
-    Address, AddressErrorKind, FireInspection, FireInspections, IntoCsv, Io, MatchPartialRecord,
-    MatchPartialRecords, MatchStatus, _from_csv, _to_csv,
+    from_csv, to_csv, Address, AddressErrorKind, FireInspection, FireInspections, IntoCsv, Io,
+    MatchPartialRecord, MatchPartialRecords, MatchStatus,
 };
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
@@ -137,12 +137,12 @@ impl FireInspectionMatchRecords {
 
 impl IntoCsv<FireInspectionMatchRecords> for FireInspectionMatchRecords {
     fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
-        let records = _from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
-        _to_csv(&mut self.0, path.as_ref().into())
+        to_csv(&mut self.0, path.as_ref().into())
     }
 }
 

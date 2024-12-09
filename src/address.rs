@@ -1,10 +1,10 @@
 //! The `address` module defines the library data standard for a valid address, and provides
 //! implementation blocks to convert data from import types to the valid address format.
 use crate::{
-    AddressError, AddressErrorKind, AddressMatch, AddressStatus, Builder, FireInspections, IntoBin,
-    IntoCsv, Io, LexisNexis, Mismatch, Parser, Point, PostalCommunity, State, StreetNamePostType,
-    StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType, StreetSeparator,
-    SubaddressType, _from_csv, _load_bin, _save, _to_csv,
+    from_bin, from_csv, to_bin, to_csv, AddressError, AddressErrorKind, AddressMatch,
+    AddressStatus, Builder, FireInspections, IntoBin, IntoCsv, Io, LexisNexis, Mismatch, Parser,
+    Point, PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional,
+    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
 };
 use derive_more::{Deref, DerefMut};
 use indicatif::ProgressBar;
@@ -541,8 +541,8 @@ where
     /// The `LexisNexis` method produces the LexisNexis table showing dispatch jurisdiction for
     /// address ranges within the City of Grants Pass.
     #[tracing::instrument(skip_all)]
-    fn _lexis_nexis(&self, other: &Self) -> Result<LexisNexis, Builder> {
-        LexisNexis::_from_addresses(self, other)
+    fn lexis_nexis(&self, other: &Self) -> Result<LexisNexis, Builder> {
+        LexisNexis::from_addresses(self, other)
     }
 
     /// The `standardize` method takes county address naming conventions and converts them to city
@@ -790,7 +790,7 @@ impl<T: Address + Clone> From<&[T]> for CommonAddresses {
 
 impl IntoBin<CommonAddresses> for CommonAddresses {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
-        match _load_bin(path) {
+        match from_bin(path) {
             Ok(records) => {
                 let decode: Self = bincode::deserialize(&records)?;
                 Ok(decode)
@@ -800,18 +800,18 @@ impl IntoBin<CommonAddresses> for CommonAddresses {
     }
 
     fn save<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), AddressError> {
-        _save(self, path)
+        to_bin(self, path)
     }
 }
 
 impl IntoCsv<CommonAddresses> for CommonAddresses {
     fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
-        let records = _from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
-        _to_csv(&mut self.0, path.as_ref().into())
+        to_csv(&mut self.0, path.as_ref().into())
     }
 }
 
@@ -1240,7 +1240,7 @@ impl From<&FireInspections> for PartialAddresses {
 
 impl IntoBin<PartialAddresses> for PartialAddresses {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
-        match _load_bin(path) {
+        match from_bin(path) {
             Ok(records) => {
                 let decode: Self = bincode::deserialize(&records)?;
                 Ok(decode)
@@ -1250,18 +1250,18 @@ impl IntoBin<PartialAddresses> for PartialAddresses {
     }
 
     fn save<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), AddressError> {
-        _save(self, path)
+        to_bin(self, path)
     }
 }
 
 impl IntoCsv<PartialAddresses> for PartialAddresses {
     fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
-        let records = _from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
-        _to_csv(&mut self.0, path.as_ref().into())
+        to_csv(&mut self.0, path.as_ref().into())
     }
 }
 
@@ -1306,7 +1306,7 @@ impl AddressDeltas {
 
 impl IntoBin<AddressDeltas> for AddressDeltas {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
-        match _load_bin(path) {
+        match from_bin(path) {
             Ok(records) => {
                 let decode: Self = bincode::deserialize(&records)?;
                 Ok(decode)
@@ -1316,17 +1316,17 @@ impl IntoBin<AddressDeltas> for AddressDeltas {
     }
 
     fn save<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), AddressError> {
-        _save(self, path)
+        to_bin(self, path)
     }
 }
 
 impl IntoCsv<AddressDeltas> for AddressDeltas {
     fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
-        let records = _from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
-        _to_csv(&mut self.0, path.as_ref().into())
+        to_csv(&mut self.0, path.as_ref().into())
     }
 }

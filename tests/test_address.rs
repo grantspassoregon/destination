@@ -1,9 +1,9 @@
 use address::{
-    Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
+    from_csv, Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
     FireInspectionMatchRecords, FireInspections, GeoAddresses, GrantsPassAddresses,
     GrantsPassSpatialAddresses, IntoBin, IntoCsv, Io, JosephineCountyAddresses, MatchRecords, Nom,
     Parser, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
-    StreetNamePreDirectional, SubaddressType, _from_csv,
+    StreetNamePreDirectional, SubaddressType,
 };
 use test_log::test;
 use tracing::{info, trace};
@@ -567,7 +567,7 @@ fn load_businesses() -> anyhow::Result<()> {
 fn parse_address_sample() -> anyhow::Result<()> {
     let path = std::env::current_dir()?;
     let file_path = path.join("data/address_sample.csv");
-    let samples: Vec<AddressSample> = _from_csv(file_path)?;
+    let samples: Vec<AddressSample> = from_csv(file_path)?;
     for sample in samples {
         match Parser::address(&sample.address) {
             Ok((_, address)) => {
@@ -645,13 +645,13 @@ fn business_mailing() -> anyhow::Result<()> {
     let situs = BusinessLicenses::from_csv(situs)?;
     info!("Business licenses loaded: {} entries.", situs.len());
     let mut situs = situs.deduplicate();
-    situs._detype_subaddresses()?;
+    situs.detype_subaddresses()?;
     info!("Business licenses deduplicated: {} entries.", situs.len());
     let mailing = "c:/users/erose/documents/business_licenses_mailing_20240530.csv";
     let mailing = BusinessLicenses::from_csv(mailing)?;
     info!("Business licenses loaded: {} entries.", mailing.len());
     let mut mailing = mailing.deduplicate();
-    mailing._detype_subaddresses()?;
+    mailing.detype_subaddresses()?;
     info!("Business licenses deduplicated: {} entries.", mailing.len());
 
     let mut mail = Vec::new();

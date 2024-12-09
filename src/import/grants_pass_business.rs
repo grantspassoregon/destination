@@ -1,8 +1,8 @@
 //! The `grants_pass_business` module contains data types for importing business license reports
 //! for the City of Grants Pass.
 use crate::{
-    AddressError, AddressErrorKind, IntoBin, IntoCsv, Io, Nom, Parser, PartialAddress, _from_csv,
-    _load_bin, _save, _to_csv,
+    from_bin, from_csv, to_bin, to_csv, AddressError, AddressErrorKind, IntoBin, IntoCsv, Io, Nom,
+    Parser, PartialAddress,
 };
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
@@ -36,8 +36,8 @@ pub struct BusinessesRaw(Vec<BusinessRaw>);
 
 impl BusinessesRaw {
     /// Writes the contents of the struct to a csv file at location `path`.
-    pub fn _from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
-        let records = _from_csv(path)?;
+    pub fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
+        let records = from_csv(path)?;
         Ok(Self(records))
     }
 }
@@ -186,7 +186,7 @@ pub struct Businesses(Vec<Business>);
 impl Businesses {
     /// Writes the contents to a csv file at location `path`.
     pub fn from_raw_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressErrorKind> {
-        let raw = BusinessesRaw::_from_csv(path)?;
+        let raw = BusinessesRaw::from_csv(path)?;
         let mut records = Vec::new();
         for record in raw.iter() {
             records.push(Business::try_from(record.clone())?);
@@ -197,7 +197,7 @@ impl Businesses {
 
 impl IntoBin<Businesses> for Businesses {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
-        match _load_bin(path) {
+        match from_bin(path) {
             Ok(records) => {
                 let decode: Self = bincode::deserialize(&records)?;
                 Ok(decode)
@@ -207,17 +207,17 @@ impl IntoBin<Businesses> for Businesses {
     }
 
     fn save<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), AddressError> {
-        _save(self, path)
+        to_bin(self, path)
     }
 }
 
 impl IntoCsv<Businesses> for Businesses {
     fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
-        let records = _from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
-        _to_csv(&mut self.0, path.as_ref().into())
+        to_csv(&mut self.0, path.as_ref().into())
     }
 }

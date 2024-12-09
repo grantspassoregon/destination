@@ -1,10 +1,10 @@
 //! The `grants_pass` module contains data types for importing addresses from the City of Grants
 //! Pass.
 use crate::{
-    deserialize_arcgis_data, Address, AddressError, AddressErrorKind, AddressStatus, Addresses,
-    IntoBin, IntoCsv, Io, Point, State, StreetNamePostType, StreetNamePreDirectional,
-    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType, _from_csv,
-    _load_bin, _save, _to_csv,
+    deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, Address, AddressError,
+    AddressErrorKind, AddressStatus, Addresses, IntoBin, IntoCsv, Io, Point, State,
+    StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType,
+    StreetSeparator, SubaddressType,
 };
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
@@ -277,7 +277,7 @@ impl Addresses<GrantsPassAddress> for GrantsPassAddresses {}
 
 impl IntoBin<GrantsPassAddresses> for GrantsPassAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
-        match _load_bin(path) {
+        match from_bin(path) {
             Ok(records) => {
                 let decode: Self = bincode::deserialize(&records)?;
                 Ok(decode)
@@ -287,18 +287,18 @@ impl IntoBin<GrantsPassAddresses> for GrantsPassAddresses {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
-        _save(self, path)
+        to_bin(self, path)
     }
 }
 
 impl IntoCsv<GrantsPassAddresses> for GrantsPassAddresses {
     fn from_csv<P: AsRef<Path>>(path: P) -> Result<Self, Io> {
-        let records = _from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
-        _to_csv(&mut self.0, path.as_ref().into())
+        to_csv(&mut self.0, path.as_ref().into())
     }
 }
 
@@ -604,7 +604,7 @@ impl Addresses<GrantsPassSpatialAddress> for GrantsPassSpatialAddresses {}
 
 impl IntoBin<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
-        match _load_bin(path) {
+        match from_bin(path) {
             Ok(records) => {
                 let decode: Self = bincode::deserialize(&records)?;
                 Ok(decode)
@@ -614,17 +614,17 @@ impl IntoBin<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
-        _save(self, path)
+        to_bin(self, path)
     }
 }
 
 impl IntoCsv<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
     fn from_csv<P: AsRef<Path>>(path: P) -> Result<Self, Io> {
-        let records = _from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
-        _to_csv(&mut self.0, path.as_ref().into())
+        to_csv(&mut self.0, path.as_ref().into())
     }
 }

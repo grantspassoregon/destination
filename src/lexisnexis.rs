@@ -1,7 +1,7 @@
 //! The `lexisnexis` module produces address range reports for the LexisNexis dispatch service.
 use crate::{
-    Address, AddressError, AddressErrorKind, Addresses, Builder, IntoBin, IntoCsv, Io, _from_csv,
-    _load_bin, _save, _to_csv,
+    from_bin, from_csv, to_bin, to_csv, Address, AddressError, AddressErrorKind, Addresses,
+    Builder, IntoBin, IntoCsv, Io,
 };
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
@@ -56,7 +56,7 @@ impl LexisNexisItemBuilder {
 
     /// The `build` method converts a `LexisNexisItemBuilder` into a [`LexisNexisItem`].  Returns
     /// an error if a required field is missing, or set to None when a value is required.
-    pub fn _build(self) -> Result<LexisNexisItem, Builder> {
+    pub fn build(self) -> Result<LexisNexisItem, Builder> {
         let target = "LexisNexisItem".to_string();
         let address_number_from = if let Some(num) = self.address_number_from {
             num
@@ -224,7 +224,7 @@ impl LexisNexis {
     /// The `from_addresses` method creates a [`LexisNexis`] struct from a set of addresses to
     /// include in the range selection `include`, and a set of addresses to exclude from the range
     /// selection `exclude`.
-    pub fn _from_addresses<T: Address + Clone + Send + Sync, U: Addresses<T>>(
+    pub fn from_addresses<T: Address + Clone + Send + Sync, U: Addresses<T>>(
         include: &U,
         exclude: &U,
     ) -> Result<LexisNexis, Builder> {
@@ -266,7 +266,7 @@ impl LexisNexis {
                     }
                     builder.postal_community = Some(address.postal_community().clone());
                     builder.zip_code = Some(address.zip());
-                    if let Ok(built) = builder._build() {
+                    if let Ok(built) = builder.build() {
                         records.push(built);
                     }
                 }
@@ -278,7 +278,7 @@ impl LexisNexis {
 
 impl IntoBin<LexisNexis> for LexisNexis {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
-        match _load_bin(path) {
+        match from_bin(path) {
             Ok(records) => {
                 let decode: Self = bincode::deserialize(&records)?;
                 Ok(decode)
@@ -288,18 +288,18 @@ impl IntoBin<LexisNexis> for LexisNexis {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
-        _save(self, path)
+        to_bin(self, path)
     }
 }
 
 impl IntoCsv<LexisNexis> for LexisNexis {
     fn from_csv<P: AsRef<Path>>(path: P) -> Result<Self, Io> {
-        let records = _from_csv(path)?;
+        let records = from_csv(path)?;
         Ok(Self(records))
     }
 
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
-        _to_csv(&mut self.0, path.as_ref().into())
+        to_csv(&mut self.0, path.as_ref().into())
     }
 }
 

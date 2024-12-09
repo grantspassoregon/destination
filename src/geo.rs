@@ -1,8 +1,9 @@
 //! The `geo` module defines spatial address types, and implements traits from the `galileo` crate for these types.
 use crate::{
-    Address, AddressDelta, AddressDeltas, AddressError, AddressErrorKind, AddressStatus, Addresses,
-    CommonAddress, IntoBin, State, StreetNamePostType, StreetNamePreDirectional,
-    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType, _load_bin, _save,
+    from_bin, to_bin, Address, AddressDelta, AddressDeltas, AddressError, AddressErrorKind,
+    AddressStatus, Addresses, CommonAddress, IntoBin, State, StreetNamePostType,
+    StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType, StreetSeparator,
+    SubaddressType,
 };
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::cartesian::CartesianPoint2d;
@@ -264,7 +265,7 @@ impl Addresses<GeoAddress> for GeoAddresses {}
 
 impl IntoBin<GeoAddress> for GeoAddress {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
-        match _load_bin(path) {
+        match from_bin(path) {
             Ok(records) => {
                 let decode: Self = bincode::deserialize(&records)?;
                 Ok(decode)
@@ -274,7 +275,7 @@ impl IntoBin<GeoAddress> for GeoAddress {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
-        _save(self, path)
+        to_bin(self, path)
     }
 }
 
@@ -476,7 +477,7 @@ impl Addresses<AddressPoint> for AddressPoints {}
 
 impl IntoBin<AddressPoint> for AddressPoint {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
-        match _load_bin(path) {
+        match from_bin(path) {
             Ok(records) => {
                 let decode: Self = bincode::deserialize(&records)?;
                 Ok(decode)
@@ -486,7 +487,7 @@ impl IntoBin<AddressPoint> for AddressPoint {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
-        _save(self, path)
+        to_bin(self, path)
     }
 }
 
@@ -711,7 +712,7 @@ impl Addresses<SpatialAddress> for SpatialAddresses {}
 
 impl IntoBin<SpatialAddresses> for SpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
-        match _load_bin(path) {
+        match from_bin(path) {
             Ok(records) => {
                 let decode: Self = bincode::deserialize(&records)?;
                 Ok(decode)
@@ -721,7 +722,7 @@ impl IntoBin<SpatialAddresses> for SpatialAddresses {
     }
 
     fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), AddressError> {
-        _save(self, path)
+        to_bin(self, path)
     }
 }
 

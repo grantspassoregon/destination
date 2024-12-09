@@ -26,10 +26,7 @@ pub fn deserialize_arcgis_data<'de, D: Deserializer<'de>>(
 
 /// Generic function to serialize data types into a CSV file.  Called by methods to avoid code
 /// duplication.
-pub fn _to_csv<T: Serialize + Clone>(
-    item: &mut [T],
-    path: PathBuf,
-) -> Result<(), AddressErrorKind> {
+pub fn to_csv<T: Serialize + Clone>(item: &mut [T], path: PathBuf) -> Result<(), AddressErrorKind> {
     match csv::Writer::from_path(&path) {
         Ok(mut wtr) => {
             for i in item {
@@ -54,7 +51,7 @@ pub fn _to_csv<T: Serialize + Clone>(
 
 /// Generic function to deserialize data types from a CSV file.  Called by methods to avoid code
 /// duplication.
-pub fn _from_csv<T: DeserializeOwned + Clone, P: AsRef<std::path::Path>>(
+pub fn from_csv<T: DeserializeOwned + Clone, P: AsRef<std::path::Path>>(
     path: P,
 ) -> Result<Vec<T>, Io> {
     let mut records = Vec::new();
@@ -85,7 +82,7 @@ pub fn _from_csv<T: DeserializeOwned + Clone, P: AsRef<std::path::Path>>(
 
 /// The `save` method serializes the contents of self into binary and writes to a file at
 /// location `path`.  Errors bubble up from serialization in [`bincode`] or file system access during write.
-pub fn _save<T: Serialize, P: AsRef<Path>>(data: &T, path: P) -> Result<(), AddressError> {
+pub fn to_bin<T: Serialize, P: AsRef<Path>>(data: &T, path: P) -> Result<(), AddressError> {
     info!("Serializing to binary.");
     let encode = bincode::serialize(data)?;
     info!("Writing to file.");
@@ -101,7 +98,7 @@ pub fn _save<T: Serialize, P: AsRef<Path>>(data: &T, path: P) -> Result<(), Addr
 /// The `load_bin` function loads the contents of a file at location `path` into a `Vec<u8>`.
 /// May error reading the file, for example if the location is invalid, or when deserializing
 /// the binary if the format is invalid.
-pub fn _load_bin<P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Io> {
+pub fn from_bin<P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Io> {
     info!("Loading from binary.");
     let bar = ProgressBar::new_spinner();
     bar.enable_steady_tick(Duration::from_millis(120));
