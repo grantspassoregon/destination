@@ -153,32 +153,31 @@ impl SubaddressType {
         if let Ok(sub) = Self::from_str(&pascal) {
             Some(sub)
         } else {
-            Self::match_abbreviated(input)
+            Self::match_abbreviated(&pascal)
         }
         // } else if let Some(sub) = Self::match_abbreviated(input) {
         //     Some(sub)
         // } else {
-        //     None
-        // match input.to_uppercase().as_str() {
-        //     "APARTMENT" => Some(Self::Apartment),
-        //     "BASEMENT" => Some(Self::Basement),
-        //     "BUILDING" => Some(Self::Building),
-        //     "DEPARTMENT" => Some(Self::Department),
-        //     "FLOOR" => Some(Self::Floor),
-        //     "FRONT" => Some(Self::Front),
-        //     "HANGER" => Some(Self::Hanger),
-        //     "LOBBY" => Some(Self::Lobby),
-        //     "LOWER" => Some(Self::Lower),
-        //     "OFFICE" => Some(Self::Office),
-        //     "PENTHOUSE" => Some(Self::Penthouse),
-        //     "ROOM" => Some(Self::Room),
-        //     "SPACE" => Some(Self::Space),
-        //     "SUITE" => Some(Self::Suite),
-        //     "TRAILER" => Some(Self::Trailer),
-        //     "UPPER" => Some(Self::Upper),
-        //     "LAUNDRY" => Some(Self::Laundry),
-        //     _ => None,
-        // }
+        //     match input.to_uppercase().as_str() {
+        //         "APARTMENT" => Some(Self::Apartment),
+        //         "BASEMENT" => Some(Self::Basement),
+        //         "BUILDING" => Some(Self::Building),
+        //         "DEPARTMENT" => Some(Self::Department),
+        //         "FLOOR" => Some(Self::Floor),
+        //         "FRONT" => Some(Self::Front),
+        //         "HANGER" => Some(Self::Hanger),
+        //         "LOBBY" => Some(Self::Lobby),
+        //         "LOWER" => Some(Self::Lower),
+        //         "OFFICE" => Some(Self::Office),
+        //         "PENTHOUSE" => Some(Self::Penthouse),
+        //         "ROOM" => Some(Self::Room),
+        //         "SPACE" => Some(Self::Space),
+        //         "SUITE" => Some(Self::Suite),
+        //         "TRAILER" => Some(Self::Trailer),
+        //         "UPPER" => Some(Self::Upper),
+        //         "LAUNDRY" => Some(Self::Laundry),
+        //         _ => None,
+        //     }
         // }
     }
 

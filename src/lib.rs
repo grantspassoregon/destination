@@ -40,7 +40,7 @@ pub use import::{
     GrantsPassAddresses, GrantsPassSpatialAddress, GrantsPassSpatialAddresses,
     JosephineCountyAddress, JosephineCountyAddress2024, JosephineCountyAddresses,
     JosephineCountyAddresses2024, JosephineCountySpatialAddress, JosephineCountySpatialAddress2024,
-    JosephineCountySpatialAddresses, JosephineCountySpatialAddresses2024,
+    JosephineCountySpatialAddresses, JosephineCountySpatialAddresses2024, SpatialAddressesRaw,
 };
 pub use lexisnexis::{
     LexisNexis, LexisNexisItem, LexisNexisItemBuilder, LexisNexisRange, LexisNexisRangeItem,

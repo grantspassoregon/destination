@@ -1,9 +1,11 @@
 //! The `import` module contains data types for importing addresses from different agencies.
+mod common;
 mod fire_inspection;
 mod grants_pass;
 mod grants_pass_business;
 mod josephine_county;
 
+pub use common::SpatialAddressesRaw;
 pub use fire_inspection::{FireInspection, FireInspectionRaw, FireInspections};
 pub use grants_pass::{
     GrantsPassAddress, GrantsPassAddresses, GrantsPassSpatialAddress, GrantsPassSpatialAddresses,

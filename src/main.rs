@@ -3,6 +3,7 @@ use address::{
     GeoAddresses, GrantsPassAddresses, GrantsPassSpatialAddresses, IntoBin, IntoCsv,
     JosephineCountyAddresses, JosephineCountyAddresses2024, JosephineCountySpatialAddresses2024,
     LexisNexis, MatchPartialRecords, MatchRecords, Point, SpatialAddress, SpatialAddresses,
+    SpatialAddressesRaw,
 };
 use clap::Parser;
 use tracing::{error, info, trace, warn};
@@ -321,6 +322,10 @@ fn main() -> anyhow::Result<()> {
                             &JosephineCountySpatialAddresses2024::from_csv(cli.source.clone())?[..],
                         )
                     }
+                    "common" => {
+                        source =
+                            GeoAddresses::from(SpatialAddressesRaw::from_csv(cli.source.clone())?)
+                    }
                     _ => error!("Unrecognized file format."),
                 }
             }
@@ -339,6 +344,9 @@ fn main() -> anyhow::Result<()> {
                                 &JosephineCountySpatialAddresses2024::from_csv(target_path)?[..],
                             );
                             target.standardize();
+                        }
+                        "common" => {
+                            target = GeoAddresses::from(SpatialAddressesRaw::from_csv(target_path)?)
                         }
                         _ => error!("Unrecognized file format."),
                     }

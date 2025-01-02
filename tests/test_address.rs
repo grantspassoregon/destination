@@ -1,9 +1,9 @@
 use address::{
     from_csv, Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
-    FireInspectionMatchRecords, FireInspections, GeoAddresses, GrantsPassAddresses,
-    GrantsPassSpatialAddresses, IntoBin, IntoCsv, Io, JosephineCountyAddresses, MatchRecords, Nom,
-    Parser, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
-    StreetNamePreDirectional, SubaddressType,
+    CommonAddresses, FireInspectionMatchRecords, FireInspections, GeoAddresses,
+    GrantsPassAddresses, GrantsPassSpatialAddresses, IntoBin, IntoCsv, Io,
+    JosephineCountyAddresses, MatchRecords, Nom, Parser, PartialAddress, PostalCommunity,
+    SpatialAddresses, StreetNamePostType, StreetNamePreDirectional, SubaddressType,
 };
 use test_log::test;
 use tracing::{info, trace};
@@ -72,9 +72,12 @@ fn load_county_addresses() -> anyhow::Result<()> {
 // Load city addresses as GeoAddresses
 #[test]
 fn load_geo_addresses() -> anyhow::Result<()> {
-    let file = "data/city_addresses_20240513.csv";
+    let file = "data/city_addresses_20241007.csv";
+    // let file = "data/city_addresses_20240513.csv";
     let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
     let geo_addresses = GeoAddresses::from(&addresses[..]);
+    let mut trial = CommonAddresses::from(&addresses[..]);
+    trial.to_csv("c:/users/erose/documents/comp.csv")?;
     assert_eq!(addresses.len(), geo_addresses.len());
     info!("Geo addresses loaded: {} entries.", geo_addresses.len());
     Ok(())

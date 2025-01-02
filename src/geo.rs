@@ -86,7 +86,7 @@ pub trait Point {
 }
 
 /// The `GeoAddress` struct defines a common address that has associated geographic coordinates.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Default, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
 pub struct GeoAddress {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
@@ -258,7 +258,18 @@ impl<T: Address + GeoPoint<Num = f64> + Clone> From<&T> for GeoAddress {
 }
 
 /// The `GeoAddresses` struct holds a vector of type [`GeoAddress`].
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd, Deref, DerefMut)]
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+    PartialEq,
+    PartialOrd,
+    derive_new::new,
+    derive_more::Deref,
+    derive_more::DerefMut,
+)]
 pub struct GeoAddresses(Vec<GeoAddress>);
 
 impl Addresses<GeoAddress> for GeoAddresses {}
@@ -502,7 +513,7 @@ impl<T: Address + Point + Clone + Sized> From<&[T]> for AddressPoints {
 }
 
 /// The `SpatialAddress` struct defines a common address that has both associated geographic coordinates and projected cartesian coordinates.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize, PartialEq, PartialOrd)]
 pub struct SpatialAddress {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
@@ -705,7 +716,18 @@ impl<T: Address + Point + GeoPoint<Num = f64> + Clone> From<&T> for SpatialAddre
 }
 
 /// The `SpatialAddresses` struct holds a vector of type [`SpatialAddress`].
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd, Deref, DerefMut)]
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+    PartialEq,
+    PartialOrd,
+    derive_new::new,
+    derive_more::Deref,
+    derive_more::DerefMut,
+)]
 pub struct SpatialAddresses(Vec<SpatialAddress>);
 
 impl Addresses<SpatialAddress> for SpatialAddresses {}

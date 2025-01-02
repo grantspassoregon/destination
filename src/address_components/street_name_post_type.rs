@@ -75,7 +75,7 @@ pub enum StreetNamePostType {
     /// post type, the Cutoff from Azalea Dr receives a second post type Cutoff.  The FGDC standard
     /// notes that the complete street name can take multiple post types, but to accommodate this in
     /// our data model, we have added a compound post type to the enumeration of valid types.
-    #[serde(rename(deserialize = "DRIVE CUTOFF"))]
+    // #[serde(rename(deserialize = "DRIVE CUTOFF"))]
     DriveCutoff,
     DRIVES,
     ESTATE,
@@ -509,7 +509,8 @@ impl StreetNamePostType {
             "DR" => Some(Self::DRIVE),
             "DRIVE" => Some(Self::DRIVE),
             "DR CUTOFF" => Some(Self::DriveCutoff),
-            "DRS" => Some(Self::DRIVES),
+            "DRIVE CUTOFF" => Some(Self::DriveCutoff),
+            "DRIVECUTOFF" => Some(Self::DriveCutoff),
             "EST" => Some(Self::ESTATE),
             "ESTS" => Some(Self::ESTATES),
             "EXPY" => Some(Self::EXPRESSWAY),

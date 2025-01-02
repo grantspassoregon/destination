@@ -556,7 +556,18 @@ where
 
 /// The `CommonAddress` struct defines the fields of a valid address, following the FGDC standard,
 /// with the inclusion of NENA-required fields for emergency response.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub struct CommonAddress {
     /// The `number` field represents the address number component of the complete address
     /// number.
@@ -773,7 +784,21 @@ impl<T: Address> From<&T> for CommonAddress {
 }
 
 /// The `CommonAddresses` struct holds a vector of type [`CommonAddress`].
-#[derive(Debug, Default, Serialize, Deserialize, Clone, Deref, DerefMut)]
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    serde::Serialize,
+    serde::Deserialize,
+    derive_new::new,
+    derive_more::Deref,
+    derive_more::DerefMut,
+)]
 pub struct CommonAddresses(Vec<CommonAddress>);
 
 impl Addresses<CommonAddress> for CommonAddresses {}
@@ -818,7 +843,18 @@ impl IntoCsv<CommonAddresses> for CommonAddresses {
 /// The `PartialAddress` struct contains optional fields so that incomplete or missing data can be
 /// compared against [`Addresses`] or [`PartialAddresses`] for potential matches.  Used to help
 /// match address information that does not parse into a full valid address.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub struct PartialAddress {
     /// The `address_number` field represents the address number component of the complete address
     /// number.
