@@ -2,7 +2,7 @@
 //! Pass.
 use crate::{
     deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, Address, AddressError,
-    AddressErrorKind, AddressStatus, Addresses, IntoBin, IntoCsv, Io, Point, State,
+    AddressErrorKind, AddressStatus, Addresses, Bincode, IntoBin, IntoCsv, Io, Point, State,
     StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType,
     StreetSeparator, SubaddressType,
 };
@@ -278,10 +278,14 @@ impl Addresses<GrantsPassAddress> for GrantsPassAddresses {}
 impl IntoBin<GrantsPassAddresses> for GrantsPassAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => {
-                let decode: Self = bincode::deserialize(&records)?;
-                Ok(decode)
-            }
+            Ok(records) => match bincode::deserialize::<Self>(&records) {
+                Ok(decode) => Ok(decode),
+                Err(source) => {
+                    let error = Bincode::new(source, line!(), file!().to_string());
+                    let error = AddressErrorKind::from(error);
+                    Err(error.into())
+                }
+            },
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -605,10 +609,14 @@ impl Addresses<GrantsPassSpatialAddress> for GrantsPassSpatialAddresses {}
 impl IntoBin<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => {
-                let decode: Self = bincode::deserialize(&records)?;
-                Ok(decode)
-            }
+            Ok(records) => match bincode::deserialize::<Self>(&records) {
+                Ok(decode) => Ok(decode),
+                Err(source) => {
+                    let error = Bincode::new(source, line!(), file!().to_string());
+                    let error = AddressErrorKind::from(error);
+                    Err(error.into())
+                }
+            },
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

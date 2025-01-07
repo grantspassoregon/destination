@@ -1,8 +1,9 @@
 use crate::{
     deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, AddressError, AddressErrorKind,
-    AddressStatus, CommonAddress, CommonAddresses, GeoAddress, GeoAddresses, IntoBin, IntoCsv, Io,
-    SpatialAddress, SpatialAddresses, State, StreetNamePostType, StreetNamePreDirectional,
-    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
+    AddressStatus, Bincode, CommonAddress, CommonAddresses, GeoAddress, GeoAddresses, IntoBin,
+    IntoCsv, Io, SpatialAddress, SpatialAddresses, State, StreetNamePostType,
+    StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType, StreetSeparator,
+    SubaddressType,
 };
 /// The `SpatialAddressRaw` struct defines the fields of a valid address, following the FGDC standard,
 /// with the inclusion of NENA-required fields for emergency response.
@@ -168,10 +169,14 @@ impl From<SpatialAddressesRaw> for SpatialAddresses {
 impl IntoBin<SpatialAddressesRaw> for SpatialAddressesRaw {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => {
-                let decode: Self = bincode::deserialize(&records)?;
-                Ok(decode)
-            }
+            Ok(records) => match bincode::deserialize::<Self>(&records) {
+                Ok(decode) => Ok(decode),
+                Err(source) => {
+                    let error = Bincode::new(source, line!(), file!().to_string());
+                    let error = AddressErrorKind::from(error);
+                    Err(error.into())
+                }
+            },
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

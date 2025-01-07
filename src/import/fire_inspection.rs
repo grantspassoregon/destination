@@ -89,7 +89,12 @@ impl TryFrom<FireInspectionRaw> for FireInspection {
                     subclass: raw.subclass,
                 })
             }
-            Err(source) => Err(Nom::new(raw.address.clone(), source)),
+            Err(source) => Err(Nom::new(
+                raw.address.clone(),
+                source,
+                line!(),
+                file!().to_string(),
+            )),
         }
     }
 }

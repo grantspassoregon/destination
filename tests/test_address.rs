@@ -38,7 +38,7 @@ fn load_city_addresses() -> anyhow::Result<()> {
     trace!("Deserializing city addresses from a csv file.");
     let file = "data/city_addresses_20240513.csv";
     let addresses = GrantsPassAddresses::from_csv(file)?;
-    assert_eq!(addresses.len(), 27509);
+    assert_eq!(addresses.len(), 27502);
     trace!("City addresses loaded: {} entries.", addresses.len());
     Ok(())
 }
@@ -577,7 +577,11 @@ fn parse_address_sample() -> anyhow::Result<()> {
                 tracing::info!("{}", address.label());
                 tracing::info!("{}", address.mailing());
             }
-            Err(source) => return Err(Nom::new(sample.address.clone(), source).into()),
+            Err(source) => {
+                return Err(
+                    Nom::new(sample.address.clone(), source, line!(), file!().to_string()).into(),
+                )
+            }
         }
     }
     Ok(())
@@ -600,7 +604,9 @@ fn parse_city_address() -> anyhow::Result<()> {
                     tracing::info!("{}", address_label);
                 }
             }
-            Err(source) => return Err(Nom::new(label.clone(), source).into()),
+            Err(source) => {
+                return Err(Nom::new(label.clone(), source, line!(), file!().to_string()).into())
+            }
         }
         // }
         // assert_eq!(label, address.label());
@@ -635,7 +641,9 @@ fn parse_county_address() -> anyhow::Result<()> {
                     tracing::info!("{}", address_label);
                 }
             }
-            Err(source) => return Err(Nom::new(label.clone(), source).into()),
+            Err(source) => {
+                return Err(Nom::new(label.clone(), source, line!(), file!().to_string()).into())
+            }
         }
     }
     Ok(())

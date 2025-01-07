@@ -1,6 +1,6 @@
 //! The `utils` module contains utility functions accessed by multiple data types, where declaring
 //! a stand-alone function eliminates code duplication in different methods.
-use crate::{AddressError, AddressErrorKind, Csv, Io};
+use crate::{AddressError, AddressErrorKind, Bincode, Csv, Io};
 use indicatif::{ProgressBar, ProgressStyle};
 use serde::de::{Deserialize, DeserializeOwned, Deserializer};
 use serde::Serialize;
@@ -33,19 +33,19 @@ pub fn to_csv<T: Serialize + Clone>(item: &mut [T], path: PathBuf) -> Result<(),
                 match wtr.serialize(i) {
                     Ok(_) => {}
                     Err(source) => {
-                        return Err(Csv::new(path, source).into());
+                        return Err(Csv::new(path, source, line!(), file!().to_string()).into());
                     }
                 }
             }
             match wtr.flush() {
                 Ok(_) => {}
                 Err(source) => {
-                    return Err(Io::new(path, source).into());
+                    return Err(Io::new(path, source, line!(), file!().to_string()).into());
                 }
             }
             Ok(())
         }
-        Err(source) => Err(Csv::new(path, source).into()),
+        Err(source) => Err(Csv::new(path, source, line!(), file!().to_string()).into()),
     }
 }
 
@@ -75,7 +75,7 @@ pub fn from_csv<T: DeserializeOwned + Clone, P: AsRef<std::path::Path>>(
         }
         Err(source) => {
             let path = std::path::PathBuf::from(path.as_ref());
-            Err(Io::new(path, source))
+            Err(Io::new(path, source, line!(), file!().to_string()))
         }
     }
 }
@@ -84,13 +84,20 @@ pub fn from_csv<T: DeserializeOwned + Clone, P: AsRef<std::path::Path>>(
 /// location `path`.  Errors bubble up from serialization in [`bincode`] or file system access during write.
 pub fn to_bin<T: Serialize, P: AsRef<Path>>(data: &T, path: P) -> Result<(), AddressError> {
     info!("Serializing to binary.");
-    let encode = bincode::serialize(data)?;
+    let encode = match bincode::serialize(data) {
+        Ok(enc) => enc,
+        Err(source) => {
+            let error = Bincode::new(source, line!(), file!().to_string());
+            let error = AddressErrorKind::from(error);
+            return Err(error.into());
+        }
+    };
     info!("Writing to file.");
     match std::fs::write(&path, encode) {
         Ok(_) => Ok(()),
         Err(source) => {
             let path = std::path::PathBuf::from(path.as_ref());
-            Err(AddressErrorKind::from(Io::new(path, source)).into())
+            Err(AddressErrorKind::from(Io::new(path, source, line!(), file!().to_string())).into())
         }
     }
 }
@@ -123,7 +130,7 @@ pub fn from_bin<P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Io> {
         }
         Err(source) => {
             let path = std::path::PathBuf::from(path.as_ref());
-            Err(Io::new(path, source))
+            Err(Io::new(path, source, line!(), file!().to_string()))
         }
     }
 }

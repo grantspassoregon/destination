@@ -1,7 +1,7 @@
 //! The `lexisnexis` module produces address range reports for the LexisNexis dispatch service.
 use crate::{
     from_bin, from_csv, to_bin, to_csv, Address, AddressError, AddressErrorKind, Addresses,
-    Builder, IntoBin, IntoCsv, Io,
+    Bincode, Builder, IntoBin, IntoCsv, Io,
 };
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
@@ -65,6 +65,8 @@ impl LexisNexisItemBuilder {
             let error = Builder::new(
                 "address_number_from field is None".to_string(),
                 target.clone(),
+                line!(),
+                file!().to_string(),
             );
             return Err(error);
         };
@@ -75,6 +77,8 @@ impl LexisNexisItemBuilder {
             let error = Builder::new(
                 "address_number_to field is None".to_string(),
                 target.clone(),
+                line!(),
+                file!().to_string(),
             );
             return Err(error);
         };
@@ -82,7 +86,12 @@ impl LexisNexisItemBuilder {
             s
         } else {
             tracing::warn!("Missing street name.");
-            let error = Builder::new("street_name field is None".to_string(), target.clone());
+            let error = Builder::new(
+                "street_name field is None".to_string(),
+                target.clone(),
+                line!(),
+                file!().to_string(),
+            );
             return Err(error);
         };
         let street_name_post_type = if let Some(s) = self.street_name_post_type {
@@ -92,6 +101,8 @@ impl LexisNexisItemBuilder {
             let error = Builder::new(
                 "street_name_post_type field is None".to_string(),
                 target.clone(),
+                line!(),
+                file!().to_string(),
             );
             return Err(error);
         };
@@ -99,14 +110,24 @@ impl LexisNexisItemBuilder {
             s
         } else {
             tracing::warn!("Postal community missing.");
-            let error = Builder::new("postal_community field is None".to_string(), target.clone());
+            let error = Builder::new(
+                "postal_community field is None".to_string(),
+                target.clone(),
+                line!(),
+                file!().to_string(),
+            );
             return Err(error);
         };
         let zip_code = if let Some(num) = self.zip_code {
             num
         } else {
             tracing::warn!("Zip code missing.");
-            let error = Builder::new("zip_code field is None".to_string(), target.clone());
+            let error = Builder::new(
+                "zip_code field is None".to_string(),
+                target.clone(),
+                line!(),
+                file!().to_string(),
+            );
             return Err(error);
         };
         Ok(LexisNexisItem {
@@ -279,10 +300,14 @@ impl LexisNexis {
 impl IntoBin<LexisNexis> for LexisNexis {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => {
-                let decode: Self = bincode::deserialize(&records)?;
-                Ok(decode)
-            }
+            Ok(records) => match bincode::deserialize::<Self>(&records) {
+                Ok(decode) => Ok(decode),
+                Err(source) => {
+                    let error = Bincode::new(source, line!(), file!().to_string());
+                    let error = AddressErrorKind::from(error);
+                    Err(error.into())
+                }
+            },
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

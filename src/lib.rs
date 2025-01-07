@@ -33,7 +33,7 @@ pub use compare::{
     FireInspectionMatches, MatchPartialRecord, MatchPartialRecords, MatchRecord, MatchRecords,
     MatchStatus, Mismatch,
 };
-pub use error::{AddressError, AddressErrorKind, Builder, Csv, Io, Nom};
+pub use error::{AddressError, AddressErrorKind, Bincode, Builder, Csv, Io, Nom};
 pub use geo::{GeoAddress, GeoAddresses, Point, SpatialAddress, SpatialAddresses};
 pub use import::{
     Business, Businesses, FireInspection, FireInspectionRaw, FireInspections, GrantsPassAddress,

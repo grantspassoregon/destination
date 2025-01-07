@@ -1,8 +1,8 @@
 //! The `grants_pass_business` module contains data types for importing business license reports
 //! for the City of Grants Pass.
 use crate::{
-    from_bin, from_csv, to_bin, to_csv, AddressError, AddressErrorKind, IntoBin, IntoCsv, Io, Nom,
-    Parser, PartialAddress,
+    from_bin, from_csv, to_bin, to_csv, AddressError, AddressErrorKind, Bincode, IntoBin, IntoCsv,
+    Io, Nom, Parser, PartialAddress,
 };
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
@@ -171,7 +171,12 @@ impl TryFrom<BusinessRaw> for Business {
                 district: raw.district,
             }),
             // Throw an error if parsing fails.
-            Err(source) => Err(Nom::new(raw.street_address_label.clone(), source)),
+            Err(source) => Err(Nom::new(
+                raw.street_address_label.clone(),
+                source,
+                line!(),
+                file!().to_string(),
+            )),
         }
     }
 }
@@ -198,10 +203,14 @@ impl Businesses {
 impl IntoBin<Businesses> for Businesses {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => {
-                let decode: Self = bincode::deserialize(&records)?;
-                Ok(decode)
-            }
+            Ok(records) => match bincode::deserialize::<Self>(&records) {
+                Ok(decode) => Ok(decode),
+                Err(source) => {
+                    let error = Bincode::new(source, line!(), file!().to_string());
+                    let error = AddressErrorKind::from(error);
+                    Err(error.into())
+                }
+            },
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

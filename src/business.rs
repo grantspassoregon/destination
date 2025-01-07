@@ -515,13 +515,13 @@ impl BusinessLicense {
                     }
                     Err(source) => {
                         let description = format!("parsing subaddress id from {}", rem);
-                        let source = Nom::new(description, source);
+                        let source = Nom::new(description, source, line!(), file!().to_string());
                         return Err(source);
                     }
                 },
                 Err(source) => {
                     let description = format!("parsing subaddress type from {}", val);
-                    let source = Nom::new(description, source);
+                    let source = Nom::new(description, source, line!(), file!().to_string());
                     return Err(source);
                 }
             }
