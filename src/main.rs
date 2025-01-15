@@ -111,6 +111,11 @@ fn main() -> anyhow::Result<()> {
                             &JosephineCountyAddresses2024::from_csv(cli.source.clone())?[..],
                         )
                     }
+                    "common" => {
+                        source_addresses = CommonAddresses::from(SpatialAddressesRaw::from_csv(
+                            cli.source.clone(),
+                        )?)
+                    }
                     _ => error!("Unrecognized file format."),
                 }
             }
@@ -130,6 +135,10 @@ fn main() -> anyhow::Result<()> {
                             target_addresses = CommonAddresses::from(
                                 &JosephineCountyAddresses::from_csv(target)?[..],
                             )
+                        }
+                        "common" => {
+                            target_addresses =
+                                CommonAddresses::from(SpatialAddressesRaw::from_csv(target)?)
                         }
                         _ => error!("Invalid target data type."),
                     }

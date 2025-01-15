@@ -1,9 +1,9 @@
 use address::{
     from_csv, Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
-    CommonAddresses, FireInspectionMatchRecords, FireInspections, GeoAddresses,
-    GrantsPassAddresses, GrantsPassSpatialAddresses, IntoBin, IntoCsv, Io,
-    JosephineCountyAddresses, MatchRecords, Nom, Parser, PartialAddress, PostalCommunity,
-    SpatialAddresses, StreetNamePostType, StreetNamePreDirectional, SubaddressType,
+    FireInspectionMatchRecords, FireInspections, GeoAddresses, GrantsPassAddresses,
+    GrantsPassSpatialAddresses, IntoBin, IntoCsv, Io, JosephineCountyAddresses, MatchRecords, Nom,
+    Parser, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
+    StreetNamePreDirectional, SubaddressType,
 };
 use test_log::test;
 use tracing::{info, trace};
@@ -13,24 +13,6 @@ struct AddressSample {
     address: String,
     // zip: String,
 }
-
-// Loads ECSO addresses, export as binary to the local data folder
-// moved to justfile
-// #[test]
-// #[cfg_attr(feature = "ci", ignore)]
-// fn load_ecso_addresses() -> Clean<()> {
-//     trace!("Deserializing county addresses from a csv file.");
-//     // let file = "tests/test_data/county_addresses_ugb_20241007.csv";
-//     let file = "data/county_addresses_20241007.csv";
-//     let addresses = JosephineCountySpatialAddresses2024::from_csv(file)?;
-//     assert_eq!(addresses.len(), 45564);
-//     trace!("County addresses loaded: {} entries.", addresses.len());
-//     let mut spatial = SpatialAddresses::from(&addresses[..]);
-//     info!("Addresses loaded: {}", spatial.len());
-//     spatial.standardize();
-//     spatial.save("data/county_addresses.data")?;
-//     Ok(())
-// }
 
 #[test]
 // Loads city addresses and prints the length
@@ -42,21 +24,6 @@ fn load_city_addresses() -> anyhow::Result<()> {
     trace!("City addresses loaded: {} entries.", addresses.len());
     Ok(())
 }
-
-// Loads city addresses, export as binary to the local data folder
-// moved to justfile
-// #[test]
-// #[cfg_attr(feature = "ci", ignore)]
-// fn save_city_addresses() -> Clean<()> {
-//     trace!("Opening city addresses from a csv file.");
-//     let file = "data/city_addresses_20241007.csv";
-//     let addresses = GrantsPassSpatialAddresses::from_csv(file)?;
-//     let addresses = SpatialAddresses::from(&addresses[..]);
-//     assert_eq!(addresses.len(), 27818);
-//     trace!("Saving city addresses to binary.");
-//     addresses.save("tests/test_data/addresses.data")?;
-//     Ok(())
-// }
 
 // Load JosephineCountyAddresses type
 #[test]
@@ -81,43 +48,6 @@ fn load_geo_addresses() -> anyhow::Result<()> {
     info!("Geo addresses loaded: {} entries.", geo_addresses.len());
     Ok(())
 }
-
-// Read business licenses from csv.
-// Match business addresses against city addresses.
-// All comps - business_match.csv
-// matching, divergent, missing - business_*.csv
-// moved to justfile
-// #[test]
-// #[cfg_attr(feature = "ci", ignore)]
-// fn business_licenses() -> Clean<()> {
-//     let file = "data/business_licenses_20240520.csv";
-//     let licenses = BusinessLicenses::from_csv(file)?;
-//     info!("Business licenses loaded: {} entries.", licenses.len());
-//     let mut licenses = licenses.deduplicate();
-//     licenses.detype_subaddresses()?;
-//     info!(
-//         "Business licenses deduplicated: {} entries.",
-//         licenses.len()
-//     );
-//     let city_path = "data/city_addresses_20240513.csv";
-//     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
-//     let mut match_records = BusinessMatchRecords::compare(&licenses, &city_addresses);
-//     info!("Match records: {}", match_records.len());
-//     match_records.to_csv("c:/users/erose/geojson/business_match.csv".into())?;
-//     let points = Businesses::from_csv("data/business_points.csv")?;
-//     info!("Business points: {}", points.len());
-//
-//     info!("{:?}", licenses[0]);
-//     let mut matching = match_records.clone().filter("matching");
-//     matching.to_csv("c:/users/erose/documents/business_matching.csv".into())?;
-//     let mut divergent = match_records.clone().filter("divergent");
-//     divergent.to_csv("c:/users/erose/documents/business_divergent.csv".into())?;
-//     let mut missing = match_records.clone().filter("missing");
-//     missing = missing.filter("local");
-//     missing.to_csv("c:/users/erose/documents/business_missing.csv".into())?;
-//
-//     Ok(())
-// }
 
 #[test]
 fn read_bus_licenses() -> Result<(), Io> {
