@@ -1,6 +1,6 @@
 //! The `fire_inspections` module imports data from fire inspections into the library to facilitate
 //! address matching.
-use crate::{AddressErrorKind, Io, Nom, Parser, PartialAddress};
+use crate::{AddressErrorKind, Io, Nom, Parse, PartialAddress};
 
 /// The `FireInspectionRaw` struct functions as a builder for a [`FireInspection`] struct.
 /// The fields correspond to the csv of fire inspection data from the fire department.
@@ -76,7 +76,7 @@ impl TryFrom<FireInspectionRaw> for FireInspection {
     type Error = Nom;
 
     fn try_from(raw: FireInspectionRaw) -> Result<Self, Self::Error> {
-        match Parser::address(&raw.address) {
+        match Parse::address(&raw.address) {
             Ok((_, address)) => {
                 let mut upper_address = address.clone();
                 if let Some(identifier) = address.subaddress_identifier() {

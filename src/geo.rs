@@ -279,11 +279,7 @@ impl IntoBin<GeoAddress> for GeoAddress {
         match from_bin(path) {
             Ok(records) => match bincode::deserialize::<Self>(&records) {
                 Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
+                Err(source) => Err(Bincode::new(source, line!(), file!().to_string()).into()),
             },
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
@@ -495,11 +491,7 @@ impl IntoBin<AddressPoint> for AddressPoint {
         match from_bin(path) {
             Ok(records) => match bincode::deserialize::<Self>(&records) {
                 Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
+                Err(source) => Err(Bincode::new(source, line!(), file!().to_string()).into()),
             },
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
@@ -745,11 +737,7 @@ impl IntoBin<SpatialAddresses> for SpatialAddresses {
         match from_bin(path) {
             Ok(records) => match bincode::deserialize::<Self>(&records) {
                 Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
+                Err(source) => Err(Bincode::new(source, line!(), file!().to_string()).into()),
             },
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }

@@ -2,7 +2,7 @@
 //! for the City of Grants Pass.
 use crate::{
     from_bin, from_csv, to_bin, to_csv, AddressError, AddressErrorKind, Bincode, IntoBin, IntoCsv,
-    Io, Nom, Parser, PartialAddress,
+    Io, Nom, Parse, PartialAddress,
 };
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
@@ -153,7 +153,7 @@ impl TryFrom<BusinessRaw> for Business {
     // [`Business`] type.  Errors if the address parsing fails.
     fn try_from(raw: BusinessRaw) -> Result<Self, Self::Error> {
         // Attempt to parse the address label to a [`PartialAddress`].
-        match Parser::address(&raw.street_address_label) {
+        match Parse::address(&raw.street_address_label) {
             // Return the conversion on success.
             Ok((_, address)) => Ok(Business {
                 company_name: raw.company_name,

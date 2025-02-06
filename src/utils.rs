@@ -87,17 +87,14 @@ pub fn to_bin<T: Serialize, P: AsRef<Path>>(data: &T, path: P) -> Result<(), Add
     let encode = match bincode::serialize(data) {
         Ok(enc) => enc,
         Err(source) => {
-            let error = Bincode::new(source, line!(), file!().to_string());
-            let error = AddressErrorKind::from(error);
-            return Err(error.into());
+            return Err(Bincode::new(source, line!(), file!().to_string()).into());
         }
     };
     info!("Writing to file.");
     match std::fs::write(&path, encode) {
         Ok(_) => Ok(()),
         Err(source) => {
-            let path = std::path::PathBuf::from(path.as_ref());
-            Err(AddressErrorKind::from(Io::new(path, source, line!(), file!().to_string())).into())
+            Err(Io::new(path.as_ref().into(), source, line!(), file!().to_string()).into())
         }
     }
 }
@@ -128,10 +125,12 @@ pub fn from_bin<P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Io> {
             bar.finish_with_message("Loaded!");
             Ok(vec)
         }
-        Err(source) => {
-            let path = std::path::PathBuf::from(path.as_ref());
-            Err(Io::new(path, source, line!(), file!().to_string()))
-        }
+        Err(source) => Err(Io::new(
+            path.as_ref().into(),
+            source,
+            line!(),
+            file!().to_string(),
+        )),
     }
 }
 

@@ -2,7 +2,7 @@
 //! matching, divergent and missing addresses.
 use crate::{
     deserialize_phone_number, from_csv, to_csv, Address, AddressErrorKind, IntoCsv, Io,
-    MatchStatus, Nom, Parser, StreetNamePostType, StreetNamePreDirectional,
+    MatchStatus, Nom, Parse, StreetNamePostType, StreetNamePreDirectional,
 };
 use derive_more::{Deref, DerefMut};
 use galileo::galileo_types::geo::GeoPoint;
@@ -506,8 +506,8 @@ impl BusinessLicense {
     /// the id to addresses in the city.
     pub fn detype_subaddress(&mut self) -> Result<(), Nom> {
         if let Some(val) = &self.subaddress_identifier {
-            match Parser::subaddress_type(val) {
-                Ok((rem, _)) => match Parser::subaddress_id(rem) {
+            match Parse::subaddress_type(val) {
+                Ok((rem, _)) => match Parse::subaddress_id(rem) {
                     Ok((_, element)) => {
                         if let Some(id) = element {
                             self.subaddress_identifier = Some(id.to_string());

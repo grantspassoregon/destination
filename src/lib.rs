@@ -45,7 +45,7 @@ pub use import::{
 pub use lexisnexis::{
     LexisNexis, LexisNexisItem, LexisNexisItemBuilder, LexisNexisRange, LexisNexisRangeItem,
 };
-pub use parser::{deserialize_phone_number, parse_phone_number, Parser};
+pub use parser::{deserialize_phone_number, parse_phone_number, Parse};
 pub use utils::{
     deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, trace_init, IntoBin, IntoCsv,
 };

@@ -3,7 +3,7 @@
 use crate::{
     from_bin, from_csv, to_bin, to_csv, AddressError, AddressErrorKind, AddressMatch,
     AddressStatus, Bincode, Builder, FireInspections, IntoBin, IntoCsv, Io, LexisNexis, Mismatch,
-    Parser, Point, PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional,
+    Parse, Point, PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional,
     StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
 };
 use derive_more::{Deref, DerefMut};
@@ -434,7 +434,7 @@ where
             "complete_street_name_abbr" => self.retain(|r| r.complete_street_name(true) == field),
             "pre_directional" => {
                 info!("Directional is {}", field);
-                if let Ok((_, dir)) = Parser::pre_directional(field) {
+                if let Ok((_, dir)) = Parse::pre_directional(field) {
                     info!("Parsed directional: {:?}", &dir);
                     self.retain(|r| r.directional() == &dir)
                 } else {
@@ -442,7 +442,7 @@ where
                 }
             }
             "post_type" => {
-                if let Ok((_, post)) = Parser::post_type(field) {
+                if let Ok((_, post)) = Parse::post_type(field) {
                     self.retain(|r| r.street_type() == &post)
                 } else {
                     tracing::info!("Could not parse post type.")
@@ -818,11 +818,7 @@ impl IntoBin<CommonAddresses> for CommonAddresses {
         match from_bin(path) {
             Ok(records) => match bincode::deserialize::<Self>(&records) {
                 Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
+                Err(source) => Err(Bincode::new(source, line!(), file!().to_string()).into()),
             },
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
@@ -1283,11 +1279,7 @@ impl IntoBin<PartialAddresses> for PartialAddresses {
         match from_bin(path) {
             Ok(records) => match bincode::deserialize::<Self>(&records) {
                 Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
+                Err(source) => Err(Bincode::new(source, line!(), file!().to_string()).into()),
             },
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
@@ -1353,11 +1345,7 @@ impl IntoBin<AddressDeltas> for AddressDeltas {
         match from_bin(path) {
             Ok(records) => match bincode::deserialize::<Self>(&records) {
                 Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
+                Err(source) => Err(Bincode::new(source, line!(), file!().to_string()).into()),
             },
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }

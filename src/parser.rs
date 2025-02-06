@@ -4,15 +4,15 @@ use crate::{
     StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
 };
 use nom::bytes::complete::{tag, take_until};
-use nom::character::{complete, is_alphanumeric};
-use nom::{branch, combinator, IResult};
+use nom::character::complete;
+use nom::{branch, combinator, AsChar, IResult, Parser};
 use serde::de::{Deserialize, Deserializer};
 
 /// The `Parser` struct holds methods for parsing addresses.
 #[derive(Debug, Copy, Clone)]
-pub struct Parser;
+pub struct Parse;
 
-impl Parser {
+impl Parse {
     /// The `address_number` function expects one or more numeric digits, returned as an i64 value.
     /// TODO: 2501-2503 address range should read as 2501 and discard remainder of range.
     pub fn address_number(input: &str) -> IResult<&str, Option<i64>> {
@@ -20,10 +20,9 @@ impl Parser {
         let (remaining, _) = complete::space0(input)?;
         // Digit1 takes one or more digits.
         // Map the digits to str::parse to convert them from str to i64
-        if let Ok((rem, num)) = combinator::map_res(
-            complete::digit1::<&str, nom::error::Error<_>>,
-            str::parse,
-        )(remaining)
+        if let Ok((rem, num)) =
+            combinator::map_res(complete::digit1::<&str, nom::error::Error<_>>, str::parse)
+                .parse(remaining)
         {
             Ok((rem, Some(num)))
         } else {
@@ -50,7 +49,8 @@ impl Parser {
                 // The second character in the sequence is not alaphanumeric if it is a "/"
                 let test = suffix.as_bytes()[1];
                 // Screen out periods so it does not confuse suffixes with N.W. or S.E. patterns
-                match !is_alphanumeric(test) && test != b'.' {
+                // match !is_alphanumeric(test) && test != b'.' {
+                match !test.is_alphanum() && test != b'.' {
                     true => Ok((rem, Some(suffix))),
                     // If not a suffix, return the remainder before trying to parse the suffix
                     false => Ok((remaining, None)),
@@ -76,7 +76,7 @@ impl Parser {
         if let Ok((rem, result)) = complete::alpha1::<&str, nom::error::Error<_>>(rem) {
             tracing::trace!("Predir read: {}", result);
             // Strip trailing period after directional.
-            let (rem, _) = combinator::opt(tag("."))(rem)?;
+            let (rem, _) = combinator::opt(tag(".")).parse(rem)?;
             // Strip preceding whitespace on next word.
             let (rem, _) = complete::space0(rem)?;
             // Save remainder input if next word does not parse as directional.
@@ -99,11 +99,11 @@ impl Parser {
                                     // Compound directional found.
                                     StreetNamePreDirectional::EAST => {
                                         // Strip trailing period after directional.
-                                        let (rem, _) = combinator::opt(tag("."))(rem)?;
+                                        let (rem, _) = combinator::opt(tag(".")).parse(rem)?;
                                         Ok((rem, Some(StreetNamePreDirectional::NORTHEAST)))
                                     }
                                     StreetNamePreDirectional::WEST => {
-                                        let (rem, _) = combinator::opt(tag("."))(rem)?;
+                                        let (rem, _) = combinator::opt(tag(".")).parse(rem)?;
                                         Ok((rem, Some(StreetNamePreDirectional::NORTHWEST)))
                                     }
                                     // Next word is a directional, but not a valid one, return "remaining" instead
@@ -143,11 +143,11 @@ impl Parser {
                                     // Compound directional found.
                                     StreetNamePreDirectional::EAST => {
                                         // Strip trailing period after directional.
-                                        let (rem, _) = combinator::opt(tag("."))(rem)?;
+                                        let (rem, _) = combinator::opt(tag(".")).parse(rem)?;
                                         Ok((rem, Some(StreetNamePreDirectional::SOUTHEAST)))
                                     }
                                     StreetNamePreDirectional::WEST => {
-                                        let (rem, _) = combinator::opt(tag("."))(rem)?;
+                                        let (rem, _) = combinator::opt(tag(".")).parse(rem)?;
                                         Ok((rem, Some(StreetNamePreDirectional::SOUTHWEST)))
                                     }
                                     // Next word is a directional, but not a valid one, return "remaining" instead
@@ -366,7 +366,7 @@ impl Parser {
                 tracing::trace!("Working name: {}", name);
                 // Capture apostrophes in street names.
                 tracing::trace!("Apostrophe check on {}", remaining);
-                let (rem, apostrophe) = combinator::opt(tag("'"))(remaining)?;
+                let (rem, apostrophe) = combinator::opt(tag("'")).parse(remaining)?;
                 if let Some(value) = apostrophe {
                     tracing::trace!("Apostrophe found, rem: {}", rem);
                     name.push_str(value);
@@ -462,11 +462,11 @@ impl Parser {
     pub fn subaddress_type(input: &str) -> IResult<&str, Option<SubaddressType>> {
         tracing::trace!("Calling subaddress_type on {}", input);
         // Strip preceding period.
-        let (rem, _) = combinator::opt(tag("."))(input)?;
+        let (rem, _) = combinator::opt(tag(".")).parse(input)?;
         // Strip preceding whitespace.
         let (rem, _) = complete::space0(rem)?;
         // Strip preceding number sign.
-        let (rem, _) = combinator::opt(tag("#"))(rem)?;
+        let (rem, _) = combinator::opt(tag("#")).parse(rem)?;
         // Take one or more alphabetic character.
         if let Ok((rem, result)) = complete::alphanumeric1::<&str, nom::error::Error<_>>(rem) {
             // Attempt to read as subaddress type.
@@ -491,13 +491,13 @@ impl Parser {
     pub fn subaddress_id(input: &str) -> IResult<&str, Option<String>> {
         tracing::trace!("Calling subaddress_id on {}", input);
         // Strip preceding period.
-        let (rem, _) = combinator::opt(tag("."))(input)?;
+        let (rem, _) = combinator::opt(tag(".")).parse(input)?;
         // Strip preceding whitespace.
         let (rem, _) = complete::space0(rem)?;
         // Strip common subaddress identifier symbols.
-        let (rem, _) = combinator::opt(tag("#"))(rem)?;
-        let (rem, _) = combinator::opt(tag("&"))(rem)?;
-        let (rem, _) = combinator::opt(tag("-"))(rem)?;
+        let (rem, _) = combinator::opt(tag("#")).parse(rem)?;
+        let (rem, _) = combinator::opt(tag("&")).parse(rem)?;
+        let (rem, _) = combinator::opt(tag("-")).parse(rem)?;
         // Strip whitespace between symbol and id.
         let (rem, _) = complete::space0(rem)?;
         // If there is no subaddress, we expect the city name next.
@@ -536,10 +536,10 @@ impl Parser {
                 // Strip preceding whitespace.
                 let (rem, _) = complete::space0(rem)?;
                 // Strip common subaddress identifier symbols.
-                let (rem, _) = combinator::opt(tag("#"))(rem)?;
-                let (rem, _) = combinator::opt(tag("&"))(rem)?;
-                let (rem, _) = combinator::opt(tag("-"))(rem)?;
-                let (rem, _) = combinator::opt(tag(","))(rem)?;
+                let (rem, _) = combinator::opt(tag("#")).parse(rem)?;
+                let (rem, _) = combinator::opt(tag("&")).parse(rem)?;
+                let (rem, _) = combinator::opt(tag("-")).parse(rem)?;
+                let (rem, _) = combinator::opt(tag(",")).parse(rem)?;
                 // Strip whitespace between symbol and id.
                 let (rem, _) = complete::space0(rem)?;
                 remain = rem;
@@ -577,7 +577,7 @@ impl Parser {
         tracing::trace!("Calling postal_community on {}", input);
         // Holds potentially compound community name.
         let mut comm = String::new();
-        let (rem, _) = combinator::opt(tag(","))(input)?;
+        let (rem, _) = combinator::opt(tag(",")).parse(input)?;
         // Strip preceding whitespace.
         let (remaining, _) = complete::space0(rem)?;
         // Take one or more alphanumeric characters.
@@ -633,7 +633,7 @@ impl Parser {
     pub fn state(input: &str) -> IResult<&str, Option<State>> {
         tracing::trace!("Calling state on {}", input);
         // Strip preceding comma.
-        let (rem, _) = combinator::opt(tag(","))(input)?;
+        let (rem, _) = combinator::opt(tag(",")).parse(input)?;
         // Strip preceding whitespace.
         let (remaining, _) = complete::space0(rem)?;
         // State name is alphabetic
@@ -670,7 +670,7 @@ impl Parser {
     pub fn zip(input: &str) -> IResult<&str, Option<i64>> {
         tracing::trace!("Calling zip on {}", input);
         // Strip preceding comma.
-        let (rem, _) = combinator::opt(tag(","))(input)?;
+        let (rem, _) = combinator::opt(tag(",")).parse(input)?;
         // Strip preceding whitespace.
         let (remaining, _) = complete::space0(rem)?;
         // Zip code is an integer.
@@ -780,11 +780,11 @@ impl Parser {
 #[tracing::instrument(skip_all)]
 pub fn parse_phone_number(input: &str) -> IResult<&str, String> {
     // Strip a leading parenthesis if present.
-    let (rem, _) = combinator::opt(tag("("))(input)?;
+    let (rem, _) = combinator::opt(tag("(")).parse(input)?;
     // Takes one or more numbers, either the prefix or the whole sequence.
     let (rem, prefix) = nom::character::complete::digit1(rem)?;
     // Strip the closing parenthesis or a period if present.
-    let (rem, _) = combinator::opt(branch::alt((tag(")"), tag("."))))(rem)?;
+    let (rem, _) = combinator::opt(branch::alt((tag(")"), tag(".")))).parse(rem)?;
     // Strip any whitespace.
     let (rem, _) = complete::space0(rem)?;
     // Takes one or more numbers, targeting the first three of the primary seven.
@@ -792,7 +792,7 @@ pub fn parse_phone_number(input: &str) -> IResult<&str, String> {
     // Strip any whitespace used before the separator.
     let (rem, _) = complete::space0(rem)?;
     // Remove a hyphen or dot separator.
-    let (rem, _) = combinator::opt(branch::alt((tag("-"), tag("."))))(rem)?;
+    let (rem, _) = combinator::opt(branch::alt((tag("-"), tag(".")))).parse(rem)?;
     // Strip any whitespace used after the separator.
     let (rem, _) = complete::space0(rem)?;
     // Takes one or more numbers, targeting the last four of the primary seven.

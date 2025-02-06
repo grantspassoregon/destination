@@ -2,7 +2,7 @@ use address::{
     from_csv, Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
     FireInspectionMatchRecords, FireInspections, GeoAddresses, GrantsPassAddresses,
     GrantsPassSpatialAddresses, IntoBin, IntoCsv, Io, JosephineCountyAddresses, MatchRecords, Nom,
-    Parser, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
+    Parse, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
     StreetNamePreDirectional, SubaddressType,
 };
 use test_log::test;
@@ -182,15 +182,15 @@ fn address_number_parser() {
     let a2 = "100 CENTURYLINK DR";
     let a3 = "100 LEWIS AVE, Grants Pass";
     assert_eq!(
-        Parser::address_number(a1),
+        Parse::address_number(a1),
         Ok((" FIRE MOUNTAIN WAY, Grants Pass", Some(1)))
     );
     assert_eq!(
-        Parser::address_number(a2),
+        Parse::address_number(a2),
         Ok((" CENTURYLINK DR", Some(100)))
     );
     assert_eq!(
-        Parser::address_number(a3),
+        Parse::address_number(a3),
         Ok((" LEWIS AVE, Grants Pass", Some(100)))
     );
 }
@@ -202,18 +202,18 @@ fn address_number_suffix_parser() {
     let a3 = " 3/4 LEWIS AVE";
     let a4 = " LEWIS AVE";
     assert_eq!(
-        Parser::address_number_suffix(a1),
+        Parse::address_number_suffix(a1),
         Ok((" LEWIS AVE", Some("1/2")))
     );
     assert_eq!(
-        Parser::address_number_suffix(a2),
+        Parse::address_number_suffix(a2),
         Ok((" LEWIS AVE", Some("1/2")))
     );
     assert_eq!(
-        Parser::address_number_suffix(a3),
+        Parse::address_number_suffix(a3),
         Ok((" LEWIS AVE", Some("3/4")))
     );
-    assert_eq!(Parser::address_number_suffix(a4), Ok(("LEWIS AVE", None)));
+    assert_eq!(Parse::address_number_suffix(a4), Ok(("LEWIS AVE", None)));
 }
 
 #[test]
@@ -222,12 +222,12 @@ fn pre_directional_parser() {
     let a2 = "LEWIS AVE";
     let a3 = " NW 6TH ST";
     assert_eq!(
-        Parser::pre_directional(a1),
+        Parse::pre_directional(a1),
         Ok(("6TH ST", Some(StreetNamePreDirectional::NORTHWEST)))
     );
-    assert_eq!(Parser::pre_directional(a2), Ok(("LEWIS AVE", None)));
+    assert_eq!(Parse::pre_directional(a2), Ok(("LEWIS AVE", None)));
     assert_eq!(
-        Parser::pre_directional(a3),
+        Parse::pre_directional(a3),
         Ok(("6TH ST", Some(StreetNamePreDirectional::NORTHWEST)))
     );
 }
@@ -238,15 +238,15 @@ fn street_type_parser() {
     let a2 = "DR";
     let a3 = " AVE, Grants Pass";
     assert_eq!(
-        Parser::post_type(a1),
+        Parse::post_type(a1),
         Ok((", Grants Pass", Some(StreetNamePostType::WAY)))
     );
     assert_eq!(
-        Parser::post_type(a2),
+        Parse::post_type(a2),
         Ok(("", Some(StreetNamePostType::DRIVE)))
     );
     assert_eq!(
-        Parser::post_type(a3),
+        Parse::post_type(a3),
         Ok((", Grants Pass", Some(StreetNamePostType::AVENUE)))
     );
 }
@@ -258,19 +258,19 @@ fn multi_word_parser() {
     let a3 = " ROGUE RIVER AVE, Grants Pass";
     let a4 = " TOO LONG NAME LN";
     assert_eq!(
-        Parser::street_name(a1),
+        Parse::street_name(a1),
         Ok(("WAY", Some("FIRE MOUNTAIN".to_string())))
     );
     assert_eq!(
-        Parser::street_name(a2),
+        Parse::street_name(a2),
         Ok(("DR", Some("CENTURYLINK".to_string())))
     );
     assert_eq!(
-        Parser::street_name(a3),
+        Parse::street_name(a3),
         Ok(("AVE, Grants Pass", Some("ROGUE RIVER".to_string())))
     );
     assert_eq!(
-        Parser::street_name(a4),
+        Parse::street_name(a4),
         Ok(("LN", Some("TOO LONG NAME".to_string())))
     );
 }
@@ -283,18 +283,18 @@ fn subaddress_type_parser() {
     let a4 = " #A";
 
     assert_eq!(
-        Parser::subaddress_type(a1),
+        Parse::subaddress_type(a1),
         Ok((" A", Some(SubaddressType::Suite)))
     );
     assert_eq!(
-        Parser::subaddress_type(a2),
+        Parse::subaddress_type(a2),
         Ok((" B", Some(SubaddressType::Suite)))
     );
     assert_eq!(
-        Parser::subaddress_type(a3),
+        Parse::subaddress_type(a3),
         Ok((" 1", Some(SubaddressType::Unit)))
     );
-    assert_eq!(Parser::subaddress_type(a4), Ok((" #A", None)));
+    assert_eq!(Parse::subaddress_type(a4), Ok((" #A", None)));
 }
 
 #[test]
@@ -303,10 +303,10 @@ fn subaddress_element_parser() {
     let a2 = " #B";
     let a3 = " #A & B";
     let a4 = " &";
-    assert_eq!(Parser::subaddress_id(a1), Ok(("", Some("A".to_string()))));
-    assert_eq!(Parser::subaddress_id(a2), Ok(("", Some("B".to_string()))));
-    assert_eq!(Parser::subaddress_id(a3), Ok(("", Some("A B".to_string()))));
-    assert_eq!(Parser::subaddress_id(a4), Ok((" &", None)));
+    assert_eq!(Parse::subaddress_id(a1), Ok(("", Some("A".to_string()))));
+    assert_eq!(Parse::subaddress_id(a2), Ok(("", Some("B".to_string()))));
+    assert_eq!(Parse::subaddress_id(a3), Ok(("", Some("A B".to_string()))));
+    assert_eq!(Parse::subaddress_id(a4), Ok((" &", None)));
 }
 
 #[test]
@@ -314,12 +314,12 @@ fn subaddress_elements_parser() {
     let a1 = " #A & B";
     let a2 = " Food Trailer";
     let a3 = "";
-    assert_eq!(Parser::subaddress_id(a1), Ok(("", Some("A B".to_string()))));
+    assert_eq!(Parse::subaddress_id(a1), Ok(("", Some("A B".to_string()))));
     assert_eq!(
-        Parser::subaddress_id(a2),
+        Parse::subaddress_id(a2),
         Ok(("", Some("Food Trailer".to_string())))
     );
-    assert_eq!(Parser::subaddress_id(a3), Ok(("", None)));
+    assert_eq!(Parse::subaddress_id(a3), Ok(("", None)));
 }
 
 #[test]
@@ -331,19 +331,19 @@ fn subaddress_identifiers_parser() {
     // TODO: Subaddress ID does not parse apostrophes
     // let a5 = " Mac's";
     let a6 = " Food Trailer, Grants Pass";
-    assert_eq!(Parser::subaddress_id(a1), Ok(("", Some("A".to_string()))));
+    assert_eq!(Parse::subaddress_id(a1), Ok(("", Some("A".to_string()))));
     assert_eq!(
-        Parser::subaddress_id(a2),
+        Parse::subaddress_id(a2),
         Ok(("Grants Pass", Some("B".to_string())))
     );
-    assert_eq!(Parser::subaddress_id(a3), Ok(("", None)));
-    assert_eq!(Parser::subaddress_id(a4), Ok(("", Some("A B".to_string()))));
+    assert_eq!(Parse::subaddress_id(a3), Ok(("", None)));
+    assert_eq!(Parse::subaddress_id(a4), Ok(("", Some("A B".to_string()))));
     // assert_eq!(
     //     Parser::subaddress_id(a5),
     //     Ok(("", Some("Mac's".to_string())))
     // );
     assert_eq!(
-        Parser::subaddress_id(a6),
+        Parse::subaddress_id(a6),
         Ok(("Grants Pass", Some("Food Trailer".to_string())))
     );
 }
@@ -363,14 +363,14 @@ fn address_parser() -> anyhow::Result<()> {
     a1_comp.set_street_name("RAMSEY");
     a1_comp.set_post_type(&StreetNamePostType::AVENUE);
     a1_comp.postal_community = Some(PostalCommunity::GrantsPass);
-    let (_, a1_parsed) = Parser::address(a1)?;
+    let (_, a1_parsed) = Parse::address(a1)?;
 
     let mut a2_comp = PartialAddress::default();
     a2_comp.set_address_number(1012);
     a2_comp.set_pre_directional(&StreetNamePreDirectional::NORTHWEST);
     a2_comp.set_street_name("6TH");
     a2_comp.set_post_type(&StreetNamePostType::STREET);
-    let (_, a2_parsed) = Parser::address(a2)?;
+    let (_, a2_parsed) = Parse::address(a2)?;
 
     let mut a3_comp = PartialAddress::default();
     a3_comp.set_address_number(1035);
@@ -379,7 +379,7 @@ fn address_parser() -> anyhow::Result<()> {
     a3_comp.set_post_type(&StreetNamePostType::STREET);
     a3_comp.set_subaddress_identifier("B");
     a3_comp.postal_community = Some(PostalCommunity::GrantsPass);
-    let (_, a3_parsed) = Parser::address(a3)?;
+    let (_, a3_parsed) = Parse::address(a3)?;
 
     let mut a4_comp = PartialAddress::default();
     a4_comp.set_address_number(1072);
@@ -387,7 +387,7 @@ fn address_parser() -> anyhow::Result<()> {
     a4_comp.set_post_type(&StreetNamePostType::HIGHWAY);
     a4_comp.set_subaddress_identifier("A B");
     a4_comp.postal_community = Some(PostalCommunity::GrantsPass);
-    let (_, a4_parsed) = Parser::address(a4)?;
+    let (_, a4_parsed) = Parse::address(a4)?;
 
     let mut a5_comp = PartialAddress::default();
     a5_comp.set_address_number(932);
@@ -396,7 +396,7 @@ fn address_parser() -> anyhow::Result<()> {
     a5_comp.set_post_type(&StreetNamePostType::AVENUE);
     a5_comp.set_subaddress_identifier("Food Trailer");
     a5_comp.postal_community = Some(PostalCommunity::GrantsPass);
-    let (_, a5_parsed) = Parser::address(a5)?;
+    let (_, a5_parsed) = Parse::address(a5)?;
 
     let mut a6_comp = PartialAddress::default();
     a6_comp.set_address_number(1650);
@@ -404,7 +404,7 @@ fn address_parser() -> anyhow::Result<()> {
     a6_comp.set_pre_directional(&StreetNamePreDirectional::NORTHEAST);
     a6_comp.set_street_name("TERRACE");
     a6_comp.set_post_type(&StreetNamePostType::DRIVE);
-    let (_, a6_parsed) = Parser::address(a6)?;
+    let (_, a6_parsed) = Parse::address(a6)?;
 
     let mut a7_comp = PartialAddress::default();
     a7_comp.set_address_number(212);
@@ -413,7 +413,7 @@ fn address_parser() -> anyhow::Result<()> {
     a7_comp.set_post_type(&StreetNamePostType::STREET);
     a7_comp.set_subaddress_type(&SubaddressType::Suite);
     a7_comp.set_subaddress_identifier("A");
-    let (_, a7_parsed) = Parser::address(a7)?;
+    let (_, a7_parsed) = Parse::address(a7)?;
 
     assert_eq!(a1_parsed, a1_comp);
     assert_eq!(a2_parsed, a2_comp);
@@ -501,7 +501,7 @@ fn parse_address_sample() -> anyhow::Result<()> {
     let file_path = path.join("data/address_sample.csv");
     let samples: Vec<AddressSample> = from_csv(file_path)?;
     for sample in samples {
-        match Parser::address(&sample.address) {
+        match Parse::address(&sample.address) {
             Ok((_, address)) => {
                 tracing::info!("{}", address.label());
                 tracing::info!("{}", address.mailing());
@@ -525,7 +525,7 @@ fn parse_city_address() -> anyhow::Result<()> {
     for sample in city_addresses.iter() {
         // if sample.street_name().as_str() == "GARDEN VALLEY" {
         let label = Address::label(sample);
-        match Parser::address(&label) {
+        match Parse::address(&label) {
             Ok((_, address)) => {
                 let address_label = address.label();
                 if label != address_label {
@@ -555,7 +555,7 @@ fn parse_county_address() -> anyhow::Result<()> {
     for sample in county_addresses.iter() {
         // if sample.street_name().as_str() == "REDWOOD" && sample.number() == 3345 {
         let label = Address::label(sample);
-        match Parser::address(&label) {
+        match Parse::address(&label) {
             Ok((_, mut address)) => {
                 address.standardize();
                 let address_label = address.label();

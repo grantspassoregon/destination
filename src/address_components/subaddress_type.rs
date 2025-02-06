@@ -1,6 +1,6 @@
 use convert_case::Casing;
-use derive_more::FromStr;
 use serde::de::Deserializer;
+use std::str::FromStr;
 
 /// The `SubaddressType` enum represents the subaddress type of an address.  Valid type
 /// designations include the list of secondary unit designators in Appendix C2 of the United States
