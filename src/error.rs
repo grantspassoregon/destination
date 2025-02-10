@@ -6,19 +6,22 @@ pub struct AddressError {
 }
 
 macro_rules! impl_address_error {
-    ($name:ident) => {
-        impl From<$name> for AddressError {
-            fn from(value: $name) -> Self {
-                let kind = AddressErrorKind::from(value);
-                Self::from(kind)
+    ( $( $name:ident),* ) => {
+        $(
+            impl From<$name> for AddressError {
+                fn from(value: $name) -> Self {
+                    let kind = Box::new(AddressErrorKind::from(value));
+                    Self { kind }
+                }
             }
-        }
+        )*
+    };
+    ( $( $name:ident),+ ,) => {
+       impl_address_err![ $( $name ),* ];
     };
 }
 
-impl_address_error!(Bincode);
-impl_address_error!(Io);
-impl_address_error!(Nom);
+impl_address_error!(Bincode, Io, Nom);
 
 /// The `AddressErrorKind` enum contains the individual error type associated with the library operation.
 #[derive(Debug, derive_more::From, derive_more::Display, derive_more::Error)]
