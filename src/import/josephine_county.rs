@@ -234,14 +234,8 @@ impl Addresses<JosephineCountyAddress2024> for JosephineCountyAddresses2024 {}
 impl IntoBin<JosephineCountyAddresses2024> for JosephineCountyAddresses2024 {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => match bincode::deserialize::<Self>(&records) {
-                Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
-            },
+            Ok(records) => bincode::deserialize::<Self>(&records)
+                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -519,14 +513,8 @@ impl Addresses<JosephineCountySpatialAddress2024> for JosephineCountySpatialAddr
 impl IntoBin<JosephineCountySpatialAddresses2024> for JosephineCountySpatialAddresses2024 {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => match bincode::deserialize::<Self>(&records) {
-                Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
-            },
+            Ok(records) => bincode::deserialize::<Self>(&records)
+                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -775,14 +763,8 @@ impl Addresses<JosephineCountyAddress> for JosephineCountyAddresses {}
 impl IntoBin<JosephineCountyAddresses> for JosephineCountyAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => match bincode::deserialize::<Self>(&records) {
-                Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
-            },
+            Ok(records) => bincode::deserialize::<Self>(&records)
+                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -1067,14 +1049,8 @@ impl Addresses<JosephineCountySpatialAddress> for JosephineCountySpatialAddresse
 impl IntoBin<JosephineCountySpatialAddresses> for JosephineCountySpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => match bincode::deserialize::<Self>(&records) {
-                Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
-            },
+            Ok(records) => bincode::deserialize::<Self>(&records)
+                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

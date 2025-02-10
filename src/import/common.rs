@@ -169,14 +169,8 @@ impl From<SpatialAddressesRaw> for SpatialAddresses {
 impl IntoBin<SpatialAddressesRaw> for SpatialAddressesRaw {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => match bincode::deserialize::<Self>(&records) {
-                Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
-            },
+            Ok(records) => bincode::deserialize::<Self>(&records)
+                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

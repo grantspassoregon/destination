@@ -816,10 +816,8 @@ impl<T: Address + Clone> From<&[T]> for CommonAddresses {
 impl IntoBin<CommonAddresses> for CommonAddresses {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => match bincode::deserialize::<Self>(&records) {
-                Ok(decode) => Ok(decode),
-                Err(source) => Err(Bincode::new(source, line!(), file!().to_string()).into()),
-            },
+            Ok(records) => bincode::deserialize::<Self>(&records)
+                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -1277,10 +1275,8 @@ impl From<&FireInspections> for PartialAddresses {
 impl IntoBin<PartialAddresses> for PartialAddresses {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => match bincode::deserialize::<Self>(&records) {
-                Ok(decode) => Ok(decode),
-                Err(source) => Err(Bincode::new(source, line!(), file!().to_string()).into()),
-            },
+            Ok(records) => bincode::deserialize::<Self>(&records)
+                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -1343,10 +1339,8 @@ impl AddressDeltas {
 impl IntoBin<AddressDeltas> for AddressDeltas {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => match bincode::deserialize::<Self>(&records) {
-                Ok(decode) => Ok(decode),
-                Err(source) => Err(Bincode::new(source, line!(), file!().to_string()).into()),
-            },
+            Ok(records) => bincode::deserialize::<Self>(&records)
+                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

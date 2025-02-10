@@ -278,14 +278,8 @@ impl Addresses<GrantsPassAddress> for GrantsPassAddresses {}
 impl IntoBin<GrantsPassAddresses> for GrantsPassAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => match bincode::deserialize::<Self>(&records) {
-                Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
-            },
+            Ok(records) => bincode::deserialize::<Self>(&records)
+                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -609,14 +603,8 @@ impl Addresses<GrantsPassSpatialAddress> for GrantsPassSpatialAddresses {}
 impl IntoBin<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => match bincode::deserialize::<Self>(&records) {
-                Ok(decode) => Ok(decode),
-                Err(source) => {
-                    let error = Bincode::new(source, line!(), file!().to_string());
-                    let error = AddressErrorKind::from(error);
-                    Err(error.into())
-                }
-            },
+            Ok(records) => bincode::deserialize::<Self>(&records)
+                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

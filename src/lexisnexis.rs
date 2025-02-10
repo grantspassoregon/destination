@@ -300,10 +300,8 @@ impl LexisNexis {
 impl IntoBin<LexisNexis> for LexisNexis {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
-            Ok(records) => match bincode::deserialize::<Self>(&records) {
-                Ok(decode) => Ok(decode),
-                Err(source) => Err(Bincode::new(source, line!(), file!().to_string()).into()),
-            },
+            Ok(records) => bincode::deserialize::<Self>(&records)
+                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
             Err(source) => Err(source.into()),
         }
     }
