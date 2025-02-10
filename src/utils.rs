@@ -86,7 +86,7 @@ pub fn to_bin<T: Serialize, P: AsRef<Path>>(data: &T, path: P) -> Result<(), Add
     Ok(())
 }
 
-/// The `load_bin` function loads the contents of a file at location `path` into a `Vec<u8>`.
+/// The `from_bin` function loads the contents of a file at location `path` into a `Vec<u8>`.
 /// May error reading the file, for example if the location is invalid, or when deserializing
 /// the binary if the format is invalid.
 pub fn from_bin<P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Io> {
