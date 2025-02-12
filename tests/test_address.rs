@@ -520,8 +520,11 @@ fn parse_address_sample() -> anyhow::Result<()> {
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
 fn parse_city_address() -> anyhow::Result<()> {
-    let city_path = "data/addresses.data";
-    let city_addresses = SpatialAddresses::load(city_path)?;
+    // let city_path = "data/addresses.data";
+    // let city_addresses = SpatialAddresses::load(city_path)?;
+    let city_path = "data/city_addresses_20241007.csv";
+    // let city_path = "data/azalea_drive_cutoff.csv";
+    let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
     for sample in city_addresses.iter() {
         // if sample.street_name().as_str() == "GARDEN VALLEY" {
         let label = Address::label(sample);
