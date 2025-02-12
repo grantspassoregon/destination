@@ -336,6 +336,7 @@ pub struct GrantsPassSpatialAddress {
     pub street_name: String,
     /// The `street_name_post_type` field represents the street name post type component of the complete street
     /// name.
+    #[serde(deserialize_with = "StreetNamePostType::deserialize_mixed")]
     #[serde(rename = "St_PosTyp")]
     pub street_name_post_type: Option<StreetNamePostType>,
     /// The `subaddress_type` field represents the subaddress type component of the complete
