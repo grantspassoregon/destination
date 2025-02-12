@@ -121,7 +121,7 @@ pub fn from_bin<P: AsRef<Path>>(path: P) -> Result<Vec<u8>, Io> {
     }
 }
 
-/// The `Csvify` trait indicates the type can be read from and to a csv file.
+/// The `IntoCsv` trait indicates the type can be read from and to a csv file.
 pub trait IntoCsv<T> {
     /// The `from_csv` method attempts to deserialize the data from a `csv` file located at `path`.
     fn from_csv<P: AsRef<Path>>(path: P) -> Result<T, Io>;
@@ -129,7 +129,7 @@ pub trait IntoCsv<T> {
     fn to_csv<P: AsRef<Path>>(&mut self, path: P) -> Result<(), AddressErrorKind>;
 }
 
-/// The `Binnable` trait indicates the type can be read from and to a binary file.
+/// The `IntoBin` trait indicates the type can be read from and to a binary file.
 pub trait IntoBin<T> {
     /// The `load` method attempts to deserialize the data from a binary file located at `path`.
     fn load<P: AsRef<Path>>(path: P) -> Result<T, AddressError>;
