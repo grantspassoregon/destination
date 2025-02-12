@@ -117,7 +117,7 @@ impl Parse {
                                     }
                                 },
                                 // No additional directional found, return first value of
-                                // riectional and original "remaining" instead of "rem".
+                                // directional and original "remaining" instead of "rem".
                                 None => Ok((remaining, Some(value))),
                             }
                         } else {
@@ -384,17 +384,20 @@ impl Parse {
                     let (first, _) = Self::post_type(rem)?;
                     let (_, next) = Self::is_post_type(first)?;
                     if next {
+                        tracing::trace!("Followed by post type.");
                         // If so, only the last type is the post type.
                         cond = false;
                     }
                     // If the post type could also be a subaddress, parse as post type and not part of
                     // the street name.
                     if let Ok((_, Some(_))) = Self::subaddress_type(first) {
+                        tracing::trace!("Potential subaddress type found.");
                         cond = true;
                     }
                 }
                 // If next word is a postal community, end loop.
                 let (_, check) = Self::is_postal_community(rem)?;
+                tracing::trace!("Postal community detected.");
                 if check {
                     cond = true;
                 }

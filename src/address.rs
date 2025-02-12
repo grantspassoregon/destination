@@ -144,6 +144,7 @@ pub trait Address {
         };
 
         let complete_street_name = self.complete_street_name(true);
+        tracing::trace!("Street name: {complete_street_name}");
 
         let accessory = self.building().as_ref().map(|v| format!("BLDG {v}"));
 
@@ -202,12 +203,16 @@ pub trait Address {
         }
         name.push_str(&self.street_name().to_string());
         if let Some(post_type) = self.street_type() {
+            tracing::trace!("Post type found: {post_type}");
             name.push(' ');
             if abbreviate {
+                tracing::trace!("Abbreviated: {}", post_type.abbreviate());
                 name.push_str(&post_type.abbreviate());
             } else {
                 name.push_str(&post_type.to_string());
             }
+        } else {
+            tracing::warn!("Post type not found for {name}.");
         }
         name
     }
