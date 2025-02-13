@@ -1,5 +1,5 @@
 [package]
-name = "where"
+name = "destination"
 version = "0.1.0"
 edition = "2021"
 description = "A library for parsing and comparing physical addresses."
@@ -9,7 +9,7 @@ path = "src/lib.rs"
 
 [[bin]]
 path = "src/main.rs"
-name = "where"
+name = "destination"
 
 [features]
 ci = []
@@ -24,9 +24,6 @@ derive-getters = "0.5.0"
 derive-new = "0.7.0"
 derive_more = { version = "2.0.1", features = ["full"] }
 derive_setters = "0.1.6"
-galileo = { git = "https://github.com/Maximkaaa/galileo" }
-# galileo = { path = "../galileo/galileo" }
-galileo-types = { git = "https://github.com/Maximkaaa/galileo" }
 indicatif = { version = "0.17.11", features = ["rayon"] }
 nom = "8.0.0"
 rayon = "1.10.0"

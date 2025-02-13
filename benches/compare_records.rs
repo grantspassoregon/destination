@@ -1,8 +1,8 @@
-use address::{
+use criterion::{criterion_group, criterion_main, Criterion};
+use destination::{
     GrantsPassSpatialAddresses, IntoCsv, JosephineCountySpatialAddresses2024, MatchRecords,
     SpatialAddresses,
 };
-use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn compare_records(c: &mut Criterion) {
     let city_path = "data/city_addresses_20241007.csv";
