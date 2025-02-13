@@ -1,4 +1,5 @@
 use serde::de::Deserializer;
+use std::str::FromStr;
 
 /// The `State` enum holds variants for state and territory names in the US used by the FAA.
 /// <https://www.faa.gov/air_traffic/publications/atpubs/cnt_html/appendix_a.html>
@@ -213,31 +214,16 @@ impl State {
         }
     }
 
-    /// The `deserialize_abbreviated` method attempts to convert an input from the postal
-    /// abbreviation for a US state or territory to a variant of the `State` enum.
-    /// Use this method when the input field for state is sanitized and failure to map to a variant
-    /// is an error.
-    #[tracing::instrument(skip_all)]
-    pub fn deserialize_abbreviated<'de, D: Deserializer<'de>>(
-        de: D,
-    ) -> Result<Option<Self>, D::Error> {
-        let intermediate = serde::Deserialize::deserialize(de)?;
-        Ok(Self::match_abbreviated(intermediate))
-    }
-
     /// The `match_mixed` method attempts to convert the str in `input` to a variant of the
     /// `State` enum.  As we encounter additional mappings of non-standard spellings to valid variants, we add them to the match statement here.
     #[tracing::instrument]
     pub fn match_mixed(input: &str) -> Option<Self> {
         if let Some(state) = Self::match_abbreviated(input) {
             Some(state)
+        } else if let Ok(state) = Self::from_str(input) {
+            Some(state)
         } else {
-            match input.to_lowercase().as_str() {
-                "california" => Some(Self::California),
-                "oregon" => Some(Self::Oregon),
-                "washington" => Some(Self::Washington),
-                _ => None,
-            }
+            None
         }
     }
 

@@ -1080,7 +1080,7 @@ impl PartialAddress {
         let mut address = self.label();
         if let Some(post_comm) = self.postal_community {
             address.push_str(", ");
-            address.push_str(&post_comm.upper());
+            address.push_str(&post_comm.label());
         }
         if let Some(state) = self.state_name {
             address.push_str(", ");
