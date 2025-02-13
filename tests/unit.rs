@@ -546,6 +546,24 @@ fn parse_city_address() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[test]
+fn post_types() -> anyhow::Result<()> {
+    use strum::IntoEnumIterator;
+    let posts = StreetNamePostType::iter()
+        .map(|v| format!("{v}"))
+        .collect::<Vec<String>>();
+    tracing::info!("{:#?}", posts);
+    let lodge = "lodge";
+    if let Some(lodge) = StreetNamePostType::match_mixed(lodge) {
+        tracing::info!("Lodge identified: {lodge}");
+    }
+    let lodge = "crossing";
+    if let Some(lodge) = StreetNamePostType::match_mixed(lodge) {
+        tracing::info!("crossing identified: {lodge}");
+    }
+    Ok(())
+}
+
 // Checks that county address labels parse back to their parent address
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
