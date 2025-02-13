@@ -1,12 +1,10 @@
 //! The `eponym` module is the eponymous module for `compare`.  Contains types and methods for
 //! comparing addresses.
 use crate::{
-    from_csv, to_csv, Address, AddressErrorKind, AddressStatus, IntoCsv, Io, PartialAddress,
-    PartialAddresses, SubaddressType,
+    from_csv, to_csv, Address, AddressErrorKind, AddressStatus, Geographic, IntoCsv, Io,
+    PartialAddress, PartialAddresses, SubaddressType,
 };
 use derive_more::{Deref, DerefMut};
-use galileo::galileo_types::geo::GeoPoint;
-use galileo::galileo_types::geometry_type::{GeoSpace2d, GeometryType, PointGeometryType};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -153,21 +151,14 @@ pub struct MatchRecord {
     pub id: uuid::Uuid,
 }
 
-impl GeoPoint for MatchRecord {
-    type Num = f64;
-
-    fn lat(&self) -> Self::Num {
+impl Geographic for MatchRecord {
+    fn latitude(&self) -> f64 {
         self.latitude
     }
 
-    fn lon(&self) -> Self::Num {
+    fn longitude(&self) -> f64 {
         self.longitude
     }
-}
-
-impl GeometryType for MatchRecord {
-    type Type = PointGeometryType;
-    type Space = GeoSpace2d;
 }
 
 /// The `MatchRecords` struct holds a vector of type [`MatchRecord`].
@@ -180,13 +171,13 @@ impl MatchRecords {
     /// match against multiple candidates (e.g. a parent address will match against all
     /// subaddresses associated with the parent), so the result type must potentially accommodate
     /// multiple records.
-    pub fn new<T: Address + GeoPoint<Num = f64>, U: Address + GeoPoint<Num = f64>>(
+    pub fn new<T: Address + Geographic, U: Address + Geographic>(
         self_address: &T,
         other_addresses: &[U],
     ) -> Self {
         let address_label = self_address.label();
-        let latitude = self_address.lat();
-        let longitude = self_address.lon();
+        let latitude = self_address.latitude();
+        let longitude = self_address.longitude();
         let id = uuid::Uuid::new_v4();
 
         let mut match_record = Vec::new();
@@ -255,10 +246,7 @@ impl MatchRecords {
     /// For each address in `self_addresses`, the `compare` method calculates the match record for
     /// the subject address compared against the addresses in `other_addresses`, and returns the
     /// results in a [`MatchRecords`] struct.
-    pub fn compare<
-        T: Address + GeoPoint<Num = f64> + Send + Sync,
-        U: Address + GeoPoint<Num = f64> + Send + Sync,
-    >(
+    pub fn compare<T: Address + Geographic + Send + Sync, U: Address + Geographic + Send + Sync>(
         self_addresses: &[T],
         other_addresses: &[U],
     ) -> Self {
@@ -337,7 +325,7 @@ impl MatchPartialRecord {
     /// The `coincident` method attempts to match fields present in the partial address against the
     /// comparison address, returning a `MatchPartialRecord` if successful.  Returns `None` if
     /// the match status is "missing".
-    pub fn coincident<T: Address + GeoPoint<Num = f64>>(
+    pub fn coincident<T: Address + Geographic>(
         partial: &PartialAddress,
         address: &T,
     ) -> Option<MatchPartialRecord> {
@@ -395,8 +383,8 @@ impl MatchPartialRecord {
                 match_status,
                 address_label: partial.label(),
                 other_label: Some(address.label()),
-                longitude: Some(address.lon()),
-                latitude: Some(address.lat()),
+                longitude: Some(address.longitude()),
+                latitude: Some(address.latitude()),
             })
         } else {
             None
@@ -405,7 +393,7 @@ impl MatchPartialRecord {
 
     /// The `compare` method attempts to match fields present in the partial address against a set
     /// of comparison addresses, returning a [`MatchPartialRecords`].
-    pub fn compare<T: Address + GeoPoint<Num = f64>>(
+    pub fn compare<T: Address + Geographic>(
         partial: &PartialAddress,
         addresses: &[T],
     ) -> MatchPartialRecords {
@@ -470,7 +458,7 @@ impl MatchPartialRecords {
     /// For each partial address in `self_addresses`, the `compare` method attempts to match the
     /// fields present in the partial address against the addresses in `other_addresses`, returning
     /// a `MatchPartialRecords`.
-    pub fn compare<T: Address + GeoPoint<Num = f64> + Send + Sync>(
+    pub fn compare<T: Address + Geographic + Send + Sync>(
         self_addresses: &PartialAddresses,
         other_addresses: &[T],
     ) -> Self {

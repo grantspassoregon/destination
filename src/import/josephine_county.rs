@@ -2,12 +2,11 @@
 //! Josephine County.
 use crate::{
     deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, zero_floor, Address, AddressError,
-    AddressErrorKind, AddressStatus, Addresses, Bincode, IntoBin, IntoCsv, Io, Point, State,
-    StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType,
-    StreetSeparator, SubaddressType,
+    AddressErrorKind, AddressStatus, Addresses, Bincode, Cartesian, Geographic, IntoBin, IntoCsv,
+    Io, State, StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier,
+    StreetNamePreType, StreetSeparator, SubaddressType,
 };
 use derive_more::{Deref, DerefMut};
-use galileo::galileo_types::geo::GeoPoint;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -481,7 +480,7 @@ impl Address for JosephineCountySpatialAddress2024 {
     }
 }
 
-impl Point for JosephineCountySpatialAddress2024 {
+impl Cartesian for JosephineCountySpatialAddress2024 {
     fn x(&self) -> f64 {
         self.x
     }
@@ -491,14 +490,12 @@ impl Point for JosephineCountySpatialAddress2024 {
     }
 }
 
-impl GeoPoint for JosephineCountySpatialAddress2024 {
-    type Num = f64;
-
-    fn lat(&self) -> Self::Num {
+impl Geographic for JosephineCountySpatialAddress2024 {
+    fn latitude(&self) -> f64 {
         self.lat
     }
 
-    fn lon(&self) -> Self::Num {
+    fn longitude(&self) -> f64 {
         self.lon
     }
 }
@@ -1017,7 +1014,7 @@ impl Address for JosephineCountySpatialAddress {
     }
 }
 
-impl Point for JosephineCountySpatialAddress {
+impl Cartesian for JosephineCountySpatialAddress {
     fn x(&self) -> f64 {
         self.x
     }
@@ -1027,14 +1024,12 @@ impl Point for JosephineCountySpatialAddress {
     }
 }
 
-impl GeoPoint for JosephineCountySpatialAddress {
-    type Num = f64;
-
-    fn lat(&self) -> Self::Num {
+impl Geographic for JosephineCountySpatialAddress {
+    fn latitude(&self) -> f64 {
         self.lat
     }
 
-    fn lon(&self) -> Self::Num {
+    fn longitude(&self) -> f64 {
         self.lon
     }
 }

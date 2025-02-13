@@ -1,11 +1,11 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
 use crate::{
-    deserialize_phone_number, from_csv, to_csv, Address, AddressErrorKind, IntoCsv, Io,
+    deserialize_phone_number, from_csv, to_csv, Address, AddressErrorKind, Geographic, IntoCsv, Io,
     MatchStatus, Nom, Parse, StreetNamePostType, StreetNamePreDirectional,
 };
 use derive_more::{Deref, DerefMut};
-use galileo::galileo_types::geo::GeoPoint;
+// use galileo::galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -93,10 +93,7 @@ pub struct BusinessMatchRecords(Vec<BusinessMatchRecord>);
 impl BusinessMatchRecords {
     /// Matches the provided address associated with a business license against the addresses in
     /// `addresses`, creating a new `BusinessMatchRecords` struct containing the results.
-    pub fn new<T: Address + GeoPoint<Num = f64>>(
-        business: &BusinessLicense,
-        addresses: &[T],
-    ) -> Self {
+    pub fn new<T: Address + Geographic>(business: &BusinessLicense, addresses: &[T]) -> Self {
         let mut records = Vec::new();
         for address in addresses {
             let business_match = business.coincident(address);
@@ -139,7 +136,7 @@ impl BusinessMatchRecords {
     /// list of partial (divergent) matches if found, otherwise a missing record.  Since divergent
     /// addresses are unnecessary to inspect if an exact match is found, this is a more efficient
     /// matching method compared to [`BusinessMatchRecords::compare()`].
-    pub fn chain<T: Address + GeoPoint<Num = f64>>(
+    pub fn chain<T: Address + Geographic>(
         business: &BusinessLicense,
         address_list: &[&[T]],
     ) -> Self {
@@ -171,7 +168,7 @@ impl BusinessMatchRecords {
     /// For each [`BusinessLicense`] object in `businesses`, this method creates a
     /// `BusinessMatchRecords` using the [`BusinessMatchRecords::new()`] method.  Match records
     /// will include matching, divergent and missing records.
-    pub fn compare<T: Address + GeoPoint<Num = f64> + Send + Sync>(
+    pub fn compare<T: Address + Geographic + Send + Sync>(
         businesses: &BusinessLicenses,
         addresses: &[T],
     ) -> Self {
@@ -194,7 +191,7 @@ impl BusinessMatchRecords {
     /// Compares each address in `businesses` against the addresses in `addresses` using the
     /// [`BusinessMatchRecords::chain()`] method, which returns only an exact match if available,
     /// otherwise returning a list of partial matches or a missing record.
-    pub fn compare_chain<T: Address + GeoPoint<Num = f64> + Send + Sync>(
+    pub fn compare_chain<T: Address + Geographic + Send + Sync>(
         businesses: &BusinessLicenses,
         addresses: &[&[T]],
     ) -> Self {
@@ -360,10 +357,7 @@ pub struct BusinessLicense {
 impl BusinessLicense {
     /// Compares the address of `BusinessLicense` to `address`, producing either a matching
     /// [`BusinessMatchRecord`], any divergent [`BusinessMatchRecord`], or `None` if missing.
-    pub fn coincident<T: Address + GeoPoint<Num = f64>>(
-        &self,
-        address: &T,
-    ) -> Option<BusinessMatchRecord> {
+    pub fn coincident<T: Address + Geographic>(&self, address: &T) -> Option<BusinessMatchRecord> {
         let mut match_status = MatchStatus::Missing;
         let mut business_match = None;
         let mut subaddress_id = None;
@@ -407,8 +401,8 @@ impl BusinessLicense {
                 industry_code: self.industry_code(),
                 community: self.community(),
                 other_address_label: Some(address.label()),
-                address_latitude: Some(address.lat()),
-                address_longitude: Some(address.lon()),
+                address_latitude: Some(address.latitude()),
+                address_longitude: Some(address.longitude()),
             });
         }
         business_match

@@ -2,12 +2,11 @@
 //! Pass.
 use crate::{
     deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, Address, AddressError,
-    AddressErrorKind, AddressStatus, Addresses, Bincode, IntoBin, IntoCsv, Io, Point, State,
-    StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType,
-    StreetSeparator, SubaddressType,
+    AddressErrorKind, AddressStatus, Addresses, Bincode, Cartesian, Geographic, IntoBin, IntoCsv,
+    Io, State, StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier,
+    StreetNamePreType, StreetSeparator, SubaddressType,
 };
 use derive_more::{Deref, DerefMut};
-use galileo::galileo_types::geo::GeoPoint;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -572,7 +571,7 @@ impl Address for GrantsPassSpatialAddress {
     }
 }
 
-impl Point for GrantsPassSpatialAddress {
+impl Cartesian for GrantsPassSpatialAddress {
     fn x(&self) -> f64 {
         self.x
     }
@@ -582,14 +581,12 @@ impl Point for GrantsPassSpatialAddress {
     }
 }
 
-impl GeoPoint for GrantsPassSpatialAddress {
-    type Num = f64;
-
-    fn lat(&self) -> Self::Num {
+impl Geographic for GrantsPassSpatialAddress {
+    fn latitude(&self) -> f64 {
         self.latitude
     }
 
-    fn lon(&self) -> Self::Num {
+    fn longitude(&self) -> f64 {
         self.longitude
     }
 }

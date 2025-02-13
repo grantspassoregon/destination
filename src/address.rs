@@ -2,9 +2,10 @@
 //! implementation blocks to convert data from import types to the valid address format.
 use crate::{
     from_bin, from_csv, to_bin, to_csv, AddressError, AddressErrorKind, AddressMatch,
-    AddressStatus, Bincode, Builder, FireInspections, IntoBin, IntoCsv, Io, LexisNexis, Mismatch,
-    Parse, Point, PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional,
-    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
+    AddressStatus, Bincode, Builder, Cartesian, FireInspections, Geographic, IntoBin, IntoCsv, Io,
+    LexisNexis, Mismatch, Parse, PostalCommunity, State, StreetNamePostType,
+    StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType, StreetSeparator,
+    SubaddressType,
 };
 use derive_more::{Deref, DerefMut};
 use indicatif::ProgressBar;
@@ -1319,13 +1320,35 @@ pub struct AddressDelta {
 
 impl AddressDelta {
     /// Initiates a new `AddressDelta` struct from the provided input values.
-    pub fn new<T: Address + Point>(address: &T, delta: f64) -> Self {
+    /// Modified to temporarily take Cartesian coordinates.
+    pub fn new<T: Address + Cartesian>(address: &T, delta: f64) -> Self {
         AddressDelta {
             label: address.label(),
             delta,
             latitude: address.y(),
             longitude: address.x(),
         }
+    }
+}
+
+impl Geographic for AddressDelta {
+    fn latitude(&self) -> f64 {
+        self.latitude
+    }
+
+    fn longitude(&self) -> f64 {
+        self.longitude
+    }
+}
+
+// This is a hack to make the distance calculations work until I can migrate to the geo library.
+impl Cartesian for AddressDelta {
+    fn y(&self) -> f64 {
+        self.latitude
+    }
+
+    fn x(&self) -> f64 {
+        self.longitude
     }
 }
 

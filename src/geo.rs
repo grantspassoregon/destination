@@ -6,22 +6,21 @@ use crate::{
     SubaddressType,
 };
 use derive_more::{Deref, DerefMut};
-use galileo::galileo_types::cartesian::CartesianPoint2d;
-use galileo::galileo_types::geo::GeoPoint;
-use galileo::galileo_types::geometry_type::{
-    AmbiguousSpace, CartesianSpace2d, GeoSpace2d, GeometryType, PointGeometryType,
-};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-/// The `Point` trait is designed to facilitate working with spatial libraries in rust.  This is an
-/// intermediary step to implementing traits from geo_types directly, and intended to be replaced
-/// by direct impls of types in other crates.  Methods like [`Point::distance`] have more robust
-/// implementations in these core spatial libraries, and we should be leaning on those rather than
-/// rolling our own.
-pub trait Point {
+/// The type can produce geographic coordinates.
+pub trait Geographic {
+    /// The `latitude` method returns the latitude component of the geographic coordinates.
+    fn latitude(&self) -> f64;
+    /// The `longitude` method returns the longitude component of the geographic coordinates.
+    fn longitude(&self) -> f64;
+}
+
+/// The type can produce cartesian coordinates.
+pub trait Cartesian {
     /// The `x` method returns the cartesian X portion of the projected coordinates of the address.
     fn x(&self) -> f64;
     /// The `y` method returns the cartesian Y portion of the projected coordinates of the address.
@@ -29,7 +28,7 @@ pub trait Point {
 
     /// The `distance` function returns the distance between a point `self` and another point
     /// `other` in the same unit as `self`.
-    fn distance<T: Point + ?Sized>(&self, other: &T) -> f64 {
+    fn distance<T: Cartesian + ?Sized>(&self, other: &T) -> f64 {
         ((self.y() - other.y()).powi(2) + (self.x() - other.x()).powi(2)).sqrt()
     }
 
@@ -37,13 +36,13 @@ pub trait Point {
     /// Iterates through records of `others`, calculates the distance from self
     /// to matching addresses in others, collects the results into a vector and
     /// returns the results in the records field of a new `AddressDeltas` struct.
-    fn delta<T: Address + Clone + Point + Sync + Send>(
+    fn delta<T: Address + Clone + Cartesian + Sync + Send>(
         &self,
         others: &[T],
         min: f64,
     ) -> AddressDeltas
     where
-        Self: Address + Point + Sized + Clone + Send + Sync,
+        Self: Address + Cartesian + Sized + Clone + Send + Sync,
     {
         let records = others
             .par_iter()
@@ -60,8 +59,8 @@ pub trait Point {
     /// returns the results in the records field of a new `AddressDeltas` struct. Calls
     /// [`Point::delta`].
     fn deltas<
-        T: Point + Address + Clone + Sync + Send,
-        U: Point + Address + Clone + Sync + Send,
+        T: Cartesian + Address + Clone + Sync + Send,
+        U: Cartesian + Address + Clone + Sync + Send,
     >(
         values: &[T],
         other: &[U],
@@ -74,7 +73,7 @@ pub trait Point {
         let records_raw = values
             .par_iter()
             .progress_with_style(style)
-            .map(|v| Point::delta(v, other, min))
+            .map(|v| Cartesian::delta(v, other, min))
             .collect::<Vec<AddressDeltas>>();
         let mut records = Vec::new();
         records_raw
@@ -227,28 +226,21 @@ impl Address for GeoAddress {
     }
 }
 
-impl GeoPoint for GeoAddress {
-    type Num = f64;
-
-    fn lat(&self) -> Self::Num {
+impl Geographic for GeoAddress {
+    fn latitude(&self) -> f64 {
         self.latitude
     }
 
-    fn lon(&self) -> Self::Num {
+    fn longitude(&self) -> f64 {
         self.longitude
     }
 }
 
-impl GeometryType for GeoAddress {
-    type Type = PointGeometryType;
-    type Space = GeoSpace2d;
-}
-
-impl<T: Address + GeoPoint<Num = f64> + Clone> From<&T> for GeoAddress {
+impl<T: Address + Geographic + Clone> From<&T> for GeoAddress {
     fn from(data: &T) -> Self {
-        let latitude = data.lat();
-        let longitude = data.lon();
         let address = CommonAddress::from(data);
+        let latitude = data.latitude();
+        let longitude = data.longitude();
         Self {
             address,
             latitude,
@@ -288,7 +280,7 @@ impl IntoBin<GeoAddress> for GeoAddress {
     }
 }
 
-impl<T: Address + GeoPoint<Num = f64> + Clone + Sized> From<&[T]> for GeoAddresses {
+impl<T: Address + Geographic + Clone + Sized> From<&[T]> for GeoAddresses {
     fn from(addresses: &[T]) -> Self {
         let records = addresses
             .iter()
@@ -299,7 +291,7 @@ impl<T: Address + GeoPoint<Num = f64> + Clone + Sized> From<&[T]> for GeoAddress
 }
 
 /// The `AddressPoint` struct defines a common address that has associated projected cartesian coordinates.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize, PartialEq, PartialOrd)]
 pub struct AddressPoint {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
@@ -442,7 +434,7 @@ impl Address for AddressPoint {
     }
 }
 
-impl Point for AddressPoint {
+impl Cartesian for AddressPoint {
     fn x(&self) -> f64 {
         self.x
     }
@@ -452,24 +444,7 @@ impl Point for AddressPoint {
     }
 }
 
-impl CartesianPoint2d for AddressPoint {
-    type Num = f64;
-
-    fn x(&self) -> Self::Num {
-        self.x
-    }
-
-    fn y(&self) -> Self::Num {
-        self.y
-    }
-}
-
-impl GeometryType for AddressPoint {
-    type Type = PointGeometryType;
-    type Space = CartesianSpace2d;
-}
-
-impl<T: Address + Point + Clone> From<&T> for AddressPoint {
+impl<T: Address + Cartesian + Clone> From<&T> for AddressPoint {
     fn from(data: &T) -> Self {
         let address = CommonAddress::from(data);
         let x = data.x();
@@ -498,7 +473,7 @@ impl IntoBin<AddressPoint> for AddressPoint {
     }
 }
 
-impl<T: Address + Point + Clone + Sized> From<&[T]> for AddressPoints {
+impl<T: Address + Cartesian + Clone + Sized> From<&[T]> for AddressPoints {
     fn from(addresses: &[T]) -> Self {
         let records = addresses
             .iter()
@@ -656,18 +631,17 @@ impl Address for SpatialAddress {
     }
 }
 
-impl GeoPoint for SpatialAddress {
-    type Num = f64;
-    fn lat(&self) -> Self::Num {
+impl Geographic for SpatialAddress {
+    fn latitude(&self) -> f64 {
         self.latitude
     }
 
-    fn lon(&self) -> Self::Num {
+    fn longitude(&self) -> f64 {
         self.longitude
     }
 }
 
-impl Point for SpatialAddress {
+impl Cartesian for SpatialAddress {
     fn x(&self) -> f64 {
         self.x
     }
@@ -677,28 +651,11 @@ impl Point for SpatialAddress {
     }
 }
 
-impl CartesianPoint2d for SpatialAddress {
-    type Num = f64;
-
-    fn x(&self) -> Self::Num {
-        self.x
-    }
-
-    fn y(&self) -> Self::Num {
-        self.y
-    }
-}
-
-impl GeometryType for SpatialAddress {
-    type Type = PointGeometryType;
-    type Space = AmbiguousSpace;
-}
-
-impl<T: Address + Point + GeoPoint<Num = f64> + Clone> From<&T> for SpatialAddress {
+impl<T: Address + Geographic + Cartesian + Clone> From<&T> for SpatialAddress {
     fn from(data: &T) -> Self {
-        let latitude = data.lat();
-        let longitude = data.lon();
         let address = CommonAddress::from(data);
+        let latitude = data.latitude();
+        let longitude = data.longitude();
         let x = data.x();
         let y = data.y();
         Self {
@@ -742,7 +699,7 @@ impl IntoBin<SpatialAddresses> for SpatialAddresses {
     }
 }
 
-impl<T: Address + Point + GeoPoint<Num = f64> + Clone + Sized> From<&[T]> for SpatialAddresses {
+impl<T: Address + Geographic + Cartesian + Clone + Sized> From<&[T]> for SpatialAddresses {
     fn from(addresses: &[T]) -> Self {
         let records = addresses
             .iter()

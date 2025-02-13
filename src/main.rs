@@ -1,11 +1,11 @@
-use address::{
-    trace_init, Addresses, BusinessLicenses, BusinessMatchRecords, Cli, CommonAddresses,
+use clap::Parser;
+use destination::{
+    trace_init, Addresses, BusinessLicenses, BusinessMatchRecords, Cartesian, Cli, CommonAddresses,
     GeoAddresses, GrantsPassAddresses, GrantsPassSpatialAddresses, IntoBin, IntoCsv,
     JosephineCountyAddresses, JosephineCountyAddresses2024, JosephineCountySpatialAddresses2024,
-    LexisNexis, MatchPartialRecords, MatchRecords, Point, SpatialAddress, SpatialAddresses,
+    LexisNexis, MatchPartialRecords, MatchRecords, SpatialAddress, SpatialAddresses,
     SpatialAddressesRaw,
 };
-use clap::Parser;
 use tracing::{error, info, trace, warn};
 
 fn main() -> anyhow::Result<()> {
@@ -93,7 +93,7 @@ fn main() -> anyhow::Result<()> {
             }
 
             let mut deltas =
-                <SpatialAddress as Point>::deltas(&source_addresses, &target_addresses, 99.0);
+                <SpatialAddress as Cartesian>::deltas(&source_addresses, &target_addresses, 99.0);
             deltas.to_csv(cli.output.clone())?;
         }
         "lexisnexis" => {
