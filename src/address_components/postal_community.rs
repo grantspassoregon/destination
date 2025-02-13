@@ -1,5 +1,4 @@
 use convert_case::Casing;
-use serde::de::{Deserialize, Deserializer};
 
 /// The `PostalCommunity` enum holds valid variants for the postal community field of an address.
 /// The list of valid postal communities is limited to the set of communities encountered locally,
@@ -26,7 +25,7 @@ use serde::de::{Deserialize, Deserializer};
     strum::EnumIter,
 )]
 pub enum PostalCommunity {
-    /// The City of Grants Pass, an incorporated municipality.
+    /// The City of Grants Pass, an incorporated municipality and unincorporated community.
     #[default]
     GrantsPass,
     /// The City of Medford, an incorporated municipality.
@@ -36,27 +35,33 @@ pub enum PostalCommunity {
 }
 
 impl PostalCommunity {
-    /// The `upper` method converts the variant name to `UPPERCASE` case using
-    /// [`convert_case::Case::Upper`].
-    #[tracing::instrument]
-    pub fn upper(&self) -> String {
-        self.to_string().to_case(convert_case::Case::Upper)
-    }
-
     /// The `label` method returns the name of the community in all caps with spaces, for printing
     /// labels.
+    ///
+    /// ```
+    /// use destination::PostalCommunity;
+    ///
+    /// let city = PostalCommunity::GrantsPass;
+    ///
+    /// assert_eq!(&city.label(), "GRANTS PASS");
+    /// ```
     #[tracing::instrument]
     pub fn label(&self) -> String {
-        let label = match self {
-            Self::GrantsPass => "GRANTS PASS",
-            Self::Medford => "MEDFORD",
-            Self::Merlin => "MERLIN",
-        };
-        label.to_string()
+        let title = self.to_string().to_case(convert_case::Case::Title);
+        title.to_uppercase()
     }
 
     /// The `match_mixed` method attempts to match the string `input` against a variant of
-    /// `PostalCommunity`.
+    /// `PostalCommunity`.  Used to parse the postal community from an address blob.
+    ///
+    /// ```
+    /// use destination::PostalCommunity;
+    ///
+    /// let a = PostalCommunity::match_mixed("Grants Pass").unwrap();
+    /// let b = PostalCommunity::match_mixed("GP").unwrap();
+    ///
+    /// assert_eq!(a, b);
+    /// ```
     #[tracing::instrument]
     pub fn match_mixed(input: &str) -> Option<Self> {
         match input.to_lowercase().as_str() {
@@ -67,27 +72,4 @@ impl PostalCommunity {
             _ => None,
         }
     }
-
-    /// The `deserialize_mixed` method attempts to match the input to a valid postal community
-    /// variant.
-    #[tracing::instrument(skip_all)]
-    pub fn deserialize_mixed<'de, D: Deserializer<'de>>(de: D) -> Result<Option<Self>, D::Error> {
-        let intermediate = Deserialize::deserialize(de)?;
-        Ok(Self::match_mixed(intermediate))
-    }
-}
-
-#[test]
-/// Establishes equality between the output of the two methods, before replacing the old with the
-/// new.
-#[tracing::instrument]
-fn community_labels() -> Result<(), String> {
-    use strum::IntoEnumIterator;
-    for comm in PostalCommunity::iter() {
-        let label = comm.label();
-        let upper = comm.upper();
-        assert_eq!(label, upper);
-    }
-
-    Ok(())
 }
