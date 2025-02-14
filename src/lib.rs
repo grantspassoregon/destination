@@ -3,8 +3,7 @@
     html_logo_url = "https://www.grantspassoregon.gov/DocumentCenter/View/31368/GPLogo_450W-PNG"
 )]
 #![doc(html_playground_url = "https://play.rust-lang.org/")]
-//! The `address` library provides types and methods for managing physical addresses in a
-//! municipality.
+#![doc = include_str!("../README.md")]
 mod address;
 mod address_components;
 mod business;

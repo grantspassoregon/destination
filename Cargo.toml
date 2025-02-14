@@ -2,7 +2,16 @@
 name = "destination"
 version = "0.1.0"
 edition = "2021"
-description = "A library for parsing and comparing physical addresses."
+authors = ["Erik Rose <erose@grantspassoregon.gov>"]
+description = "A library providing types and method for managing physical addresses in a municipality."
+repository = "https://github.com/grantspassoregon/destination"
+license = "Apache-2.0"
+keywords = ["address", "government", "parser"]
+categories = [
+  "command-line-utilities",
+  "parser-implementations",
+  "science::geo",
+]
 
 [lib]
 path = "src/lib.rs"
