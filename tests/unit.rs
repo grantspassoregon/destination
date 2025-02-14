@@ -1,8 +1,8 @@
 use destination::{
     from_csv, Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
     FireInspectionMatchRecords, FireInspections, GeoAddresses, GrantsPassAddresses,
-    GrantsPassSpatialAddresses, IntoBin, IntoCsv, Io, JosephineCountyAddresses, MatchRecords, Nom,
-    Parse, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
+    GrantsPassSpatialAddresses, IntoBin, IntoCsv, Io, JosephineCountyAddresses2024, MatchRecords,
+    Nom, Parse, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
     StreetNamePreDirectional, SubaddressType,
 };
 use test_log::test;
@@ -18,9 +18,9 @@ struct AddressSample {
 // Loads city addresses and prints the length
 fn load_city_addresses() -> anyhow::Result<()> {
     trace!("Deserializing city addresses from a csv file.");
-    let file = "data/city_addresses_20240513.csv";
+    let file = "data/city_addresses_20241007.csv";
     let addresses = GrantsPassAddresses::from_csv(file)?;
-    assert_eq!(addresses.len(), 27502);
+    assert_eq!(addresses.len(), 27811);
     trace!("City addresses loaded: {} entries.", addresses.len());
     Ok(())
 }
@@ -29,9 +29,9 @@ fn load_city_addresses() -> anyhow::Result<()> {
 #[test]
 fn load_county_addresses() -> anyhow::Result<()> {
     trace!("Deserializing county addresses from a csv file.");
-    let file = "data/county_addresses_20240226.csv";
-    let addresses = JosephineCountyAddresses::from_csv(file)?;
-    assert_eq!(addresses.len(), 45134);
+    let file = "data/county_addresses_20241007.csv";
+    let addresses = JosephineCountyAddresses2024::from_csv(file)?;
+    assert_eq!(addresses.len(), 45564);
     trace!("County addresses loaded: {} entries.", addresses.len());
     Ok(())
 }
@@ -102,11 +102,11 @@ fn match_city_address() -> anyhow::Result<()> {
 #[test]
 fn match_business_addresses() -> anyhow::Result<()> {
     let business_path = "data/business_licenses_20240520.csv";
-    let city_path = "data/city_addresses_20240513.csv";
+    let city_path = "data/city_addresses_20241007.csv";
     let business_addresses = BusinessLicenses::from_csv(business_path)?;
     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
     let match_records = BusinessMatchRecords::compare(&business_addresses, &city_addresses);
-    assert_eq!(match_records.len(), 6100);
+    assert_eq!(match_records.len(), 4888);
     info!("Business addresses match against commmon addresses.");
 
     Ok(())
