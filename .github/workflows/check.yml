@@ -16,11 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build
-        run: cargo build --verbose --all --features ci
-      - run: rustup update stable && rustup default stable
+        run: rustup update stable && rustup default stable
+      - run: cargo build --verbose --all --features ci
       - name: Tests
-        run: cargo test --verbose --features ci
-      - run: rustup update stable && rustup default stable
+        run: rustup update stable && rustup default stable
+      - run: cargo test --verbose --features ci
 
   fmt:
     name: Format
