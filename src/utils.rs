@@ -2,8 +2,8 @@
 //! a stand-alone function eliminates code duplication in different methods.
 use crate::{AddressError, AddressErrorKind, Bincode, Csv, Io};
 use indicatif::{ProgressBar, ProgressStyle};
-use serde::de::{Deserialize, DeserializeOwned, Deserializer};
 use serde::Serialize;
+use serde::de::{Deserialize, DeserializeOwned, Deserializer};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -142,7 +142,7 @@ pub fn trace_init() {
     if tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "address=info".into()),
+                .unwrap_or_else(|_| "destination=info".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .try_init()

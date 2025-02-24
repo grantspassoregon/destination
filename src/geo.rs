@@ -1,9 +1,8 @@
 //! The `geo` module defines spatial address types, and implements traits from the `galileo` crate for these types.
 use crate::{
-    from_bin, to_bin, Address, AddressDelta, AddressDeltas, AddressError, AddressErrorKind,
-    AddressStatus, Addresses, Bincode, CommonAddress, IntoBin, State, StreetNamePostType,
-    StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType, StreetSeparator,
-    SubaddressType,
+    Address, AddressDelta, AddressDeltas, AddressError, AddressErrorKind, AddressStatus, Addresses,
+    Bincode, CommonAddress, IntoBin, State, StreetNamePostType, StreetNamePreDirectional,
+    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType, from_bin, to_bin,
 };
 use derive_more::{Deref, DerefMut};
 use indicatif::ParallelProgressIterator;
@@ -89,6 +88,7 @@ pub trait Cartesian {
 pub struct GeoAddress {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
+    #[serde(flatten)]
     pub address: CommonAddress,
     /// The `latitude` field represents the latitude of the geographic coordinates for the address.
     pub latitude: f64,
@@ -295,6 +295,7 @@ impl<T: Address + Geographic + Clone + Sized> From<&[T]> for GeoAddresses {
 pub struct AddressPoint {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
+    #[serde(flatten)]
     pub address: CommonAddress,
     /// The `x` field represents the cartesian X portion of the projected coordinates of the
     /// address.
@@ -488,6 +489,7 @@ impl<T: Address + Cartesian + Clone + Sized> From<&[T]> for AddressPoints {
 pub struct SpatialAddress {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
+    #[serde(flatten)]
     pub address: CommonAddress,
     /// The `latitude` field represents the latitude of the geographic coordinates for the address.
     pub latitude: f64,

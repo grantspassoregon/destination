@@ -1,9 +1,9 @@
 use destination::{
-    from_csv, Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
+    Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
     FireInspectionMatchRecords, FireInspections, GeoAddresses, GrantsPassAddresses,
     GrantsPassSpatialAddresses, IntoBin, IntoCsv, Io, JosephineCountyAddresses2024, MatchRecords,
     Nom, Parse, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
-    StreetNamePreDirectional, SubaddressType,
+    StreetNamePreDirectional, SubaddressType, from_csv,
 };
 use test_log::test;
 use tracing::{info, trace};
@@ -509,7 +509,7 @@ fn parse_address_sample() -> anyhow::Result<()> {
             Err(source) => {
                 return Err(
                     Nom::new(sample.address.clone(), source, line!(), file!().to_string()).into(),
-                )
+                );
             }
         }
     }
@@ -537,7 +537,7 @@ fn parse_city_address() -> anyhow::Result<()> {
                 }
             }
             Err(source) => {
-                return Err(Nom::new(label.clone(), source, line!(), file!().to_string()).into())
+                return Err(Nom::new(label.clone(), source, line!(), file!().to_string()).into());
             }
         }
         // }
@@ -592,7 +592,7 @@ fn parse_county_address() -> anyhow::Result<()> {
                 }
             }
             Err(source) => {
-                return Err(Nom::new(label.clone(), source, line!(), file!().to_string()).into())
+                return Err(Nom::new(label.clone(), source, line!(), file!().to_string()).into());
             }
         }
     }
