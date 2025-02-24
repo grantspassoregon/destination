@@ -88,7 +88,6 @@ pub trait Cartesian {
 pub struct GeoAddress {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
-    #[serde(flatten)]
     pub address: CommonAddress,
     /// The `latitude` field represents the latitude of the geographic coordinates for the address.
     pub latitude: f64,
@@ -295,7 +294,6 @@ impl<T: Address + Geographic + Clone + Sized> From<&[T]> for GeoAddresses {
 pub struct AddressPoint {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
-    #[serde(flatten)]
     pub address: CommonAddress,
     /// The `x` field represents the cartesian X portion of the projected coordinates of the
     /// address.
@@ -489,7 +487,6 @@ impl<T: Address + Cartesian + Clone + Sized> From<&[T]> for AddressPoints {
 pub struct SpatialAddress {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
-    #[serde(flatten)]
     pub address: CommonAddress,
     /// The `latitude` field represents the latitude of the geographic coordinates for the address.
     pub latitude: f64,

@@ -65,7 +65,7 @@ pub struct Csv {
 
 /// The `Bincode` struct contains error information associated with the `bincode` crate.
 #[derive(Debug, derive_more::Display, derive_more::Error, derive_new::new)]
-#[display("bincode error at line {line} in {file}")]
+#[display("bincode error: {source:?} at line {line} in {file}")]
 pub struct Bincode {
     source: Box<bincode::ErrorKind>,
     line: u32,
