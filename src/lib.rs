@@ -21,9 +21,8 @@ pub use address::{
     PartialAddress, PartialAddresses,
 };
 pub use address_components::{
-    zero_floor, AddressStatus, PostalCommunity, State, StreetNamePostType,
-    StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType, StreetSeparator,
-    SubaddressType,
+    AddressStatus, PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional,
+    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType, zero_floor,
 };
 pub use business::{BusinessLicense, BusinessLicenses, BusinessMatchRecord, BusinessMatchRecords};
 pub use cli::Cli;
@@ -44,7 +43,7 @@ pub use import::{
 pub use lexisnexis::{
     LexisNexis, LexisNexisItem, LexisNexisItemBuilder, LexisNexisRange, LexisNexisRangeItem,
 };
-pub use parser::{deserialize_phone_number, parse_phone_number, Parse};
+pub use parser::{Parse, deserialize_phone_number, parse_phone_number};
 pub use utils::{
-    deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, trace_init, IntoBin, IntoCsv,
+    IntoBin, IntoCsv, deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, trace_init,
 };

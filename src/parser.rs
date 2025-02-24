@@ -5,7 +5,7 @@ use crate::{
 };
 use nom::bytes::complete::{tag, take_until};
 use nom::character::complete;
-use nom::{branch, combinator, AsChar, IResult, Parser};
+use nom::{AsChar, IResult, Parser, branch, combinator};
 use serde::de::{Deserialize, Deserializer};
 
 /// The `Parser` struct holds methods for parsing addresses.

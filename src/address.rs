@@ -1,11 +1,10 @@
 //! The `address` module defines the library data standard for a valid address, and provides
 //! implementation blocks to convert data from import types to the valid address format.
 use crate::{
-    from_bin, from_csv, to_bin, to_csv, AddressError, AddressErrorKind, AddressMatch,
-    AddressStatus, Bincode, Builder, Cartesian, FireInspections, Geographic, IntoBin, IntoCsv, Io,
-    LexisNexis, Mismatch, Parse, PostalCommunity, State, StreetNamePostType,
-    StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType, StreetSeparator,
-    SubaddressType,
+    AddressError, AddressErrorKind, AddressMatch, AddressStatus, Bincode, Builder, Cartesian,
+    FireInspections, Geographic, IntoBin, IntoCsv, Io, LexisNexis, Mismatch, Parse,
+    PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier,
+    StreetNamePreType, StreetSeparator, SubaddressType, from_bin, from_csv, to_bin, to_csv,
 };
 use derive_more::{Deref, DerefMut};
 use indicatif::ProgressBar;

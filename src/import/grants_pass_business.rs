@@ -1,8 +1,8 @@
 //! The `grants_pass_business` module contains data types for importing business license reports
 //! for the City of Grants Pass.
 use crate::{
-    from_bin, from_csv, to_bin, to_csv, AddressError, AddressErrorKind, Bincode, IntoBin, IntoCsv,
-    Io, Nom, Parse, PartialAddress,
+    AddressError, AddressErrorKind, Bincode, IntoBin, IntoCsv, Io, Nom, Parse, PartialAddress,
+    from_bin, from_csv, to_bin, to_csv,
 };
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};

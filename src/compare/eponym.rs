@@ -1,8 +1,8 @@
 //! The `eponym` module is the eponymous module for `compare`.  Contains types and methods for
 //! comparing addresses.
 use crate::{
-    from_csv, to_csv, Address, AddressErrorKind, AddressStatus, Geographic, IntoCsv, Io,
-    PartialAddress, PartialAddresses, SubaddressType,
+    Address, AddressErrorKind, AddressStatus, Geographic, IntoCsv, Io, PartialAddress,
+    PartialAddresses, SubaddressType, from_csv, to_csv,
 };
 use derive_more::{Deref, DerefMut};
 use indicatif::ParallelProgressIterator;

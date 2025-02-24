@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use destination::{
     GrantsPassSpatialAddresses, IntoCsv, JosephineCountySpatialAddresses2024, MatchRecords,
     SpatialAddresses,

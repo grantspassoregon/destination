@@ -1,10 +1,10 @@
 use clap::Parser;
 use destination::{
-    trace_init, Addresses, BusinessLicenses, BusinessMatchRecords, Cartesian, Cli, CommonAddresses,
+    Addresses, BusinessLicenses, BusinessMatchRecords, Cartesian, Cli, CommonAddresses,
     GeoAddresses, GrantsPassAddresses, GrantsPassSpatialAddresses, IntoBin, IntoCsv,
     JosephineCountyAddresses, JosephineCountyAddresses2024, JosephineCountySpatialAddresses2024,
     LexisNexis, MatchPartialRecords, MatchRecords, SpatialAddress, SpatialAddresses,
-    SpatialAddressesRaw,
+    SpatialAddressesRaw, trace_init,
 };
 use tracing::{error, info, trace, warn};
 

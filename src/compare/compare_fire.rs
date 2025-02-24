@@ -1,7 +1,7 @@
 //!  The `compare_fire` module implements address matching and comparison for Fire Inspections.
 use crate::{
-    from_csv, to_csv, Address, AddressErrorKind, FireInspection, FireInspections, Geographic,
-    IntoCsv, Io, MatchPartialRecord, MatchPartialRecords, MatchStatus,
+    Address, AddressErrorKind, FireInspection, FireInspections, Geographic, IntoCsv, Io,
+    MatchPartialRecord, MatchPartialRecords, MatchStatus, from_csv, to_csv,
 };
 use derive_more::{Deref, DerefMut};
 use indicatif::ParallelProgressIterator;

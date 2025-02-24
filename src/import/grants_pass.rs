@@ -1,10 +1,10 @@
 //! The `grants_pass` module contains data types for importing addresses from the City of Grants
 //! Pass.
 use crate::{
-    deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, Address, AddressError,
-    AddressErrorKind, AddressStatus, Addresses, Bincode, Cartesian, Geographic, IntoBin, IntoCsv,
-    Io, State, StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier,
-    StreetNamePreType, StreetSeparator, SubaddressType,
+    Address, AddressError, AddressErrorKind, AddressStatus, Addresses, Bincode, Cartesian,
+    Geographic, IntoBin, IntoCsv, Io, State, StreetNamePostType, StreetNamePreDirectional,
+    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
+    deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv,
 };
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};

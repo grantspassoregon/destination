@@ -1,8 +1,8 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
 use crate::{
-    deserialize_phone_number, from_csv, to_csv, Address, AddressErrorKind, Geographic, IntoCsv, Io,
-    MatchStatus, Nom, Parse, StreetNamePostType, StreetNamePreDirectional,
+    Address, AddressErrorKind, Geographic, IntoCsv, Io, MatchStatus, Nom, Parse,
+    StreetNamePostType, StreetNamePreDirectional, deserialize_phone_number, from_csv, to_csv,
 };
 use derive_more::{Deref, DerefMut};
 // use galileo::galileo_types::geo::GeoPoint;

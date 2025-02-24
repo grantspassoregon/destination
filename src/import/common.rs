@@ -1,9 +1,8 @@
 use crate::{
-    deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, AddressError, AddressErrorKind,
-    AddressStatus, Bincode, CommonAddress, CommonAddresses, GeoAddress, GeoAddresses, IntoBin,
-    IntoCsv, Io, SpatialAddress, SpatialAddresses, State, StreetNamePostType,
-    StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType, StreetSeparator,
-    SubaddressType,
+    AddressError, AddressErrorKind, AddressStatus, Bincode, CommonAddress, CommonAddresses,
+    GeoAddress, GeoAddresses, IntoBin, IntoCsv, Io, SpatialAddress, SpatialAddresses, State,
+    StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType,
+    StreetSeparator, SubaddressType, deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv,
 };
 /// The `SpatialAddressRaw` struct defines the fields of a valid address, following the FGDC standard,
 /// with the inclusion of NENA-required fields for emergency response.

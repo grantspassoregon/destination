@@ -1,10 +1,10 @@
 //! The `josephine_county` module contains data types for importing addresses from ECSO and
 //! Josephine County.
 use crate::{
-    deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, zero_floor, Address, AddressError,
-    AddressErrorKind, AddressStatus, Addresses, Bincode, Cartesian, Geographic, IntoBin, IntoCsv,
-    Io, State, StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier,
-    StreetNamePreType, StreetSeparator, SubaddressType,
+    Address, AddressError, AddressErrorKind, AddressStatus, Addresses, Bincode, Cartesian,
+    Geographic, IntoBin, IntoCsv, Io, State, StreetNamePostType, StreetNamePreDirectional,
+    StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
+    deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, zero_floor,
 };
 use derive_more::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
