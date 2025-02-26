@@ -12,6 +12,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 /// Function for deserailizing ArcGIS data that may contain either empty (Null) fields, or fields
 /// with string value "\<Null\>", either of which should translate to `None`.
+///
+/// Used to deserialize fields in import data from ArcGIS, e.g.
+/// [`GrantsPassAddress`](crate::GrantsPassAddress).
 pub fn deserialize_arcgis_data<'de, D: Deserializer<'de>>(
     de: D,
 ) -> Result<Option<String>, D::Error> {
