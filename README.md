@@ -3,6 +3,7 @@
 _A library providing types and methods for managing physical addresses in a municipality._
 
 ![Destination Logo](./data/destination_logo.jpg)
+_Logo art created using Gemini AI._
 
 ## Project Goals
 

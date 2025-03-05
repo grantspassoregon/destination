@@ -32,7 +32,10 @@ pub use compare::{
     MatchStatus, Mismatch,
 };
 pub use error::{AddressError, AddressErrorKind, Bincode, Builder, Csv, Io, Nom};
-pub use geo::{Cartesian, GeoAddress, GeoAddresses, Geographic, SpatialAddress, SpatialAddresses};
+pub use geo::{
+    AddressPoints, Cartesian, GeoAddress, GeoAddresses, Geographic, SpatialAddress,
+    SpatialAddresses,
+};
 pub use import::{
     Business, Businesses, FireInspection, FireInspectionRaw, FireInspections, GrantsPassAddress,
     GrantsPassAddresses, GrantsPassSpatialAddress, GrantsPassSpatialAddresses,
