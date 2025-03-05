@@ -265,7 +265,7 @@ pub struct GeoAddresses(Vec<GeoAddress>);
 
 impl Addresses<GeoAddress> for GeoAddresses {}
 
-impl IntoBin<GeoAddress> for GeoAddress {
+impl IntoBin<GeoAddresses> for GeoAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
             Ok(records) => bincode::deserialize::<Self>(&records)
@@ -458,7 +458,7 @@ pub struct AddressPoints(Vec<AddressPoint>);
 
 impl Addresses<AddressPoint> for AddressPoints {}
 
-impl IntoBin<AddressPoint> for AddressPoint {
+impl IntoBin<AddressPoints> for AddressPoints {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
         match from_bin(path) {
             Ok(records) => bincode::deserialize::<Self>(&records)
