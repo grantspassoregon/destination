@@ -1,7 +1,7 @@
 //! The `grants_pass` module contains data types for importing addresses from the City of Grants
 //! Pass.
 use crate::{
-    Address, AddressError, AddressErrorKind, AddressStatus, Addresses, Bincode, Cartesian,
+    Address, AddressError, AddressErrorKind, AddressStatus, Addresses, Cartesian, Decode,
     Geographic, IntoBin, IntoCsv, Io, State, StreetNamePostType, StreetNamePreDirectional,
     StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
     deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv,
@@ -276,9 +276,16 @@ impl Addresses<GrantsPassAddress> for GrantsPassAddresses {}
 
 impl IntoBin<GrantsPassAddresses> for GrantsPassAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (results, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(results)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -600,9 +607,16 @@ impl Addresses<GrantsPassSpatialAddress> for GrantsPassSpatialAddresses {}
 
 impl IntoBin<GrantsPassSpatialAddresses> for GrantsPassSpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (results, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(results)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

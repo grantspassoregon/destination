@@ -1,5 +1,5 @@
 use crate::{
-    AddressError, AddressErrorKind, AddressStatus, Bincode, CommonAddress, CommonAddresses,
+    AddressError, AddressErrorKind, AddressStatus, CommonAddress, CommonAddresses, Decode,
     GeoAddress, GeoAddresses, IntoBin, IntoCsv, Io, SpatialAddress, SpatialAddresses, State,
     StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType,
     StreetSeparator, SubaddressType, deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv,
@@ -167,9 +167,16 @@ impl From<SpatialAddressesRaw> for SpatialAddresses {
 
 impl IntoBin<SpatialAddressesRaw> for SpatialAddressesRaw {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (results, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(results)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

@@ -1,6 +1,6 @@
 //! The `lexisnexis` module produces address range reports for the LexisNexis dispatch service.
 use crate::{
-    Address, AddressError, AddressErrorKind, Addresses, Bincode, Builder, IntoBin, IntoCsv, Io,
+    Address, AddressError, AddressErrorKind, Addresses, Builder, Decode, IntoBin, IntoCsv, Io,
     from_bin, from_csv, to_bin, to_csv,
 };
 use derive_more::{Deref, DerefMut};
@@ -299,9 +299,16 @@ impl LexisNexis {
 
 impl IntoBin<LexisNexis> for LexisNexis {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (results, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(results)
+            }
             Err(source) => Err(source.into()),
         }
     }

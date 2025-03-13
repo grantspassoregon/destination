@@ -1,7 +1,7 @@
 //! The `grants_pass_business` module contains data types for importing business license reports
 //! for the City of Grants Pass.
 use crate::{
-    AddressError, AddressErrorKind, Bincode, IntoBin, IntoCsv, Io, Nom, Parse, PartialAddress,
+    AddressError, AddressErrorKind, Decode, IntoBin, IntoCsv, Io, Nom, Parse, PartialAddress,
     from_bin, from_csv, to_bin, to_csv,
 };
 use derive_more::{Deref, DerefMut};
@@ -202,9 +202,16 @@ impl Businesses {
 
 impl IntoBin<Businesses> for Businesses {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (results, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(results)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

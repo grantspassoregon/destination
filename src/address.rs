@@ -1,7 +1,7 @@
 //! The `address` module defines the library data standard for a valid address, and provides
 //! implementation blocks to convert data from import types to the valid address format.
 use crate::{
-    AddressError, AddressErrorKind, AddressMatch, AddressStatus, Bincode, Builder, Cartesian,
+    AddressError, AddressErrorKind, AddressMatch, AddressStatus, Builder, Cartesian, Decode,
     FireInspections, Geographic, IntoBin, IntoCsv, Io, LexisNexis, Mismatch, Parse,
     PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier,
     StreetNamePreType, StreetSeparator, SubaddressType, from_bin, from_csv, to_bin, to_csv,
@@ -820,9 +820,16 @@ impl<T: Address + Clone> From<&[T]> for CommonAddresses {
 
 impl IntoBin<CommonAddresses> for CommonAddresses {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (result, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(result)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -1279,9 +1286,16 @@ impl From<&FireInspections> for PartialAddresses {
 
 impl IntoBin<PartialAddresses> for PartialAddresses {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (result, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(result)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -1365,9 +1379,16 @@ impl AddressDeltas {
 
 impl IntoBin<AddressDeltas> for AddressDeltas {
     fn load<P: AsRef<std::path::Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (result, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(result)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

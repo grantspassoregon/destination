@@ -21,14 +21,17 @@ macro_rules! impl_address_error {
     };
 }
 
-impl_address_error!(Bincode, Io, Nom);
+impl_address_error!(Decode, Encode, Io, Nom);
 
 /// The `AddressErrorKind` enum contains the individual error type associated with the library operation.
 #[derive(Debug, derive_more::From, derive_more::Display, derive_more::Error)]
 pub enum AddressErrorKind {
-    /// The `Bincode` variant contains a [`Bincode`] error.
-    #[from(Bincode)]
-    Bincode(Bincode),
+    /// The `Decode` variant contains a [`Decode`] error.
+    #[from(Decode)]
+    Decode(Decode),
+    /// The `Encode` variant contains a [`Encode`] error.
+    #[from(Encode)]
+    Encode(Encode),
     /// The `Builder` variant contains a [`Builder`] error.
     #[from(Builder)]
     Builder,
@@ -63,11 +66,20 @@ pub struct Csv {
     file: String,
 }
 
-/// The `Bincode` struct contains error information associated with the `bincode` crate.
+/// The `Decode` struct contains decode error information associated with the `bincode` crate.
 #[derive(Debug, derive_more::Display, derive_more::Error, derive_new::new)]
-#[display("bincode error: {source:?} at line {line} in {file}")]
-pub struct Bincode {
-    source: Box<bincode::ErrorKind>,
+#[display("bincode decode error: {source:?} at line {line} in {file}")]
+pub struct Decode {
+    source: bincode::error::DecodeError,
+    line: u32,
+    file: String,
+}
+
+/// The `Encode` struct contains encoding error information associated with the `bincode` crate.
+#[derive(Debug, derive_more::Display, derive_more::Error, derive_new::new)]
+#[display("bincode encode error: {source:?} at line {line} in {file}")]
+pub struct Encode {
+    source: bincode::error::EncodeError,
     line: u32,
     file: String,
 }

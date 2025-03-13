@@ -1,6 +1,6 @@
 //! The `utils` module contains utility functions accessed by multiple data types, where declaring
 //! a stand-alone function eliminates code duplication in different methods.
-use crate::{AddressError, AddressErrorKind, Bincode, Csv, Io};
+use crate::{AddressError, AddressErrorKind, Csv, Encode, Io};
 use indicatif::{ProgressBar, ProgressStyle};
 use serde::Serialize;
 use serde::de::{Deserialize, DeserializeOwned, Deserializer};
@@ -136,8 +136,9 @@ pub fn from_csv<T: DeserializeOwned + Clone, P: AsRef<std::path::Path>>(
 /// [`SpatialAddressesRaw::save`](crate::SpatialAddressesRaw::save),
 pub fn to_bin<T: Serialize, P: AsRef<Path>>(data: &T, path: P) -> Result<(), AddressError> {
     info!("Serializing to binary.");
-    let encode =
-        bincode::serialize(data).map_err(|source| Bincode::new(source, line!(), file!().into()))?;
+    let config = bincode::config::standard();
+    let encode = bincode::serde::encode_to_vec(data, config)
+        .map_err(|source| Encode::new(source, line!(), file!().into()))?;
     info!("Writing to file.");
     std::fs::write(&path, encode)
         .map_err(|source| Io::new(path.as_ref().into(), source, line!(), file!().into()))?;

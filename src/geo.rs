@@ -1,7 +1,7 @@
 //! The `geo` module defines spatial address types, and implements traits from the `galileo` crate for these types.
 use crate::{
     Address, AddressDelta, AddressDeltas, AddressError, AddressErrorKind, AddressStatus, Addresses,
-    Bincode, CommonAddress, IntoBin, State, StreetNamePostType, StreetNamePreDirectional,
+    CommonAddress, Decode, IntoBin, State, StreetNamePostType, StreetNamePreDirectional,
     StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType, from_bin, to_bin,
 };
 use derive_more::{Deref, DerefMut};
@@ -267,9 +267,16 @@ impl Addresses<GeoAddress> for GeoAddresses {}
 
 impl IntoBin<GeoAddresses> for GeoAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (result, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(result)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -460,9 +467,16 @@ impl Addresses<AddressPoint> for AddressPoints {}
 
 impl IntoBin<AddressPoints> for AddressPoints {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (result, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(result)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -686,9 +700,16 @@ impl Addresses<SpatialAddress> for SpatialAddresses {}
 
 impl IntoBin<SpatialAddresses> for SpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (result, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(result)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }

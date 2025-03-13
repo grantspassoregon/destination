@@ -1,7 +1,7 @@
 //! The `josephine_county` module contains data types for importing addresses from ECSO and
 //! Josephine County.
 use crate::{
-    Address, AddressError, AddressErrorKind, AddressStatus, Addresses, Bincode, Cartesian,
+    Address, AddressError, AddressErrorKind, AddressStatus, Addresses, Cartesian, Decode,
     Geographic, IntoBin, IntoCsv, Io, State, StreetNamePostType, StreetNamePreDirectional,
     StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
     deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, zero_floor,
@@ -232,9 +232,16 @@ impl Addresses<JosephineCountyAddress2024> for JosephineCountyAddresses2024 {}
 
 impl IntoBin<JosephineCountyAddresses2024> for JosephineCountyAddresses2024 {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (result, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(result)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -509,9 +516,16 @@ impl Addresses<JosephineCountySpatialAddress2024> for JosephineCountySpatialAddr
 
 impl IntoBin<JosephineCountySpatialAddresses2024> for JosephineCountySpatialAddresses2024 {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (results, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(results)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -759,9 +773,16 @@ impl Addresses<JosephineCountyAddress> for JosephineCountyAddresses {}
 
 impl IntoBin<JosephineCountyAddresses> for JosephineCountyAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (result, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(result)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
@@ -1043,9 +1064,16 @@ impl Addresses<JosephineCountySpatialAddress> for JosephineCountySpatialAddresse
 
 impl IntoBin<JosephineCountySpatialAddresses> for JosephineCountySpatialAddresses {
     fn load<P: AsRef<Path>>(path: P) -> Result<Self, AddressError> {
+        let config = bincode::config::standard();
         match from_bin(path) {
-            Ok(records) => bincode::deserialize::<Self>(&records)
-                .map_err(|source| Bincode::new(source, line!(), file!().into()).into()),
+            Ok(records) => {
+                let (results, _) = bincode::serde::decode_from_slice::<
+                    Self,
+                    bincode::config::Configuration,
+                >(&records, config)
+                .map_err(|source| Decode::new(source, line!(), file!().into()))?;
+                Ok(results)
+            }
             Err(source) => Err(AddressErrorKind::from(source).into()),
         }
     }
