@@ -1,6 +1,6 @@
 [package]
 name = "destination"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 authors = ["Erik Rose <erose@grantspassoregon.gov>"]
 description = "A library providing types and method for managing physical addresses in a municipality."
