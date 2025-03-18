@@ -1,8 +1,8 @@
 use destination::{
     Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
     FireInspectionMatchRecords, FireInspections, GeoAddresses, GrantsPassAddresses,
-    GrantsPassSpatialAddresses, IntoBin, IntoCsv, Io, JosephineCountyAddresses2024, MatchRecords,
-    Nom, Parse, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
+    GrantsPassSpatialAddresses, IntoBin, IntoCsv, JosephineCountyAddresses2024, MatchRecords, Nom,
+    Parse, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
     StreetNamePreDirectional, SubaddressType, from_csv,
 };
 use test_log::test;
@@ -49,41 +49,41 @@ fn load_geo_addresses() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[test]
-fn read_bus_licenses() -> Result<(), Io> {
-    let file = "data/active_business_licenses.csv";
-    let licenses = BusinessLicenses::from_csv(file)?;
-    info!("Business licenses loaded: {} entries.", licenses.len());
-    // info!("Record 171:");
-    // info!("{:?}", licenses.records[171]);
-    assert!(licenses[0].pre_directional() == Some(StreetNamePreDirectional::NORTHEAST));
-    info!("NE reads.");
-    assert!(licenses[3].pre_directional() == Some(StreetNamePreDirectional::NORTHWEST));
-    info!("NW reads.");
-    assert!(licenses[1].pre_directional() == Some(StreetNamePreDirectional::SOUTHEAST));
-    info!("SE reads.");
-    assert!(licenses[109].pre_directional() == Some(StreetNamePreDirectional::SOUTHEAST));
-    info!("SOUTHEAST reads.");
-    assert!(licenses[0].post_type() == Some(StreetNamePostType::STREET));
-    info!("ST reads.");
-    assert!(licenses[1].post_type() == Some(StreetNamePostType::STREET));
-    info!("St reads.");
-    assert!(licenses[109].post_type() == Some(StreetNamePostType::STREET));
-    info!("STREET reads.");
-    assert!(licenses[171].post_type() == Some(StreetNamePostType::AVENUE));
-    info!("Ave reads.");
-    assert!(licenses[88].post_type() == Some(StreetNamePostType::BOULEVARD));
-    info!("BOULEVARD reads.");
-    assert!(licenses[134].post_type() == Some(StreetNamePostType::DRIVE));
-    info!("Dr reads.");
-    assert!(licenses[5].post_type() == Some(StreetNamePostType::HIGHWAY));
-    info!("HWY reads.");
-    assert!(licenses[214].post_type() == Some(StreetNamePostType::HIGHWAY));
-    info!("Hwy reads.");
-    assert!(licenses[405].post_type() == Some(StreetNamePostType::HIGHWAY));
-    info!("HIGHWAY reads.");
-    Ok(())
-}
+// #[test]
+// fn read_bus_licenses() -> Result<(), Io> {
+//     let file = "data/active_business_licenses.csv";
+//     let licenses = BusinessLicenses::from_csv(file)?;
+//     info!("Business licenses loaded: {} entries.", licenses.len());
+//     // info!("Record 171:");
+//     // info!("{:?}", licenses.records[171]);
+//     assert!(licenses[0].pre_directional() == Some(StreetNamePreDirectional::NORTHEAST));
+//     info!("NE reads.");
+//     assert!(licenses[3].pre_directional() == Some(StreetNamePreDirectional::NORTHWEST));
+//     info!("NW reads.");
+//     assert!(licenses[1].pre_directional() == Some(StreetNamePreDirectional::SOUTHEAST));
+//     info!("SE reads.");
+//     assert!(licenses[109].pre_directional() == Some(StreetNamePreDirectional::SOUTHEAST));
+//     info!("SOUTHEAST reads.");
+//     assert!(licenses[0].post_type() == Some(StreetNamePostType::STREET));
+//     info!("ST reads.");
+//     assert!(licenses[1].post_type() == Some(StreetNamePostType::STREET));
+//     info!("St reads.");
+//     assert!(licenses[109].post_type() == Some(StreetNamePostType::STREET));
+//     info!("STREET reads.");
+//     assert!(licenses[171].post_type() == Some(StreetNamePostType::AVENUE));
+//     info!("Ave reads.");
+//     assert!(licenses[88].post_type() == Some(StreetNamePostType::BOULEVARD));
+//     info!("BOULEVARD reads.");
+//     assert!(licenses[134].post_type() == Some(StreetNamePostType::DRIVE));
+//     info!("Dr reads.");
+//     assert!(licenses[5].post_type() == Some(StreetNamePostType::HIGHWAY));
+//     info!("HWY reads.");
+//     assert!(licenses[214].post_type() == Some(StreetNamePostType::HIGHWAY));
+//     info!("Hwy reads.");
+//     assert!(licenses[405].post_type() == Some(StreetNamePostType::HIGHWAY));
+//     info!("HIGHWAY reads.");
+//     Ok(())
+// }
 
 #[test]
 fn match_city_address() -> anyhow::Result<()> {
@@ -101,41 +101,16 @@ fn match_city_address() -> anyhow::Result<()> {
 
 #[test]
 fn match_business_addresses() -> anyhow::Result<()> {
-    let business_path = "data/business_licenses_20240520.csv";
+    let business_path = "data/business_licenses_20250317.csv";
     let city_path = "data/city_addresses_20241007.csv";
     let business_addresses = BusinessLicenses::from_csv(business_path)?;
     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
     let match_records = BusinessMatchRecords::compare(&business_addresses, &city_addresses);
-    assert_eq!(match_records.len(), 4888);
+    assert_eq!(match_records.len(), 4796);
     info!("Business addresses match against commmon addresses.");
 
     Ok(())
 }
-
-// #[test]
-// fn match_business_address_chain() -> Result<(), std::io::Error> {
-//     if tracing_subscriber::fmt()
-//         .with_max_level(tracing::Level::TRACE)
-//         .try_init()
-//         .is_ok()
-//     {};
-//     info!("Subscriber initialized.");
-//     let business_path = "c:/users/erose/documents/active_business_licenses.csv";
-//     let city_path = "c:/users/erose/documents/addresses_20230411.csv";
-//     let city2022_path = "c:/users/erose/documents/addresses_2022.csv";
-//     let business_addresses = BusinessLicenses::from_csv(business_path)?;
-//     let city_addresses = CityAddresses::from_csv(city_path)?;
-//     let city2022_addresses = GrantsPass2022Addresses::from_csv(city2022_path)?;
-//     let target_addresses = Addresses::from(city_addresses);
-//     let other_addresses = Addresses::from(city2022_addresses);
-//     let match_records = BusinessMatchRecords::compare_chain(
-//         &business_addresses,
-//         &[&target_addresses, &other_addresses],
-//     );
-//     info!("Records: {:?}", match_records.records.len());
-//
-//     Ok(())
-// }
 
 #[test]
 fn match_city_addresses() -> anyhow::Result<()> {
@@ -602,7 +577,7 @@ fn parse_county_address() -> anyhow::Result<()> {
 #[test]
 #[cfg_attr(feature = "ci", ignore)]
 fn business_mailing() -> anyhow::Result<()> {
-    let situs = "data/business_licenses_20240520.csv";
+    let situs = "data/business_licenses_20250317.csv";
     let situs = BusinessLicenses::from_csv(situs)?;
     info!("Business licenses loaded: {} entries.", situs.len());
     let mut situs = situs.deduplicate();

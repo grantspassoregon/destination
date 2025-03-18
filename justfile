@@ -18,7 +18,7 @@ orphans:
 duplicates file="data/city_addresses_20241007.csv" type="grants_pass" out="duplicates.csv":
   cargo run --release -- -c duplicates -s {{file}} -k {{type}} -o {{out}}
 
-business file="data/business_licenses_20240520.csv" compare="data/city_addresses_20241007.csv":
+business file="data/business_licenses_20250317.csv" compare="data/city_addresses_20241007.csv":
   cargo run --release -- -c business -s {{file}} -t {{compare}} -z grants_pass -o c:/users/erose/documents/business_match.csv
   cargo run --release -- -c filter -s c:/users/erose/documents/business_match.csv -k "business" -f matching -o c:/users/erose/documents/business_matching.csv
   cargo run --release -- -c filter -s c:/users/erose/documents/business_match.csv -k "business" -f divergent -o c:/users/erose/documents/business_divergent.csv
