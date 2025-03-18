@@ -19,21 +19,21 @@ fn main() -> anyhow::Result<()> {
                 if let Some(source) = cli.source_type {
                     match source.as_str() {
                         "business" => {
-                            let match_records = BusinessMatchRecords::from_csv(cli.source.clone())?;
+                            let match_records = BusinessMatchRecords::from_csv(&cli.source)?;
                             info!("Source records read: {} entries.", match_records.len());
                             let mut filtered = match_records.filter(&filter);
                             info!("Records remaining: {} entries.", filtered.len());
                             filtered.to_csv(cli.output)?;
                         }
                         "partial" => {
-                            let match_records = MatchPartialRecords::from_csv(cli.source.clone())?;
+                            let match_records = MatchPartialRecords::from_csv(&cli.source)?;
                             info!("Source records read: {} entries.", match_records.len());
                             let mut filtered = match_records.clone().filter(&filter);
                             info!("Records remaining: {} entries.", filtered.len());
                             filtered.to_csv(cli.output)?;
                         }
                         "full" => {
-                            let match_records = MatchRecords::from_csv(cli.source.clone())?;
+                            let match_records = MatchRecords::from_csv(&cli.source)?;
                             info!("Source records read: {} entries.", match_records.len());
                             let mut filtered = match_records.clone().filter(&filter);
                             info!("Records remaining: {} entries.", filtered.len());
@@ -102,19 +102,17 @@ fn main() -> anyhow::Result<()> {
             if let Some(source_type) = &cli.source_type {
                 match source_type.as_str() {
                     "grants_pass" => {
-                        source_addresses = CommonAddresses::from(
-                            &GrantsPassAddresses::from_csv(cli.source.clone())?[..],
-                        )
+                        source_addresses =
+                            CommonAddresses::from(&GrantsPassAddresses::from_csv(&cli.source)?[..])
                     }
                     "josephine_county" => {
                         source_addresses = CommonAddresses::from(
-                            &JosephineCountyAddresses2024::from_csv(cli.source.clone())?[..],
+                            &JosephineCountyAddresses2024::from_csv(&cli.source)?[..],
                         )
                     }
                     "common" => {
-                        source_addresses = CommonAddresses::from(SpatialAddressesRaw::from_csv(
-                            cli.source.clone(),
-                        )?)
+                        source_addresses =
+                            CommonAddresses::from(SpatialAddressesRaw::from_csv(&cli.source)?)
                     }
                     _ => error!("Unrecognized file format."),
                 }
@@ -172,6 +170,10 @@ fn main() -> anyhow::Result<()> {
                         );
                         source_addresses.standardize();
                     }
+                    "common" => {
+                        source_addresses =
+                            SpatialAddresses::from(SpatialAddressesRaw::from_csv(&cli.source)?)
+                    }
                     _ => error!("Invalid source data type."),
                 }
             } else {
@@ -191,13 +193,17 @@ fn main() -> anyhow::Result<()> {
                 match source_type.as_str() {
                     "grants_pass" => {
                         source_addresses = CommonAddresses::from(
-                            &GrantsPassSpatialAddresses::from_csv(cli.source.clone())?[..],
+                            &GrantsPassSpatialAddresses::from_csv(&cli.source)?[..],
                         )
                     }
                     "josephine_county" => {
                         source_addresses = CommonAddresses::from(
-                            &JosephineCountySpatialAddresses2024::from_csv(cli.source.clone())?[..],
+                            &JosephineCountySpatialAddresses2024::from_csv(&cli.source)?[..],
                         )
+                    }
+                    "common" => {
+                        source_addresses =
+                            CommonAddresses::from(SpatialAddressesRaw::from_csv(&cli.source)?)
                     }
                     _ => error!("Unrecognized file format."),
                 }
@@ -237,13 +243,17 @@ fn main() -> anyhow::Result<()> {
                 match source_type.as_str() {
                     "grants_pass" => {
                         source_addresses = CommonAddresses::from(
-                            &GrantsPassSpatialAddresses::from_csv(cli.source.clone())?[..],
+                            &GrantsPassSpatialAddresses::from_csv(&cli.source)?[..],
                         )
                     }
                     "josephine_county" => {
                         source_addresses = CommonAddresses::from(
-                            &JosephineCountySpatialAddresses2024::from_csv(cli.source.clone())?[..],
+                            &JosephineCountySpatialAddresses2024::from_csv(&cli.source)?[..],
                         )
+                    }
+                    "common" => {
+                        source_addresses =
+                            CommonAddresses::from(SpatialAddressesRaw::from_csv(&cli.source)?)
                     }
                     _ => error!("Unrecognized file format."),
                 }
@@ -277,6 +287,15 @@ fn main() -> anyhow::Result<()> {
                                 &GrantsPassSpatialAddresses::from_csv(target)?[..],
                             )
                         }
+                        "josephine_county" => {
+                            target_addresses = GeoAddresses::from(
+                                &JosephineCountySpatialAddresses2024::from_csv(target)?[..],
+                            )
+                        }
+                        "common" => {
+                            target_addresses =
+                                GeoAddresses::from(SpatialAddressesRaw::from_csv(target)?)
+                        }
                         _ => info!("Unrecognized file format."),
                     }
                 }
@@ -291,6 +310,15 @@ fn main() -> anyhow::Result<()> {
                             alt_target = GeoAddresses::from(
                                 &GrantsPassSpatialAddresses::from_csv(alternate)?[..],
                             )
+                        }
+                        "josephine_county" => {
+                            alt_target = GeoAddresses::from(
+                                &JosephineCountySpatialAddresses2024::from_csv(alternate)?[..],
+                            )
+                        }
+                        "common" => {
+                            alt_target =
+                                GeoAddresses::from(SpatialAddressesRaw::from_csv(alternate)?)
                         }
                         _ => error!("Unrecognized file format."),
                     }
@@ -323,17 +351,16 @@ fn main() -> anyhow::Result<()> {
                 match source_type.as_str() {
                     "grants_pass" => {
                         source = GeoAddresses::from(
-                            &GrantsPassSpatialAddresses::from_csv(cli.source.clone())?[..],
+                            &GrantsPassSpatialAddresses::from_csv(&cli.source)?[..],
                         )
                     }
                     "josephine_county" => {
                         source = GeoAddresses::from(
-                            &JosephineCountySpatialAddresses2024::from_csv(cli.source.clone())?[..],
+                            &JosephineCountySpatialAddresses2024::from_csv(&cli.source)?[..],
                         )
                     }
                     "common" => {
-                        source =
-                            GeoAddresses::from(SpatialAddressesRaw::from_csv(cli.source.clone())?)
+                        source = GeoAddresses::from(SpatialAddressesRaw::from_csv(&cli.source)?)
                     }
                     _ => error!("Unrecognized file format."),
                 }
