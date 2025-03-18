@@ -2,7 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2025-03-18
+
+### 🐛 Bug Fixes
+
+- Binary test data updated to match the new bincode version.
+
+### 🚜 Refactor
+
+- Common address format now accepted by all command options.
+
+### 📚 Documentation
+
+- Bullet points illustrating intended function added to README.md.
+
+### 🧪 Testing
+
+- Unit tests updated to read the current active business licenses.
+
+### ⚙️ Miscellaneous Tasks
+
+- *(dependency)* Patch updates for dependencies.
+- *(dependency)* Update bincode to v2.0.1.  Bincode error type replaced with Decode and Encode variants.  Impls for IntoBin updated to use the new bincode api.
+- Minor bump to the `uuid` dependency.  No code changes required.
+- Increment version to 0.1.2 in Cargo.toml.
+- Active business licenses updated in the `data` folder.
+
 ## [0.1.1] - 2025-03-05
+
+### 🚀 Features
+
+- Changelog added to repo.
 
 ### 🐛 Bug Fixes
 
