@@ -29,9 +29,9 @@ fn load_city_addresses() -> anyhow::Result<()> {
 #[test]
 fn load_county_addresses() -> anyhow::Result<()> {
     trace!("Deserializing county addresses from a csv file.");
-    let file = "data/county_addresses_20241007.csv";
+    let file = "data/county_addresses_20250319.csv";
     let addresses = JosephineCountyAddresses2024::from_csv(file)?;
-    assert_eq!(addresses.len(), 45564);
+    assert_eq!(addresses.len(), 45866);
     trace!("County addresses loaded: {} entries.", addresses.len());
     Ok(())
 }
@@ -92,7 +92,7 @@ fn match_city_address() -> anyhow::Result<()> {
     let city_addresses = SpatialAddresses::load(city_path)?;
     assert_eq!(city_addresses.len(), 27818);
     let county_addresses = SpatialAddresses::load(county_path)?;
-    assert_eq!(county_addresses.len(), 45564);
+    assert_eq!(county_addresses.len(), 45866);
     info!("Matching single address.");
     let match_records = MatchRecords::new(&city_addresses[0].clone(), &county_addresses);
     info!("Record 0 is: {:?}", match_records[0]);
