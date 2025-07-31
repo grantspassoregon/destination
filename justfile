@@ -1,24 +1,36 @@
 set shell := ["powershell.exe", "-c"]
 set windows-shell := ["powershell.exe", "-c"]
 
-# load city addresses and save to binary in the data directory
+# Variables
+city := "data/city_addresses_20241007.csv"
+county := "data/county_addresses_20250319.csv"
+business := "data/business_licenses_20250317.csv"
+
+default:
+  @just --list --unsorted
+
+# Load city addresses and save to binary in the data directory.
 load_city file="data/city_addresses_20241007.csv":
   cargo run --release -- -c save -s {{file}} -k grants_pass -o data/addresses.data
 
-# load county addresses and save to binary in the data directory
+# Load county addresses and save to binary in the data directory.
 load_county file="data/county_addresses_20250319.csv":
   cargo run --release -- -c save -s {{file}} -k josephine_county -o data/county_addresses.data
 
-drift:
-  cargo run --release -- -c drift -s data/city_addresses_20241007.csv -k grants_pass -t data/county_addresses_20250319.csv -z josephine_county -o c:/users/erose/documents/drift.csv
+# Calculate spatial deltas between matching addresses.
+drift city=city county=county out="c:/users/erose/documents/drift.csv":
+  cargo run --release -- -c drift -s {{city}} -k grants_pass -t {{county}} -z josephine_county -o {{out}}
 
-orphans:
-  cargo run --release -- -c orphan_streets -s data/city_addresses_20241007.csv -k grants_pass -t data/county_addresses_20250319.csv -z josephine_county
+# Find street names present in the City that are missing in the County dataset and may be mislabeled.
+orphans city=city county=county:
+  cargo run --release -- -c orphan_streets -s {{city}} -k grants_pass -t {{county}} -z josephine_county
 
-duplicates file="data/city_addresses_20241007.csv" type="grants_pass" out="duplicates.csv":
+# Find duplicate addresses with dataset 'file' from source 'type'.
+duplicates file=city type="grants_pass" out="duplicates.csv":
   cargo run --release -- -c duplicates -s {{file}} -k {{type}} -o {{out}}
 
-business file="data/business_licenses_20250317.csv" compare="data/city_addresses_20241007.csv" out="c:/users/erose/documents/":
+# Compare business licenses to city addresses and sort by matching, divergent and missing.
+business file=business compare=city out="c:/users/erose/documents/":
   cargo run --release -- -c business -s {{file}} -t {{compare}} -z grants_pass -o {{out}}business_match.csv
   cargo run --release -- -c filter -s {{out}}business_match.csv -k "business" -f matching -o {{out}}business_matching.csv
   cargo run --release -- -c filter -s {{out}}business_match.csv -k "business" -f divergent -o {{out}}business_divergent.csv
