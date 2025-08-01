@@ -1,9 +1,9 @@
 use destination::{
-    Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses,
+    Address, Addresses, BusinessLicenses, BusinessMatchRecords, Businesses, CommonAddresses,
     FireInspectionMatchRecords, FireInspections, GeoAddresses, GrantsPassAddresses,
     GrantsPassSpatialAddresses, IntoBin, IntoCsv, JosephineCountyAddresses2024, MatchRecords, Nom,
-    Parse, PartialAddress, PostalCommunity, SpatialAddresses, StreetNamePostType,
-    StreetNamePreDirectional, SubaddressType, from_csv,
+    Parse, PartialAddress, PostalCommunity, SpatialAddresses, SpatialAddressesRaw,
+    StreetNamePostType, StreetNamePreDirectional, SubaddressType, from_csv,
 };
 use test_log::test;
 use tracing::{info, trace};
@@ -22,6 +22,21 @@ fn load_city_addresses() -> anyhow::Result<()> {
     let addresses = GrantsPassAddresses::from_csv(file)?;
     assert_eq!(addresses.len(), 27811);
     trace!("City addresses loaded: {} entries.", addresses.len());
+    Ok(())
+}
+
+#[test]
+// Loads city addresses and prints the length
+fn load_common_addresses() -> anyhow::Result<()> {
+    trace!("Deserializing city addresses from a csv file.");
+    let file = "data/grants_pass_addresses_20250731.csv";
+    let addresses = SpatialAddressesRaw::from_csv(file)?;
+    assert_eq!(addresses.len(), 28045);
+    trace!("City addresses loaded: {} entries.", addresses.len());
+    let file = "data/josephine_county_addresses_20250731.csv";
+    let addresses = SpatialAddressesRaw::from_csv(file)?;
+    assert_eq!(addresses.len(), 46018);
+    trace!("County addresses loaded: {} entries.", addresses.len());
     Ok(())
 }
 
