@@ -62,6 +62,10 @@ fn main() -> anyhow::Result<()> {
                             &JosephineCountySpatialAddresses2024::from_csv(&cli.source)?[..],
                         )
                     }
+                    "common" => {
+                        source_addresses =
+                            SpatialAddresses::from(SpatialAddressesRaw::from_csv(&cli.source)?)
+                    }
                     _ => error!("Invalid source data type."),
                 }
             } else {
@@ -82,6 +86,10 @@ fn main() -> anyhow::Result<()> {
                             target_addresses = SpatialAddresses::from(
                                 &JosephineCountySpatialAddresses2024::from_csv(target)?[..],
                             )
+                        }
+                        "common" => {
+                            target_addresses =
+                                SpatialAddresses::from(SpatialAddressesRaw::from_csv(target)?)
                         }
                         _ => error!("Invalid target data type."),
                     }
@@ -220,6 +228,10 @@ fn main() -> anyhow::Result<()> {
                             target_addresses = CommonAddresses::from(
                                 &JosephineCountySpatialAddresses2024::from_csv(target)?[..],
                             )
+                        }
+                        "common" => {
+                            target_addresses =
+                                CommonAddresses::from(SpatialAddressesRaw::from_csv(target)?)
                         }
                         _ => error!("Invalid target data type."),
                     }
