@@ -220,10 +220,8 @@ impl State {
     pub fn match_mixed(input: &str) -> Option<Self> {
         if let Some(state) = Self::match_abbreviated(input) {
             Some(state)
-        } else if let Ok(state) = Self::from_str(input) {
-            Some(state)
         } else {
-            None
+            Self::from_str(input).ok()
         }
     }
 
