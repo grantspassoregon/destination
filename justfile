@@ -2,28 +2,28 @@ set shell := ["powershell.exe", "-c"]
 set windows-shell := ["powershell.exe", "-c"]
 
 # Variables
-city := "data/city_addresses_20241007.csv"
-county := "data/county_addresses_20250319.csv"
+city := "data/grants_pass_addresses_20250731.csv"
+county := "data/josephine_county_addresses_20250731.csv"
 business := "data/business_licenses_20250317.csv"
 
 default:
   @just --list --unsorted
 
 # Load city addresses and save to binary in the data directory.
-load_city file="data/city_addresses_20241007.csv":
-  cargo run --release -- -c save -s {{file}} -k grants_pass -o data/addresses.data
+load_city file=city:
+  cargo run --release -- -c save -s {{file}} -k common -o data/addresses.data
 
 # Load county addresses and save to binary in the data directory.
-load_county file="data/county_addresses_20250319.csv":
-  cargo run --release -- -c save -s {{file}} -k josephine_county -o data/county_addresses.data
+load_county file=county:
+  cargo run --release -- -c save -s {{file}} -k common -o data/county_addresses.data
 
 # Calculate spatial deltas between matching addresses.
 drift city=city county=county out="c:/users/erose/documents/drift.csv":
-  cargo run --release -- -c drift -s {{city}} -k grants_pass -t {{county}} -z josephine_county -o {{out}}
+  cargo run --release -- -c drift -s {{city}} -k common -t {{county}} -z common -o {{out}}
 
 # Find street names present in the City that are missing in the County dataset and may be mislabeled.
 orphans city=city county=county:
-  cargo run --release -- -c orphan_streets -s {{city}} -k grants_pass -t {{county}} -z josephine_county
+  cargo run --release -- -c orphan_streets -s {{city}} -k common -t {{county}} -z common
 
 # Find duplicate addresses with dataset 'file' from source 'type'.
 duplicates file=city type="grants_pass" out="duplicates.csv":
