@@ -50,3 +50,9 @@ tools:
 dist:
   dist build
   dist plan
+
+# Produces a changelog using git-cliff and commits it to the active branch.
+cliff version:
+  git cliff --tag {{version}} -o CHANGELOG.md
+  git add CHANGELOG.md
+  git commit -m "CHANGELOG.md updated for version {{version}}"
