@@ -41,3 +41,12 @@ filter_parcels parcels="../../documents/compare_parcels.csv" out="c:/users/erose
   cargo run --release -- -c filter -s {{parcels}} -k "partial" -f divergent -o {{out}}compare_parcels_divergent.csv
   cargo run --release -- -c filter -s {{parcels}} -k "partial" -f missing -o {{out}}compare_parcels_missing.csv
 
+# Installs the latests versions of package-specific tooling from cargo.
+tools:
+  cargo install just git-cliff cargo-audit cargo-auditable omnibor-cli
+  cargo install cargo-dist cargo-release --locked
+
+# Plan and build source code and artifacts.
+dist:
+  dist build
+  dist plan
