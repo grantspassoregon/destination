@@ -379,25 +379,25 @@ fn main() -> anyhow::Result<()> {
             }
             info!("Reading target records.");
             let mut target = GeoAddresses::default();
-            if let Some(target_type) = &cli.target_type {
-                if let Some(target_path) = &cli.target {
-                    match target_type.as_str() {
-                        "grants_pass" => {
-                            target = GeoAddresses::from(
-                                &GrantsPassSpatialAddresses::from_csv(target_path)?[..],
-                            )
-                        }
-                        "josephine_county" => {
-                            target = GeoAddresses::from(
-                                &JosephineCountySpatialAddresses2024::from_csv(target_path)?[..],
-                            );
-                            target.standardize();
-                        }
-                        "common" => {
-                            target = GeoAddresses::from(SpatialAddressesRaw::from_csv(target_path)?)
-                        }
-                        _ => error!("Unrecognized file format."),
+            if let Some(target_type) = &cli.target_type
+                && let Some(target_path) = &cli.target
+            {
+                match target_type.as_str() {
+                    "grants_pass" => {
+                        target = GeoAddresses::from(
+                            &GrantsPassSpatialAddresses::from_csv(target_path)?[..],
+                        )
                     }
+                    "josephine_county" => {
+                        target = GeoAddresses::from(
+                            &JosephineCountySpatialAddresses2024::from_csv(target_path)?[..],
+                        );
+                        target.standardize();
+                    }
+                    "common" => {
+                        target = GeoAddresses::from(SpatialAddressesRaw::from_csv(target_path)?)
+                    }
+                    _ => error!("Unrecognized file format."),
                 }
             }
             info!("Comparing records.");

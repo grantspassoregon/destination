@@ -67,8 +67,10 @@ pub struct FireInspection {
     #[setters(doc = "Sets the value of the `address` field representing the business address.")]
     address: PartialAddress,
     // Field used by fire dept.
+    #[setters(doc = "Sets the value of the `class` field for fire dept. use.")]
     class: Option<String>,
     // Field used by fire dept.
+    #[setters(doc = "Sets the value of the `subclass` field for fire dept. use.")]
     subclass: Option<String>,
 }
 

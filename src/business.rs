@@ -233,13 +233,13 @@ impl BusinessMatchRecords {
                 let mut names = HashSet::new();
                 let mut records = Vec::new();
                 for record in self.iter() {
-                    if let Some(name) = record.company_name() {
-                        if !names.contains(&name) {
-                            names.insert(name.clone());
-                            let subset = self.clone().filter_field("name", &name);
-                            if subset.len() == 1 {
-                                records.push(subset[0].clone());
-                            }
+                    if let Some(name) = record.company_name()
+                        && !names.contains(&name)
+                    {
+                        names.insert(name.clone());
+                        let subset = self.clone().filter_field("name", &name);
+                        if subset.len() == 1 {
+                            records.push(subset[0].clone());
                         }
                     }
                 }
@@ -249,13 +249,13 @@ impl BusinessMatchRecords {
                 let mut names = HashSet::new();
                 let mut records = Vec::new();
                 for record in self.iter() {
-                    if let Some(name) = record.company_name() {
-                        if !names.contains(&name) {
-                            names.insert(name.clone());
-                            let mut subset = self.clone().filter_field("name", &name);
-                            if subset.len() > 1 {
-                                records.append(&mut subset);
-                            }
+                    if let Some(name) = record.company_name()
+                        && !names.contains(&name)
+                    {
+                        names.insert(name.clone());
+                        let mut subset = self.clone().filter_field("name", &name);
+                        if subset.len() > 1 {
+                            records.append(&mut subset);
                         }
                     }
                 }
@@ -361,14 +361,14 @@ impl BusinessLicense {
         let mut match_status = MatchStatus::Missing;
         let mut business_match = None;
         let mut subaddress_id = None;
-        if let Some(val) = self.subaddress_identifier.clone() {
-            if !val.is_empty() {
-                // info!("Subaddress not empty: {}", &val);
-                let trim_val = val.trim();
-                if !trim_val.is_empty() {
-                    // info!("Writing subaddress: {}", trim_val);
-                    subaddress_id = Some(trim_val.to_string());
-                }
+        if let Some(val) = self.subaddress_identifier.clone()
+            && !val.is_empty()
+        {
+            // info!("Subaddress not empty: {}", &val);
+            let trim_val = val.trim();
+            if !trim_val.is_empty() {
+                // info!("Writing subaddress: {}", trim_val);
+                subaddress_id = Some(trim_val.to_string());
             }
         }
         let street_name = self.street_name.trim().to_string();

@@ -279,12 +279,13 @@ pub trait Address {
             *self.street_type_mut() = Some(StreetNamePostType::DriveCutoff);
         }
 
-        if let Some(sub) = self.subaddress_id() {
-            if comp == "LEWIS" && sub == "OFFICE" {
-                info!("Fixing Lewis Ave Office");
-                *self.subaddress_id_mut() = None;
-                *self.subaddress_type_mut() = Some(SubaddressType::Office);
-            }
+        if let Some(sub) = self.subaddress_id()
+            && comp == "LEWIS"
+            && sub == "OFFICE"
+        {
+            info!("Fixing Lewis Ave Office");
+            *self.subaddress_id_mut() = None;
+            *self.subaddress_type_mut() = Some(SubaddressType::Office);
         }
         if comp == "BEAVILLA VIEW" {
             trace!("Fixing Beavilla View");
