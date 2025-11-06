@@ -331,10 +331,10 @@ impl MatchPartialRecord {
     ) -> Option<MatchPartialRecord> {
         let mut match_status = MatchStatus::Missing;
 
-        if let Some(value) = partial.address_number {
-            if value == address.number() {
-                match_status = MatchStatus::Matching;
-            }
+        if let Some(value) = partial.address_number
+            && value == address.number()
+        {
+            match_status = MatchStatus::Matching;
         }
 
         if &partial.street_name_pre_directional != address.directional()
@@ -343,18 +343,19 @@ impl MatchPartialRecord {
             match_status = MatchStatus::Missing;
         }
 
-        if let Some(value) = &partial.street_name {
-            if value != address.street_name() && match_status == MatchStatus::Matching {
-                match_status = MatchStatus::Missing;
-            }
+        if let Some(value) = &partial.street_name
+            && value != address.street_name()
+            && match_status == MatchStatus::Matching
+        {
+            match_status = MatchStatus::Missing;
         }
 
-        if let Some(value) = partial.street_name_post_type() {
-            if let &Some(street_type) = address.street_type() {
-                if value != street_type && match_status == MatchStatus::Matching {
-                    match_status = MatchStatus::Missing;
-                }
-            }
+        if let Some(value) = partial.street_name_post_type()
+            && let &Some(street_type) = address.street_type()
+            && value != street_type
+            && match_status == MatchStatus::Matching
+        {
+            match_status = MatchStatus::Missing;
         }
 
         if &partial.subaddress_identifier() != address.subaddress_id()
