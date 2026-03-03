@@ -24,28 +24,28 @@ name = "destination"
 ci = []
 
 [dependencies]
-anyhow = "1.0.100"
+anyhow = "1"
 bincode = { version = "2.0.1", features = ["serde"] }
-clap = { version = "4.5.50", features = ["derive"] }
-convert_case = "0.8.0"
-csv = "1.4.0"
-derive-getters = "0.5.0"
-derive-new = "0.7.0"
-derive_more = { version = "2.0.1", features = ["full"] }
-derive_setters = "0.1.8"
-indicatif = { version = "0.18.1", features = ["rayon"] }
-nom = "8.0.0"
-rayon = "1.11.0"
-serde = { version = "1.0.228", features = ["derive"] }
-strum = { version = "0.27.2", features = ["derive"] }
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
-uuid = { version = "1.18.1", features = ["serde", "v4"] }
+clap = { version = "4.5", features = ["derive"] }
+convert_case = "0.11"
+csv = "1.4"
+derive-getters = "0.5"
+derive-new = "0.7"
+derive_more = { version = "2", features = ["full"] }
+derive_setters = "0.1"
+indicatif = { version = "0.18", features = ["rayon"] }
+nom = "8"
+rayon = "1.11"
+serde = { version = "1", features = ["derive"] }
+strum = { version = "0.28", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1.21", features = ["serde", "v4"] }
 
 [dev-dependencies]
-criterion = "0.7.0"
-plotters = "0.3.7"
-test-log = { version = "0.2.18", features = ["trace"] }
+criterion = "0.8"
+plotters = "0.3"
+test-log = { version = "0.2", features = ["trace"] }
 
 [[bench]]
 name = "compare_records"
