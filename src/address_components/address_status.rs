@@ -1,3 +1,5 @@
+use elicitation::{Prompt, Select};
+
 /// The `AddressStatus` enum represents the address status, used by City of Grants Pass staff.
 #[derive(
     Copy,
@@ -14,6 +16,8 @@
     derive_more::Display,
     derive_more::FromStr,
     strum::EnumIter,
+    schemars::JsonSchema,
+    elicitation::Elicit,
 )]
 pub enum AddressStatus {
     /// Current active valid address.

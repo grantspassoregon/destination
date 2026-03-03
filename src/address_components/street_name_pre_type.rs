@@ -4,6 +4,7 @@
 //! to map to street names, while catching those existing cases in our area using pre types.  We do
 //! not issue addresses with pre types.
 use convert_case::Casing;
+use elicitation::{Prompt, Select};
 use serde::de::Deserializer;
 
 /// The `StreetNamePreType` is the pre-type element of a complete street name.
@@ -23,6 +24,8 @@ use serde::de::Deserializer;
     derive_more::Display,
     derive_more::FromStr,
     strum::EnumIter,
+    schemars::JsonSchema,
+    elicitation::Elicit,
 )]
 pub enum StreetNamePreType {
     Avenue,

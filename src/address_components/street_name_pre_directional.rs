@@ -1,3 +1,4 @@
+use elicitation::{Prompt, Select};
 use serde::de::Deserializer;
 
 /// The `StreetNamePreDirectional` enum represents the street name predirectional component of the
@@ -19,6 +20,8 @@ use serde::de::Deserializer;
     derive_more::Display,
     derive_more::FromStr,
     strum::EnumIter,
+    schemars::JsonSchema,
+    elicitation::Elicit,
 )]
 pub enum StreetNamePreDirectional {
     NORTHEAST,

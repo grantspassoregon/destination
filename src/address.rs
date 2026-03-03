@@ -7,6 +7,7 @@ use crate::{
     StreetNamePreType, StreetSeparator, SubaddressType, from_bin, from_csv, to_bin, to_csv,
 };
 use derive_more::{Deref, DerefMut};
+use elicitation::{Prompt, Select};
 use indicatif::ProgressBar;
 use nom::bytes::complete::tag;
 use serde::{Deserialize, Serialize};
@@ -573,6 +574,8 @@ where
     Hash,
     serde::Serialize,
     serde::Deserialize,
+    schemars::JsonSchema,
+    elicitation::Elicit,
 )]
 pub struct CommonAddress {
     /// The `number` field represents the address number component of the complete address
@@ -804,6 +807,8 @@ impl<T: Address> From<&T> for CommonAddress {
     derive_new::new,
     derive_more::Deref,
     derive_more::DerefMut,
+    schemars::JsonSchema,
+    elicitation::Elicit,
 )]
 pub struct CommonAddresses(Vec<CommonAddress>);
 

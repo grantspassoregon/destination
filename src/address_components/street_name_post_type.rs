@@ -1,3 +1,4 @@
+use elicitation::{Prompt, Select};
 use serde::de::Deserializer;
 use std::str::FromStr;
 
@@ -20,6 +21,8 @@ use std::str::FromStr;
     derive_more::Display,
     derive_more::FromStr,
     strum::EnumIter,
+    schemars::JsonSchema,
+    elicitation::Elicit,
 )]
 pub enum StreetNamePostType {
     ALLEY,
