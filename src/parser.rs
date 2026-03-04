@@ -3,13 +3,15 @@ use crate::{
     PartialAddress, PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional,
     StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType,
 };
+use elicitation::Elicit;
 use nom::bytes::complete::{tag, take_until};
 use nom::character::complete;
 use nom::{AsChar, IResult, Parser, branch, combinator};
+use schemars::JsonSchema;
 use serde::de::{Deserialize, Deserializer};
 
 /// The `Parser` struct holds methods for parsing addresses.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, JsonSchema, Elicit)]
 pub struct Parse;
 
 impl Parse {

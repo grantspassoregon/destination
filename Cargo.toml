@@ -33,7 +33,9 @@ derive-getters = "0.5"
 derive-new = "0.7"
 derive_more = { version = "2", features = ["full"] }
 derive_setters = "0.1"
-elicitation = { path = "../elicitation/crates/elicitation/" }
+elicitation = { path = "../elicitation/crates/elicitation/", features = [
+  "uuid",
+] }
 indicatif = { version = "0.18", features = ["rayon"] }
 nom = "8"
 rayon = "1.11"

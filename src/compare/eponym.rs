@@ -5,14 +5,18 @@ use crate::{
     PartialAddresses, SubaddressType, from_csv, to_csv,
 };
 use derive_more::{Deref, DerefMut};
+use elicitation::{Elicit, Prompt, Select};
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
 /// The `Mismatch` enum tracks the fields of an address that can diverge while still potentially
 /// referring to the same location.
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize, JsonSchema, Elicit,
+)]
 pub enum Mismatch {
     /// Represents a mismatch in the subaddress type.
     SubaddressType(String),
@@ -65,6 +69,8 @@ impl Mismatch {
     Deserialize,
     Deref,
     DerefMut,
+    JsonSchema,
+    Elicit,
 )]
 pub struct Mismatches(Vec<Mismatch>);
 
@@ -77,7 +83,20 @@ impl Mismatches {
 
 /// The `AddressMatch` is an intermediary data structure used internally to aggregate match information from
 /// comparing types that implement [`crate::Addresses`], for the purpose of producing [`MatchRecords`].
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    PartialEq,
+    PartialOrd,
+    Eq,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    Elicit,
+)]
 pub struct AddressMatch {
     /// The `coincident` field indicates the compared addresses refer to the same location, or are
     /// coincidental.
@@ -109,7 +128,20 @@ impl AddressMatch {
 /// We have derived Default using the Missing variant, mostly so structs that take a `MatchStatus`
 /// as a field can also derive default.  Properly speaking, there is no meaningful default for this
 /// struct, but if you need to create one first and fill it in later, you can.
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    PartialEq,
+    PartialOrd,
+    Eq,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    Elicit,
+)]
 pub enum MatchStatus {
     /// The `Matching` variant indicates an address has an exact match in the comparison set.
     Matching,
@@ -307,7 +339,7 @@ impl IntoCsv<MatchRecords> for MatchRecords {
 }
 
 /// The `MatchPartialRecord` struct contains match data for a [`PartialAddress`].
-#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize, JsonSchema, Elicit)]
 pub struct MatchPartialRecord {
     /// The `match_status` field represents the match status of the partial address.
     match_status: MatchStatus,
@@ -451,7 +483,17 @@ impl MatchPartialRecord {
 
 /// The `MatchPartialRecords` struct holds a vector of type [`MatchPartialRecord`].
 #[derive(
-    Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize, Deref, DerefMut, derive_new::new,
+    Debug,
+    Clone,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    Deref,
+    DerefMut,
+    derive_new::new,
+    JsonSchema,
+    Elicit,
 )]
 pub struct MatchPartialRecords(Vec<MatchPartialRecord>);
 

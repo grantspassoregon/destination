@@ -7,9 +7,10 @@ use crate::{
     StreetNamePreType, StreetSeparator, SubaddressType, from_bin, from_csv, to_bin, to_csv,
 };
 use derive_more::{Deref, DerefMut};
-use elicitation::{Prompt, Select};
+use elicitation::Elicit;
 use indicatif::ProgressBar;
 use nom::bytes::complete::tag;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ops;
@@ -574,8 +575,8 @@ where
     Hash,
     serde::Serialize,
     serde::Deserialize,
-    schemars::JsonSchema,
-    elicitation::Elicit,
+    JsonSchema,
+    Elicit,
 )]
 pub struct CommonAddress {
     /// The `number` field represents the address number component of the complete address
@@ -807,8 +808,8 @@ impl<T: Address> From<&T> for CommonAddress {
     derive_new::new,
     derive_more::Deref,
     derive_more::DerefMut,
-    schemars::JsonSchema,
-    elicitation::Elicit,
+    JsonSchema,
+    Elicit,
 )]
 pub struct CommonAddresses(Vec<CommonAddress>);
 
@@ -870,6 +871,8 @@ impl IntoCsv<CommonAddresses> for CommonAddresses {
     Hash,
     serde::Serialize,
     serde::Deserialize,
+    JsonSchema,
+    Elicit,
 )]
 pub struct PartialAddress {
     /// The `address_number` field represents the address number component of the complete address
@@ -1262,6 +1265,8 @@ impl PartialAddress {
     Hash,
     Deref,
     DerefMut,
+    JsonSchema,
+    Elicit,
 )]
 pub struct PartialAddresses(Vec<PartialAddress>);
 
@@ -1325,7 +1330,9 @@ impl IntoCsv<PartialAddresses> for PartialAddresses {
 /// Deltas - Measuring the distance between points based upon matching values.
 /// The `label` field of `AddressDelta` holds the matching value and the `delta`
 /// field holds the distance between matching points.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd)]
+#[derive(
+    Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd, JsonSchema, Elicit,
+)]
 pub struct AddressDelta {
     /// Addresses match by address label.
     pub label: String,
@@ -1373,7 +1380,19 @@ impl Cartesian for AddressDelta {
 
 /// The `AddressDeltas` struct holds a `records` field that contains a vector of type
 /// [`AddressDelta`].
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd, Deref, DerefMut)]
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    PartialOrd,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
+)]
 pub struct AddressDeltas(Vec<AddressDelta>);
 
 impl AddressDeltas {

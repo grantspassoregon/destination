@@ -4,12 +4,27 @@ use crate::{
     from_bin, from_csv, to_bin, to_csv,
 };
 use derive_more::{Deref, DerefMut};
+use elicitation::Elicit;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::Path;
 
 /// The `LexisNexisItemBuilder` struct provides a framework to create and modify the required fields in the LexisNexis spreadsheet.
-#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
+#[derive(
+    Default,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Deserialize,
+    Serialize,
+    JsonSchema,
+    Elicit,
+)]
 pub struct LexisNexisItemBuilder {
     /// The `address_number_from` field represents the lower bound on the address number range for
     /// the row.
@@ -331,7 +346,20 @@ impl IntoCsv<LexisNexis> for LexisNexis {
 
 /// The `LexisNexisRangeItem` represents an address number `num`, and whether to include the number
 /// in the range selection.
-#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
+#[derive(
+    Default,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Deserialize,
+    Serialize,
+    JsonSchema,
+    Elicit,
+)]
 pub struct LexisNexisRangeItem {
     /// The `num` field represents an address number observation.
     pub num: i64,
@@ -364,6 +392,8 @@ impl LexisNexisRangeItem {
     Serialize,
     Deref,
     DerefMut,
+    JsonSchema,
+    Elicit,
 )]
 pub struct LexisNexisRange(Vec<LexisNexisRangeItem>);
 

@@ -7,12 +7,16 @@ use crate::{
     deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv, zero_floor,
 };
 use derive_more::{Deref, DerefMut};
+use elicitation::Elicit;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 /// The `JosephineCountyAddress2024` struct represents an address site point for Josephine County,
 /// consistent with the schema adopted by the agency in April of 2024.
-#[derive(Clone, Debug, Default, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(
+    Clone, Debug, Default, PartialEq, PartialOrd, Deserialize, Serialize, JsonSchema, Elicit,
+)]
 pub struct JosephineCountyAddress2024 {
     /// The `address_number` field represents the address number component of the complete address
     /// number.
@@ -225,7 +229,19 @@ impl Address for JosephineCountyAddress2024 {
 
 /// The `JosephineCountyAddresses2024` struct holds a vector of type
 /// ['JosephineCountyAddress2024'].
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut)]
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    PartialEq,
+    PartialOrd,
+    Deserialize,
+    Serialize,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
+)]
 pub struct JosephineCountyAddresses2024(Vec<JosephineCountyAddress2024>);
 
 impl Addresses<JosephineCountyAddress2024> for JosephineCountyAddresses2024 {}
@@ -264,7 +280,9 @@ impl IntoCsv<JosephineCountyAddresses2024> for JosephineCountyAddresses2024 {
 
 /// The `JosephineCountySpatialAddress2024` struct represents an address site point for Josephine County that includes geographic and projected coordinate information,
 /// consistent with the schema adopted by the agency in April of 2024.
-#[derive(Clone, Debug, Default, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(
+    Clone, Debug, Default, PartialEq, PartialOrd, Deserialize, Serialize, JsonSchema, Elicit,
+)]
 pub struct JosephineCountySpatialAddress2024 {
     /// The `address_number` field represents the address number component of the complete address
     /// number.
@@ -509,7 +527,19 @@ impl Geographic for JosephineCountySpatialAddress2024 {
 
 /// The `JosephineCountySpatialAddresses2024` struct holds a vector of type
 /// ['JosephineCountySpatialAddress2024'].
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut)]
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    PartialEq,
+    PartialOrd,
+    Deserialize,
+    Serialize,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
+)]
 pub struct JosephineCountySpatialAddresses2024(Vec<JosephineCountySpatialAddress2024>);
 
 impl Addresses<JosephineCountySpatialAddress2024> for JosephineCountySpatialAddresses2024 {}
@@ -548,7 +578,9 @@ impl IntoCsv<JosephineCountySpatialAddresses2024> for JosephineCountySpatialAddr
 
 /// The `JosephineCountyAddress` struct represents an address site point for Josephine County,
 /// prior to the schema adopted by the agency in April of 2024.
-#[derive(Clone, Debug, Default, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(
+    Clone, Debug, Default, PartialEq, PartialOrd, Deserialize, Serialize, JsonSchema, Elicit,
+)]
 pub struct JosephineCountyAddress {
     /// The `taxlot` field represents the map tax lot number of the parcel on which the address
     /// is located.
@@ -766,7 +798,19 @@ impl Address for JosephineCountyAddress {
 
 /// The `JosephineCountyAddresses` struct holds a vector of type
 /// ['JosephineCountyAddress'].
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut)]
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    PartialEq,
+    PartialOrd,
+    Deserialize,
+    Serialize,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
+)]
 pub struct JosephineCountyAddresses(Vec<JosephineCountyAddress>);
 
 impl Addresses<JosephineCountyAddress> for JosephineCountyAddresses {}
@@ -805,7 +849,9 @@ impl IntoCsv<JosephineCountyAddresses> for JosephineCountyAddresses {
 
 /// The `JosephineCountySpatialAddress` struct represents an address site point for Josephine County that includes geographic and projected coordinate information,
 /// prior to the schema adopted by the agency in April of 2024.
-#[derive(Clone, Debug, Default, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(
+    Clone, Debug, Default, PartialEq, PartialOrd, Deserialize, Serialize, JsonSchema, Elicit,
+)]
 pub struct JosephineCountySpatialAddress {
     /// The `taxlot` field represents the map tax lot number of the parcel on which the address
     /// is located.
@@ -1057,7 +1103,19 @@ impl Geographic for JosephineCountySpatialAddress {
 
 /// The `JosephineCountySpatialAddresses` struct holds a vector of type
 /// ['JosephineCountySpatialAddress'].
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut)]
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    PartialEq,
+    PartialOrd,
+    Deserialize,
+    Serialize,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
+)]
 pub struct JosephineCountySpatialAddresses(Vec<JosephineCountySpatialAddress>);
 
 impl Addresses<JosephineCountySpatialAddress> for JosephineCountySpatialAddresses {}

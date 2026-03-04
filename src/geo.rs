@@ -5,8 +5,10 @@ use crate::{
     StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType, from_bin, to_bin,
 };
 use derive_more::{Deref, DerefMut};
+use elicitation::Elicit;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -84,7 +86,9 @@ pub trait Cartesian {
 }
 
 /// The `GeoAddress` struct defines a common address that has associated geographic coordinates.
-#[derive(Debug, Clone, Default, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Default, PartialEq, PartialOrd, Serialize, Deserialize, JsonSchema, Elicit,
+)]
 pub struct GeoAddress {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
@@ -253,13 +257,15 @@ impl<T: Address + Geographic + Clone> From<&T> for GeoAddress {
     Debug,
     Clone,
     Default,
-    serde::Serialize,
-    serde::Deserialize,
+    Serialize,
+    Deserialize,
     PartialEq,
     PartialOrd,
     derive_new::new,
-    derive_more::Deref,
-    derive_more::DerefMut,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
 )]
 pub struct GeoAddresses(Vec<GeoAddress>);
 
@@ -297,7 +303,9 @@ impl<T: Address + Geographic + Clone + Sized> From<&[T]> for GeoAddresses {
 }
 
 /// The `AddressPoint` struct defines a common address that has associated projected cartesian coordinates.
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize, PartialEq, PartialOrd)]
+#[derive(
+    Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd, JsonSchema, Elicit,
+)]
 pub struct AddressPoint {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
@@ -460,7 +468,19 @@ impl<T: Address + Cartesian + Clone> From<&T> for AddressPoint {
 }
 
 /// The `AddressPoints` struct holds a vector of type [`AddressPoint`].
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, PartialOrd, Deref, DerefMut)]
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    PartialOrd,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
+)]
 pub struct AddressPoints(Vec<AddressPoint>);
 
 impl Addresses<AddressPoint> for AddressPoints {}
@@ -497,7 +517,17 @@ impl<T: Address + Cartesian + Clone + Sized> From<&[T]> for AddressPoints {
 }
 
 /// The `SpatialAddress` struct defines a common address that has both associated geographic coordinates and projected cartesian coordinates.
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize, PartialEq, PartialOrd)]
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+    PartialEq,
+    PartialOrd,
+    JsonSchema,
+    Elicit,
+)]
 pub struct SpatialAddress {
     /// The `address` field holds a [`CommonAddress`] struct, which defines the fields of a valid address, following the FGDC standard,
     /// with the inclusion of NENA-required fields for emergency response.
@@ -686,13 +716,15 @@ impl<T: Address + Geographic + Cartesian + Clone> From<&T> for SpatialAddress {
     Debug,
     Clone,
     Default,
-    serde::Serialize,
-    serde::Deserialize,
+    Serialize,
+    Deserialize,
     PartialEq,
     PartialOrd,
     derive_new::new,
-    derive_more::Deref,
-    derive_more::DerefMut,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
 )]
 pub struct SpatialAddresses(Vec<SpatialAddress>);
 

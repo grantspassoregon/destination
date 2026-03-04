@@ -5,13 +5,17 @@ use crate::{
     from_bin, from_csv, to_bin, to_csv,
 };
 use derive_more::{Deref, DerefMut};
+use elicitation::Elicit;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// The `BusinessRaw` struct contains business license records. Serves as an intermediary for
 /// creating a [`Business`] struct when reading the data in from a csv.  Mainly this involves
 /// parsing the `street_address_label` from a String into a `PartialAddress`.
 /// The fields correspond to the export format from the GIS layer.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
+#[derive(
+    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, JsonSchema, Elicit,
+)]
 pub struct BusinessRaw {
     company_name: String,
     contact_name: Option<String>,
@@ -30,7 +34,19 @@ pub struct BusinessRaw {
 
 /// The `BusinessesRaw` struct is a wrapper for a vector of type [`BusinessRaw`].
 #[derive(
-    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, Deref, DerefMut,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Deserialize,
+    Serialize,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
 )]
 pub struct BusinessesRaw(Vec<BusinessRaw>);
 
@@ -43,7 +59,9 @@ impl BusinessesRaw {
 }
 
 /// The `Business` struct holds query information for active business licenses, for access in GIS.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
+#[derive(
+    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, JsonSchema, Elicit,
+)]
 pub struct Business {
     // The official name of the company.
     company_name: String,
@@ -184,7 +202,19 @@ impl TryFrom<BusinessRaw> for Business {
 /// The `Businesses` struct is a wrapper around a vector of type [`Business`].
 /// This struct contains business licenses that have mapped to valid addresses.
 #[derive(
-    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, Deref, DerefMut,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Deserialize,
+    Serialize,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
 )]
 pub struct Businesses(Vec<Business>);
 

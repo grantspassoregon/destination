@@ -1,12 +1,18 @@
 //! The `fire_inspections` module imports data from fire inspections into the library to facilitate
 //! address matching.
 use crate::{AddressErrorKind, Io, Nom, Parse, PartialAddress};
+use derive_getters::Getters;
+use derive_more::{Deref, DerefMut};
+use derive_setters::Setters;
+use elicitation::Elicit;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 /// The `FireInspectionRaw` struct functions as a builder for a [`FireInspection`] struct.
 /// The fields correspond to the csv of fire inspection data from the fire department.
 /// A raw inspection represents the address a String, as opposed to a [`PartialAddress`].
 #[derive(
-    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Deserialize, serde::Serialize,
+    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, JsonSchema, Elicit,
 )]
 #[serde(rename_all = "PascalCase")]
 pub struct FireInspectionRaw {
@@ -29,10 +35,12 @@ pub struct FireInspectionRaw {
     PartialOrd,
     Ord,
     Hash,
-    serde::Deserialize,
-    serde::Serialize,
-    derive_more::Deref,
-    derive_more::DerefMut,
+    Deserialize,
+    Serialize,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
 )]
 pub struct FireInspectionsRaw(Vec<FireInspectionRaw>);
 
@@ -55,10 +63,12 @@ impl FireInspectionsRaw {
     PartialOrd,
     Ord,
     Hash,
-    serde::Serialize,
-    serde::Deserialize,
-    derive_getters::Getters,
-    derive_setters::Setters,
+    Serialize,
+    Deserialize,
+    Getters,
+    Setters,
+    JsonSchema,
+    Elicit,
 )]
 #[setters(prefix = "with_", strip_option, borrow_self)]
 pub struct FireInspection {
@@ -110,10 +120,12 @@ impl TryFrom<FireInspectionRaw> for FireInspection {
     PartialOrd,
     Ord,
     Hash,
-    serde::Deserialize,
-    serde::Serialize,
-    derive_more::Deref,
-    derive_more::DerefMut,
+    Deserialize,
+    Serialize,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
 )]
 pub struct FireInspections(Vec<FireInspection>);
 

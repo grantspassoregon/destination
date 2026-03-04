@@ -4,9 +4,15 @@ use crate::{
     StreetNamePostType, StreetNamePreDirectional, StreetNamePreModifier, StreetNamePreType,
     StreetSeparator, SubaddressType, deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv,
 };
+use elicitation::Elicit;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 /// The `SpatialAddressRaw` struct defines the fields of a valid address, following the FGDC standard,
 /// with the inclusion of NENA-required fields for emergency response.
-#[derive(Debug, Default, Clone, PartialEq, PartialOrd, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Default, Clone, PartialEq, PartialOrd, Serialize, Deserialize, JsonSchema, Elicit,
+)]
 pub struct SpatialAddressRaw {
     /// The `number` field represents the address number component of the complete address
     /// number.
@@ -128,10 +134,12 @@ impl From<SpatialAddressRaw> for SpatialAddress {
     Clone,
     PartialEq,
     PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
+    Serialize,
+    Deserialize,
     derive_more::Deref,
     derive_more::DerefMut,
+    JsonSchema,
+    Elicit,
 )]
 pub struct SpatialAddressesRaw(Vec<SpatialAddressRaw>);
 

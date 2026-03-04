@@ -5,15 +5,17 @@ use crate::{
     StreetNamePostType, StreetNamePreDirectional, deserialize_phone_number, from_csv, to_csv,
 };
 use derive_more::{Deref, DerefMut};
+use elicitation::Elicit;
 // use galileo::galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tracing::info;
 
 /// The `BusinessMatchRecord` struct holds match data for a licensed business.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, JsonSchema, Elicit)]
 pub struct BusinessMatchRecord {
     match_status: MatchStatus,
     business_address_label: String,
@@ -87,7 +89,9 @@ impl BusinessMatchRecord {
 }
 
 /// The `BusinessMatchRecords` struct holds a vector of [`BusinessMatchRecord`] objects.
-#[derive(Debug, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut)]
+#[derive(
+    Debug, Clone, PartialEq, PartialOrd, Deserialize, Serialize, Deref, DerefMut, JsonSchema, Elicit,
+)]
 pub struct BusinessMatchRecords(Vec<BusinessMatchRecord>);
 
 impl BusinessMatchRecords {
@@ -311,7 +315,7 @@ impl IntoCsv<BusinessMatchRecords> for BusinessMatchRecords {
 /// The `BusinessLicense` struct is designed to deserialize CSV data produced by querying the
 /// EnerGov SQL database for active business licenses.  If the structure of the SQL query changes,
 /// this function will need to change to match the resulting fields in the CSV.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema, Elicit)]
 #[serde(rename_all = "PascalCase")]
 pub struct BusinessLicense {
     company_name: Option<String>,
@@ -526,7 +530,7 @@ impl BusinessLicense {
 
 /// The `BusinessLicenses` struct holds a `records` field containing a vector of type
 /// [`BusinessLicense`].
-#[derive(Debug, Clone, Deserialize, Serialize, Deref, DerefMut)]
+#[derive(Debug, Clone, Deserialize, Serialize, Deref, DerefMut, JsonSchema, Elicit)]
 pub struct BusinessLicenses(Vec<BusinessLicense>);
 
 impl BusinessLicenses {

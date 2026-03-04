@@ -7,11 +7,13 @@ use crate::{
     deserialize_arcgis_data, from_bin, from_csv, to_bin, to_csv,
 };
 use derive_more::{Deref, DerefMut};
+use elicitation::Elicit;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 /// The `GrantsPassSpatialAddress` struct represents an address site point for the City of Grants Pass.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, PartialOrd, JsonSchema, Elicit)]
 #[serde(rename_all = "PascalCase")]
 pub struct GrantsPassAddress {
     /// The `address_number` field represents the address number component of the complete address
@@ -269,7 +271,19 @@ impl Address for GrantsPassAddress {
 
 /// The `GrantsPassAddresses` struct holds a vector of type
 /// ['GrantsPassAddress'].
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, PartialOrd, Deref, DerefMut)]
+#[derive(
+    Clone,
+    Debug,
+    Default,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    PartialOrd,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
+)]
 pub struct GrantsPassAddresses(Vec<GrantsPassAddress>);
 
 impl Addresses<GrantsPassAddress> for GrantsPassAddresses {}
@@ -307,7 +321,7 @@ impl IntoCsv<GrantsPassAddresses> for GrantsPassAddresses {
 }
 
 /// The `GrantsPassSpatialAddress` struct represents an address site point for the City of Grants Pass that includes geographic and projected coordinate information.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, PartialOrd, JsonSchema, Elicit)]
 #[serde(rename_all = "PascalCase")]
 pub struct GrantsPassSpatialAddress {
     /// The `address_number` field represents the address number component of the complete address
@@ -600,7 +614,19 @@ impl Geographic for GrantsPassSpatialAddress {
 
 /// The `GrantsPassSpatialAddresses` struct holds a vector of type
 /// ['GrantsPassSpatialAddress'].
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, PartialOrd, Deref, DerefMut)]
+#[derive(
+    Clone,
+    Debug,
+    Default,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    PartialOrd,
+    Deref,
+    DerefMut,
+    JsonSchema,
+    Elicit,
+)]
 pub struct GrantsPassSpatialAddresses(Vec<GrantsPassSpatialAddress>);
 
 impl Addresses<GrantsPassSpatialAddress> for GrantsPassSpatialAddresses {}
