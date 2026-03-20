@@ -1,10 +1,11 @@
 //! The `grants_pass_business` module contains data types for importing business license reports
 //! for the City of Grants Pass.
 use crate::{
-    AddressError, AddressErrorKind, Decode, IntoBin, IntoCsv, Io, Nom, Parse, PartialAddress,
-    from_bin, from_csv, to_bin, to_csv,
+    AddressError, AddressErrorKind, BusinessMatchRecord, BusinessMatchRecords, Decode, IntoBin,
+    IntoCsv, Io, NaicsMissing, Nom, Parse, PartialAddress, error::ParseInt, from_bin, from_csv,
+    to_bin, to_csv,
 };
-use derive_more::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut, From};
 use elicitation::Elicit;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -70,6 +71,7 @@ pub struct Business {
     // The business alias of the company.
     dba: Option<String>,
     // The situs address of the business.
+    #[serde(flatten)]
     address: PartialAddress,
     // The license identifier.
     license: String,
@@ -199,6 +201,78 @@ impl TryFrom<BusinessRaw> for Business {
     }
 }
 
+impl TryFrom<&BusinessMatchRecord> for Business {
+    type Error = AddressError;
+
+    fn try_from(value: &BusinessMatchRecord) -> Result<Self, Self::Error> {
+        let company_name = value.company_name().unwrap_or_default();
+        let contact_name = value.contact_name();
+        let dba = value.dba();
+        let address = value.business_address_label();
+        let (_, address) = Parse::address(&address).map_err(|e| {
+            Nom::new(
+                "situs address from business match".to_string(),
+                e,
+                line!(),
+                file!().to_string(),
+            )
+        })?;
+        let license = value.license();
+        let industry_code = value.industry_code();
+        let codestring = industry_code.to_string();
+        let naics = bears_species::Naics::from_code(&codestring).ok_or(NaicsMissing::new(
+            codestring.clone(),
+            line!(),
+            file!().to_string(),
+        ))?;
+        let industry_name = naics.description().to_owned();
+        let sector_code = codestring.chars().take(2).collect::<String>();
+        let sector = bears_species::NaicsSector::from_code(&sector_code).ok_or(
+            NaicsMissing::new(sector_code.clone(), line!(), file!().to_string()),
+        )?;
+        let sector_code = sector_code.parse::<i32>().map_err(|e| {
+            ParseInt::new(
+                "sector code for business match".to_string(),
+                e,
+                line!(),
+                file!().to_string(),
+            )
+        })?;
+        let sector_name = sector.description().to_owned();
+        let subsector_code = codestring.chars().take(3).collect::<String>();
+        let subsector = bears_species::NaicsSubsector::from_code(&subsector_code).ok_or(
+            NaicsMissing::new(subsector_code.clone(), line!(), file!().to_string()),
+        )?;
+        let subsector_code = subsector_code.parse::<i32>().map_err(|e| {
+            ParseInt::new(
+                "subsector code for business match".to_string(),
+                e,
+                line!(),
+                file!().to_string(),
+            )
+        })?;
+        let subsector_name = Some(subsector.description().to_owned());
+        let tourism = Default::default();
+        let district = Default::default();
+        let industry_code = industry_code as i32;
+        Ok(Self {
+            company_name,
+            contact_name,
+            dba,
+            address,
+            license,
+            industry_code,
+            industry_name,
+            sector_code,
+            sector_name,
+            subsector_code,
+            subsector_name,
+            tourism,
+            district,
+        })
+    }
+}
+
 /// The `Businesses` struct is a wrapper around a vector of type [`Business`].
 /// This struct contains business licenses that have mapped to valid addresses.
 #[derive(
@@ -213,6 +287,7 @@ impl TryFrom<BusinessRaw> for Business {
     Serialize,
     Deref,
     DerefMut,
+    From,
     JsonSchema,
     Elicit,
 )]
@@ -227,6 +302,18 @@ impl Businesses {
             records.push(Business::try_from(record.clone())?);
         }
         Ok(Businesses(records))
+    }
+}
+
+impl TryFrom<BusinessMatchRecords> for Businesses {
+    type Error = AddressError;
+
+    fn try_from(value: BusinessMatchRecords) -> Result<Self, Self::Error> {
+        let features = value
+            .iter()
+            .map(Business::try_from)
+            .collect::<Result<Vec<Business>, AddressError>>()?;
+        Ok(Businesses::from(features))
     }
 }
 
