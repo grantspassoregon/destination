@@ -166,7 +166,20 @@ impl LexisNexisItemBuilder {
 }
 
 /// The `LexisNexisItem` struct contains the required fields in the LexisNexis spreadsheet.
-#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize)]
+#[derive(
+    Default,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Deserialize,
+    Serialize,
+    JsonSchema,
+    Elicit,
+)]
 pub struct LexisNexisItem {
     /// The `address_number_from` field represents the lower range of address numbers associated
     /// with the service area.
@@ -253,6 +266,8 @@ pub struct LexisNexisItem {
     Deref,
     DerefMut,
     derive_new::new,
+    JsonSchema,
+    Elicit,
 )]
 pub struct LexisNexis(Vec<LexisNexisItem>);
 
