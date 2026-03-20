@@ -31,7 +31,9 @@ pub use compare::{
     FireInspectionMatches, MatchPartialRecord, MatchPartialRecords, MatchRecord, MatchRecords,
     MatchStatus, Mismatch,
 };
-pub use error::{AddressError, AddressErrorKind, Builder, Csv, Decode, Encode, Io, Nom};
+pub use error::{
+    AddressError, AddressErrorKind, Builder, Csv, Decode, Encode, Io, NaicsMissing, Nom,
+};
 pub use geo::{
     AddressPoints, Cartesian, GeoAddress, GeoAddresses, Geographic, SpatialAddress,
     SpatialAddresses,
