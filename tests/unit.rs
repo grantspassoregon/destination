@@ -18,9 +18,11 @@ struct AddressSample {
 // Loads city addresses and prints the length
 fn load_city_addresses() -> anyhow::Result<()> {
     trace!("Deserializing city addresses from a csv file.");
-    let file = "data/city_addresses_20241007.csv";
+    // let file = "data/city_addresses_20241007.csv";
+    let file = "data/grants_pass_addresses_20260316.csv";
     let addresses = GrantsPassAddresses::from_csv(file)?;
-    assert_eq!(addresses.len(), 27811);
+    // assert_eq!(addresses.len(), 27811);
+    assert_eq!(addresses.len(), 28630);
     trace!("City addresses loaded: {} entries.", addresses.len());
     Ok(())
 }
@@ -116,12 +118,15 @@ fn match_city_address() -> anyhow::Result<()> {
 
 #[test]
 fn match_business_addresses() -> anyhow::Result<()> {
-    let business_path = "data/business_licenses_20250317.csv";
-    let city_path = "data/city_addresses_20241007.csv";
+    // let business_path = "data/business_licenses_20250317.csv";
+    let business_path = "data/business_licenses_20260316.csv";
+    // let city_path = "data/city_addresses_20241007.csv";
+    let city_path = "data/grants_pass_addresses_20260316.csv";
     let business_addresses = BusinessLicenses::from_csv(business_path)?;
     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
     let match_records = BusinessMatchRecords::compare(&business_addresses, &city_addresses);
-    assert_eq!(match_records.len(), 4796);
+    // assert_eq!(match_records.len(), 4796);
+    assert_eq!(match_records.len(), 4390);
     info!("Business addresses match against commmon addresses.");
 
     Ok(())
