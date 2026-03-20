@@ -1,6 +1,6 @@
 use clap::Parser;
 use destination::{
-    Addresses, BusinessLicenses, BusinessMatchRecords, Cartesian, Cli, CommonAddresses,
+    Addresses, BusinessLicenses, BusinessMatchRecords, Businesses, Cartesian, Cli, CommonAddresses,
     GeoAddresses, GrantsPassAddresses, GrantsPassSpatialAddresses, IntoBin, IntoCsv,
     JosephineCountyAddresses, JosephineCountyAddresses2024, JosephineCountySpatialAddresses2024,
     LexisNexis, MatchPartialRecords, MatchRecords, SpatialAddress, SpatialAddresses,
@@ -412,6 +412,16 @@ fn main() -> anyhow::Result<()> {
             info!("{:?} records categorized.", match_records.len());
             info!("Output file: {:?}", cli.output);
             match_records.to_csv(cli.output)?;
+        }
+        "business_features" => {
+            info!("Converting match records to business features.");
+            info!("Reading source records to business match records.");
+            let match_records = BusinessMatchRecords::from_csv(cli.source.clone())?;
+            info!("Source records read: {} entries.", match_records.len());
+            let mut businesses = Businesses::try_from(match_records)?;
+            info!("{:?} match records converted.", businesses.len());
+            info!("Output file: {:?}", cli.output);
+            businesses.to_csv(cli.output)?;
         }
         _ => {}
     }

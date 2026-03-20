@@ -15,7 +15,7 @@ pub struct Cli {
     #[arg(
         short = 'c',
         long,
-        help = "Command to execute.  Valid commands include 'compare', 'drift', 'filter', 'orphan_streets', 'lexisnexis' and 'save'"
+        help = "Command to execute.  Valid commands include 'compare', 'drift', 'filter', 'orphan_streets', 'lexisnexis', 'save', 'business' and 'business_features'."
     )]
     pub command: String,
     /// The `source` field specifies the path the source address file.
