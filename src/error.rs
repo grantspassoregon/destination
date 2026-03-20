@@ -21,7 +21,7 @@ macro_rules! impl_address_error {
     };
 }
 
-impl_address_error!(Decode, Encode, Io, Nom);
+impl_address_error!(Decode, Encode, Io, Nom, NaicsMissing, ParseInt);
 
 /// The `AddressErrorKind` enum contains the individual error type associated with the library operation.
 #[derive(Debug, derive_more::From, derive_more::Display, derive_more::Error)]
@@ -44,6 +44,12 @@ pub enum AddressErrorKind {
     /// The `Nom` variant contains an [`Nom`] error.
     #[from(Nom)]
     Nom(Nom),
+    /// The `NaicsMissing` variant contains a [`NaicsMissing`] error.
+    #[from(NaicsMissing)]
+    NaicsMissing(NaicsMissing),
+    /// The `ParseInt` variant contains a [`ParseInt`] error.
+    #[from(ParseInt)]
+    ParseInt(ParseInt),
 }
 
 /// The `Io` struct contains error information associated with input/output calls.
@@ -126,4 +132,30 @@ impl Nom {
             file,
         }
     }
+}
+
+/// The `NaicsMissing` error occurs when the NAICS code provided by a business license does not
+/// match a variant of `bears_species::Naics`.
+#[derive(Debug, derive_more::Display, derive_new::new)]
+#[display("NAICS code {code} missing in line {line} of {file}")]
+pub struct NaicsMissing {
+    code: String,
+    line: u32,
+    file: String,
+}
+
+impl std::error::Error for NaicsMissing {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
+}
+
+/// The `ParseInt` struct contains error information from parsing an integer.
+#[derive(Debug, derive_more::Display, derive_more::Error, derive_new::new)]
+#[display("Parsing integer error: {description} in line {line} of {file}")]
+pub struct ParseInt {
+    description: String,
+    source: std::num::ParseIntError,
+    line: u32,
+    file: String,
 }
