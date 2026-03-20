@@ -1,7 +1,7 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
 use crate::{
-    Address, AddressErrorKind, Geographic, IntoCsv, Io, MatchStatus, Nom, Parse,
+    Address, AddressErrorKind, Business, Geographic, IntoCsv, Io, MatchStatus, Nom, Parse,
     StreetNamePostType, StreetNamePreDirectional, deserialize_phone_number, from_csv, to_csv,
 };
 use derive_more::{Deref, DerefMut};
@@ -587,3 +587,88 @@ impl IntoCsv<BusinessLicenses> for BusinessLicenses {
         to_csv(&mut self.0, path.as_ref().into())
     }
 }
+
+/// The `BusinessFeature` struct is an export format for the business feature layer in GIS.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Deserialize,
+    Serialize,
+    JsonSchema,
+    Elicit,
+    derive_getters::Getters,
+    derive_setters::Setters,
+)]
+#[setters(prefix = "with_")]
+pub struct BusinessFeature {
+    // The official name of the company.
+    company_name: String,
+    // The contact for the company.
+    contact_name: Option<String>,
+    // The business alias of the company.
+    dba: Option<String>,
+    // The situs address of the business.
+    address: String,
+    // The license identifier.
+    license: String,
+    // The NAICS industry code of the business.
+    industry_code: i32,
+    // The NAICS industry code description.
+    industry_name: String,
+    // The NAICS sector code of the business.
+    sector_code: i32,
+    // The NAICS sector code description.
+    sector_name: String,
+    // The NAICS subsector code.
+    subsector_code: i32,
+    // The NAICS subsector code description.
+    subsector_name: Option<String>,
+    // Broad business categories used to drive symbolization in a GIS map.
+    tourism: Option<String>,
+    // The business district name of the GC zone, if in a GC zone.
+    district: Option<String>,
+}
+
+impl From<&Business> for BusinessFeature {
+    fn from(value: &Business) -> Self {
+        Self {
+            company_name: value.company_name().to_owned(),
+            contact_name: value.contact_name().to_owned(),
+            dba: value.dba().to_owned(),
+            address: value.address().label(),
+            license: value.license().to_owned(),
+            industry_code: value.industry_code(),
+            industry_name: value.industry_name().to_owned(),
+            sector_code: value.sector_code(),
+            sector_name: value.sector_name().to_owned(),
+            subsector_code: value.subsector_code(),
+            subsector_name: value.subsector_name().to_owned(),
+            tourism: value.tourism().to_owned(),
+            district: value.district().to_owned(),
+        }
+    }
+}
+
+/// The `BusinessFeatures` struct holds a vector of type [`BusinessFeature`].
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Deserialize,
+    Serialize,
+    Deref,
+    DerefMut,
+    derive_more::From,
+    JsonSchema,
+    Elicit,
+)]
+pub struct BusinessFeatures(Vec<BusinessFeature>);
