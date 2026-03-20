@@ -2,9 +2,9 @@ set shell := ["powershell.exe", "-c"]
 set windows-shell := ["powershell.exe", "-c"]
 
 # Variables
-city := "data/grants_pass_addresses_20250731.csv"
+city := "data/grants_pass_addresses_20260316.csv"
 county := "data/josephine_county_addresses_20250731.csv"
-business := "data/business_licenses_20250317.csv"
+business := "data/business_licenses_20260316.csv"
 
 default:
   @just --list --unsorted
