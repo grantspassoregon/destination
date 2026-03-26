@@ -337,14 +337,3 @@ impl IntoBin<Businesses> for Businesses {
         to_bin(self, path)
     }
 }
-
-impl IntoCsv<Businesses> for Businesses {
-    fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
-        let records = from_csv(path)?;
-        Ok(Self(records))
-    }
-
-    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
-        to_csv(&mut self.0, path.as_ref().into())
-    }
-}
