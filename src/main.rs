@@ -1,10 +1,10 @@
 use clap::Parser;
 use destination::{
-    Addresses, BusinessLicenses, BusinessMatchRecords, Businesses, Cartesian, Cli, CommonAddresses,
-    GeoAddresses, GrantsPassAddresses, GrantsPassSpatialAddresses, IntoBin, IntoCsv,
-    JosephineCountyAddresses, JosephineCountyAddresses2024, JosephineCountySpatialAddresses2024,
-    LexisNexis, MatchPartialRecords, MatchRecords, SpatialAddress, SpatialAddresses,
-    SpatialAddressesRaw, trace_init,
+    Addresses, BusinessFeatures, BusinessLicenses, BusinessMatchRecords, Businesses, Cartesian,
+    Cli, CommonAddresses, GeoAddresses, GrantsPassAddresses, GrantsPassSpatialAddresses, IntoBin,
+    IntoCsv, JosephineCountyAddresses, JosephineCountyAddresses2024,
+    JosephineCountySpatialAddresses2024, LexisNexis, MatchPartialRecords, MatchRecords,
+    SpatialAddress, SpatialAddresses, SpatialAddressesRaw, trace_init,
 };
 use tracing::{error, info, trace, warn};
 
@@ -418,7 +418,7 @@ fn main() -> anyhow::Result<()> {
             info!("Reading source records to business match records.");
             let match_records = BusinessMatchRecords::from_csv(cli.source.clone())?;
             info!("Source records read: {} entries.", match_records.len());
-            let mut businesses = Businesses::try_from(match_records)?;
+            let mut businesses = BusinessFeatures::try_from(&match_records)?;
             info!("{:?} match records converted.", businesses.len());
             info!("Output file: {:?}", cli.output);
             businesses.to_csv(cli.output)?;
