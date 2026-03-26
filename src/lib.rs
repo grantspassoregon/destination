@@ -24,7 +24,10 @@ pub use address_components::{
     AddressStatus, PostalCommunity, State, StreetNamePostType, StreetNamePreDirectional,
     StreetNamePreModifier, StreetNamePreType, StreetSeparator, SubaddressType, zero_floor,
 };
-pub use business::{BusinessLicense, BusinessLicenses, BusinessMatchRecord, BusinessMatchRecords};
+pub use business::{
+    BusinessFeature, BusinessFeatures, BusinessLicense, BusinessLicenses, BusinessMatchRecord,
+    BusinessMatchRecords,
+};
 pub use cli::Cli;
 pub use compare::{
     AddressMatch, FireInspectionMatch, FireInspectionMatchRecord, FireInspectionMatchRecords,

@@ -1,8 +1,9 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
 use crate::{
-    Address, AddressErrorKind, Business, Geographic, IntoCsv, Io, MatchStatus, Nom, Parse,
-    StreetNamePostType, StreetNamePreDirectional, deserialize_phone_number, from_csv, to_csv,
+    Address, AddressError, AddressErrorKind, Business, Businesses, Geographic, IntoCsv, Io,
+    MatchStatus, NaicsMissing, Nom, Parse, StreetNamePostType, StreetNamePreDirectional,
+    deserialize_phone_number, error::ParseInt, from_csv, to_csv,
 };
 use derive_more::{Deref, DerefMut};
 use elicitation::Elicit;
@@ -593,10 +594,7 @@ impl IntoCsv<BusinessLicenses> for BusinessLicenses {
     Clone,
     Debug,
     PartialEq,
-    Eq,
     PartialOrd,
-    Ord,
-    Hash,
     Deserialize,
     Serialize,
     JsonSchema,
@@ -632,25 +630,185 @@ pub struct BusinessFeature {
     tourism: Option<String>,
     // The business district name of the GC zone, if in a GC zone.
     district: Option<String>,
+    latitude: Option<f64>,
+    longitude: Option<f64>,
 }
 
-impl From<&Business> for BusinessFeature {
-    fn from(value: &Business) -> Self {
-        Self {
-            company_name: value.company_name().to_owned(),
-            contact_name: value.contact_name().to_owned(),
-            dba: value.dba().to_owned(),
-            address: value.address().label(),
-            license: value.license().to_owned(),
-            industry_code: value.industry_code(),
-            industry_name: value.industry_name().to_owned(),
-            sector_code: value.sector_code(),
-            sector_name: value.sector_name().to_owned(),
-            subsector_code: value.subsector_code(),
-            subsector_name: value.subsector_name().to_owned(),
-            tourism: value.tourism().to_owned(),
-            district: value.district().to_owned(),
+impl BusinessFeature {
+    /// Convert NAICS subsector to Tourism category to drive map symbology.
+    pub fn into_tourism(naics: &bears_species::Naics) -> Option<String> {
+        use bears_species::NaicsIndustry as ni;
+        let mut text = String::new();
+        if let Some(industry) = naics.industry() {
+            text.push_str(match industry {
+                ni::LessorsOfResidentialBuildingsAndDwellings => "Property Management",
+                ni::GeneralAutomotiveRepair => "Automotive",
+                ni::SportingGoodsRetailers => "Sporting Goods",
+                ni::WholesaleTradeAgentsAndBrokers => "Brokers",
+                ni::NursingCareFacilitiesSkilledNursingFacilities => "Nursing",
+                ni::TobaccoElectronicCigaretteAndOtherSmokingSuppliesRetailers => {
+                    "Tobacco & Cannabis"
+                }
+                ni::LandscapingServices => "Landscaping",
+                ni::MotorVehicleTowing => "Towing",
+                ni::PhotographyStudiosPortrait => "Photography",
+                ni::DepartmentStores => "Department Store",
+                ni::NurseryGardenCenterAndFarmSupplyRetailers => "Garden Center",
+                ni::ToyAndHobbyGoodsAndSuppliesMerchantWholesalers => "Souvenir",
+                ni::MusicalInstrumentAndSuppliesRetailers => "Music Instruments",
+                ni::BeerWineAndLiquorRetailers => "Liquor Store",
+                ni::BookRetailersAndNewsDealers => "Book Store",
+                ni::BusAndOtherMotorVehicleTransitSystems => "Transit Station",
+                ni::CouriersAndExpressDeliveryServices => "Courier",
+                ni::ExterminatingAndPestControlServices => "Pest Control",
+                ni::Locksmiths => "Locksmith",
+                ni::Museums => "Museum",
+                ni::RadioBroadcastingStations => "Radio Station",
+                ni::PassengerCarRental => "Car Rental",
+                ni::VeterinaryServices => "Veterinary",
+                ni::BowlingCenters => "Bowling",
+                ni::MotionPictureTheatersExceptDriveins => "Movie Theater",
+                ni::JewelryRetailers => "Jewelry",
+                ni::ShoeRetailers => "Shoes",
+                ni::ClothingAndClothingAccessoriesRetailers => "Clothing",
+                ni::SnackAndNonalcoholicBeverageBars => "Coffee",
+                ni::BarberShops => "Salon & Barber",
+                ni::BeautySalons => "Salon & Barber",
+                ni::NailSalons => "Salon & Barber",
+                ni::LandscapeArchitecturalServices => "Landscape Architect",
+                ni::GraphicDesignServices => "Graphic Design",
+                ni::OfficesOfCertifiedPublicAccountants => "Accountant (CPA)",
+                ni::OfficesOfLawyers => "Legal",
+                ni::OfficesOfDentists => "Dentist",
+                ni::OfficesOfPhysiciansExceptMentalHealthSpecialists => "Physicians",
+                ni::OfficesOfPhysiciansMentalHealthSpecialists => "Mental Health",
+                ni::OfficesOfMentalHealthPractitionersExceptPhysicians => "Mental Health",
+                ni::OfficesOfOptometrists => "Optometrist",
+                ni::CommercialBakeries => "Bakery",
+                ni::CommercialBanking => "Bank",
+                ni::CreditUnions => "Bank",
+                ni::HardwareRetailers => "Hardware",
+                ni::ConvenienceRetailers => "Convenience",
+                ni::PlumbingHeatingAndAirconditioningContractors => "Plumbing",
+                ni::ChildDayCareServices => "Education",
+                _ => "",
+            });
+            if !text.is_empty() {
+                return Some(text);
+            }
         }
+        use bears_species::NaicsSubcategory as sc;
+        if let Some(subcategory) = naics.subcategory() {
+            text.push_str(match subcategory {
+                sc::RestaurantsAndOtherEatingPlaces => "Restaurant",
+                sc::SupermarketsAndOtherGroceryRetailersExceptConvenienceRetailers => "Grocery",
+                _ => "",
+            });
+            if !text.is_empty() {
+                return Some(text);
+            }
+        }
+        use bears_species::NaicsCategory as nc;
+        if let Some(category) = naics.category() {
+            text.push_str(match category {
+                nc::AutomotiveRepairAndMaintenance => "Automotive",
+                nc::AutomotivePartsAccessoriesAndTireRetailers => "Automotive",
+                nc::AutomotiveEquipmentRentalAndLeasing => "Automotive",
+                nc::AutomobileDealers => "Car Dealership",
+                nc::LegalServices => "Legal",
+                _ => "",
+            });
+            if !text.is_empty() {
+                return Some(text);
+            }
+        }
+        use bears_species::NaicsSubsector as ss;
+        if let Some(subsector) = naics.subsector() {
+            text.push_str(match subsector {
+                ss::Accommodation => "Accommodation",
+                ss::AmusementGamblingAndRecreationIndustries => "Amusement",
+                ss::MonetaryAuthoritiesCentralBank => "Bank",
+                ss::EducationalServices => "Education",
+                ss::AmbulatoryHealthCareServices => "Health Care",
+                ss::Hospitals => "Hospital",
+                ss::FoodServicesAndDrinkingPlaces => "Food & Drink",
+                ss::GasolineStationsAndFuelDealers => "Gas",
+                ss::PersonalAndLaundryServices => "Laundry",
+                ss::PerformingArtsSpectatorSportsAndRelatedIndustries => "Performing Arts",
+                ss::ProfessionalScientificAndTechnicalServices => "Science & Tech",
+                ss::RealEstate => "Real Estate",
+                _ => "",
+            });
+        }
+        if !text.is_empty() { Some(text) } else { None }
+    }
+}
+
+impl TryFrom<&BusinessMatchRecord> for BusinessFeature {
+    type Error = AddressError;
+
+    fn try_from(value: &BusinessMatchRecord) -> Result<Self, Self::Error> {
+        let company_name = value.company_name().unwrap_or_default();
+        let contact_name = value.contact_name();
+        let dba = value.dba();
+        let address = value.business_address_label();
+        let license = value.license();
+        let industry_code = value.industry_code();
+        let codestring = industry_code.to_string();
+        let naics = bears_species::Naics::from_code(&codestring).ok_or(NaicsMissing::new(
+            codestring.clone(),
+            line!(),
+            file!().to_string(),
+        ))?;
+        let industry_name = naics.description().to_owned();
+        let sector_code = codestring.chars().take(2).collect::<String>();
+        let sector = bears_species::NaicsSector::from_code(&sector_code).ok_or(
+            NaicsMissing::new(sector_code.clone(), line!(), file!().to_string()),
+        )?;
+        let sector_code = sector_code.parse::<i32>().map_err(|e| {
+            ParseInt::new(
+                "sector code for business match".to_string(),
+                e,
+                line!(),
+                file!().to_string(),
+            )
+        })?;
+        let sector_name = sector.description().to_owned();
+        let subsector_code = codestring.chars().take(3).collect::<String>();
+        let subsector = bears_species::NaicsSubsector::from_code(&subsector_code).ok_or(
+            NaicsMissing::new(subsector_code.clone(), line!(), file!().to_string()),
+        )?;
+        let subsector_code = subsector_code.parse::<i32>().map_err(|e| {
+            ParseInt::new(
+                "subsector code for business match".to_string(),
+                e,
+                line!(),
+                file!().to_string(),
+            )
+        })?;
+        let subsector_name = Some(subsector.description().to_owned());
+        let tourism = Self::into_tourism(&naics);
+        let district = Default::default();
+        let industry_code = industry_code as i32;
+        let latitude = value.latitude();
+        let longitude = value.longitude();
+        Ok(Self {
+            company_name,
+            contact_name,
+            dba,
+            address,
+            license,
+            industry_code,
+            industry_name,
+            sector_code,
+            sector_name,
+            subsector_code,
+            subsector_name,
+            tourism,
+            district,
+            latitude,
+            longitude,
+        })
     }
 }
 
@@ -659,10 +817,7 @@ impl From<&Business> for BusinessFeature {
     Debug,
     Clone,
     PartialEq,
-    Eq,
     PartialOrd,
-    Ord,
-    Hash,
     Deserialize,
     Serialize,
     Deref,
@@ -672,3 +827,26 @@ impl From<&Business> for BusinessFeature {
     Elicit,
 )]
 pub struct BusinessFeatures(Vec<BusinessFeature>);
+
+impl TryFrom<&BusinessMatchRecords> for BusinessFeatures {
+    type Error = AddressError;
+
+    fn try_from(value: &BusinessMatchRecords) -> Result<Self, Self::Error> {
+        let businesses = value
+            .iter()
+            .map(BusinessFeature::try_from)
+            .collect::<Result<Vec<BusinessFeature>, AddressError>>()?;
+        Ok(BusinessFeatures::from(businesses))
+    }
+}
+
+impl IntoCsv<BusinessFeatures> for BusinessFeatures {
+    fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
+        let records = from_csv(path)?;
+        Ok(Self(records))
+    }
+
+    fn to_csv<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<(), AddressErrorKind> {
+        to_csv(&mut self.0, path.as_ref().into())
+    }
+}
