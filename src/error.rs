@@ -21,7 +21,15 @@ macro_rules! impl_address_error {
     };
 }
 
-impl_address_error!(Decode, Encode, Io, Nom, NaicsMissing, ParseInt);
+impl_address_error!(
+    Decode,
+    Encode,
+    Io,
+    Nom,
+    NaicsMissing,
+    ParseInt,
+    LicenseMissing
+);
 
 /// The `AddressErrorKind` enum contains the individual error type associated with the library operation.
 #[derive(Debug, derive_more::From, derive_more::Display, derive_more::Error)]
@@ -50,6 +58,9 @@ pub enum AddressErrorKind {
     /// The `ParseInt` variant contains a [`ParseInt`] error.
     #[from(ParseInt)]
     ParseInt(ParseInt),
+    /// The `LicenseMissing` variant contains a [`LicenseMissing`] error.
+    #[from(LicenseMissing)]
+    LicenseMissing(LicenseMissing),
 }
 
 /// The `Io` struct contains error information associated with input/output calls.
@@ -158,4 +169,19 @@ pub struct ParseInt {
     source: std::num::ParseIntError,
     line: u32,
     file: String,
+}
+
+/// The `LicenseMissing` struct occurs when the situs business license does not match a mailing license.
+#[derive(Debug, derive_more::Display, derive_new::new)]
+#[display("license {code} missing in line {line} of {file}")]
+pub struct LicenseMissing {
+    code: String,
+    line: u32,
+    file: String,
+}
+
+impl std::error::Error for LicenseMissing {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
 }
