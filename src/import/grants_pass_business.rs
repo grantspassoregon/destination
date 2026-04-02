@@ -205,10 +205,10 @@ impl TryFrom<&BusinessMatchRecord> for Business {
     type Error = AddressError;
 
     fn try_from(value: &BusinessMatchRecord) -> Result<Self, Self::Error> {
-        let company_name = value.company_name().unwrap_or_default();
-        let contact_name = value.contact_name();
-        let dba = value.dba();
-        let address = value.business_address_label();
+        let company_name = value.company_name().clone().unwrap_or_default();
+        let contact_name = value.contact_name().clone();
+        let dba = value.dba().clone();
+        let address = value.business_address_label().clone();
         let (_, address) = Parse::address(&address).map_err(|e| {
             Nom::new(
                 "situs address from business match".to_string(),
@@ -217,8 +217,8 @@ impl TryFrom<&BusinessMatchRecord> for Business {
                 file!().to_string(),
             )
         })?;
-        let license = value.license();
-        let industry_code = value.industry_code();
+        let license = value.license().clone();
+        let industry_code = *value.industry_code();
         let codestring = industry_code.to_string();
         let naics = bears_species::Naics::from_code(&codestring).ok_or(NaicsMissing::new(
             codestring.clone(),

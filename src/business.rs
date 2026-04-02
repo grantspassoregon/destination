@@ -1,8 +1,8 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
 use crate::{
-    Address, AddressError, AddressErrorKind, Business, Businesses, Geographic, IntoCsv, Io,
-    MatchStatus, NaicsMissing, Nom, Parse, StreetNamePostType, StreetNamePreDirectional,
+    Address, AddressError, AddressErrorKind, Geographic, IntoCsv, Io, LicenseMissing, MatchStatus,
+    NaicsMissing, Nom, Parse, State, StreetNamePostType, StreetNamePreDirectional, business,
     deserialize_phone_number, error::ParseInt, from_csv, to_csv,
 };
 use derive_more::{Deref, DerefMut};
@@ -12,11 +12,21 @@ use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::{collections::HashSet, ops::Add};
 use tracing::info;
 
 /// The `BusinessMatchRecord` struct holds match data for a licensed business.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, JsonSchema, Elicit)]
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    PartialOrd,
+    JsonSchema,
+    Elicit,
+    derive_getters::Getters,
+)]
 pub struct BusinessMatchRecord {
     match_status: MatchStatus,
     business_address_label: String,
@@ -34,58 +44,9 @@ pub struct BusinessMatchRecord {
 }
 
 impl BusinessMatchRecord {
-    /// The `company_name` field represents the registered business name associated with the
-    /// active business license.
-    pub fn company_name(&self) -> Option<String> {
-        self.company_name.clone()
-    }
-
-    /// The `contact_name` field represents the contact name associated with the
-    /// active business license.
-    pub fn contact_name(&self) -> Option<String> {
-        self.contact_name.clone()
-    }
-
-    /// The `dba` field represents the business name alias associated with the
-    /// active business license.
-    pub fn dba(&self) -> Option<String> {
-        self.dba.clone()
-    }
-
-    /// The `business_address_label` field represents the submitted address associated with the
-    /// active business license.
-    pub fn business_address_label(&self) -> String {
-        self.business_address_label.clone()
-    }
-
-    /// The `other_address_label` field represents the City address associated with the
-    /// active business license.
-    pub fn other_address_label(&self) -> Option<String> {
-        self.other_address_label.clone()
-    }
-
-    /// The `license` field represents the business license number associated with the
-    /// active business license.
-    pub fn license(&self) -> String {
-        self.license.clone()
-    }
-
-    /// The `industry_code` field represents the tax code associated with the
-    /// active business license.
-    pub fn industry_code(&self) -> i64 {
-        self.industry_code
-    }
-
-    /// The `latitude` method returns the latitude of the address for the
-    /// active business license.
-    pub fn latitude(&self) -> Option<f64> {
-        self.address_latitude
-    }
-
-    /// The `longitude` method returns the longitude of the address for the
-    /// active business license.
-    pub fn longitude(&self) -> Option<f64> {
-        self.address_longitude
+    /// Full address
+    pub fn full_address(&self) -> String {
+        format!("{}, {}", self.business_address_label, self.community)
     }
 }
 
@@ -110,14 +71,14 @@ impl BusinessMatchRecords {
             records.push(BusinessMatchRecord {
                 match_status: MatchStatus::Missing,
                 business_address_label: business.label(),
-                company_name: business.company_name(),
-                contact_name: business.contact_name(),
-                business_type: business.business_type(),
-                dba: business.dba(),
-                license: business.license(),
-                expires: business.expires(),
-                industry_code: business.industry_code(),
-                community: business.community(),
+                company_name: business.company_name().clone(),
+                contact_name: business.contact_name().clone(),
+                business_type: business.business_type().clone(),
+                dba: business.dba().clone(),
+                license: business.license().clone(),
+                expires: business.expires().clone(),
+                industry_code: *business.industry_code(),
+                community: business.postal_community().clone(),
                 other_address_label: None,
                 address_latitude: None,
                 address_longitude: None,
@@ -239,10 +200,10 @@ impl BusinessMatchRecords {
                 let mut records = Vec::new();
                 for record in self.iter() {
                     if let Some(name) = record.company_name()
-                        && !names.contains(&name)
+                        && !names.contains(name)
                     {
                         names.insert(name.clone());
-                        let subset = self.clone().filter_field("name", &name);
+                        let subset = self.clone().filter_field("name", name);
                         if subset.len() == 1 {
                             records.push(subset[0].clone());
                         }
@@ -255,10 +216,10 @@ impl BusinessMatchRecords {
                 let mut records = Vec::new();
                 for record in self.iter() {
                     if let Some(name) = record.company_name()
-                        && !names.contains(&name)
+                        && !names.contains(name)
                     {
                         names.insert(name.clone());
-                        let mut subset = self.clone().filter_field("name", &name);
+                        let mut subset = self.clone().filter_field("name", name);
                         if subset.len() > 1 {
                             records.append(&mut subset);
                         }
@@ -280,7 +241,7 @@ impl BusinessMatchRecords {
     /// Like the filter method, we move the responsibility to clone to the caller.
     pub fn filter_field(mut self, filter: &str, field: &str) -> Self {
         match filter {
-            "name" => self.retain(|r| r.company_name() == Some(field.to_string())),
+            "name" => self.retain(|r| *r.company_name() == Some(field.to_string())),
             _ => info!("Invalid filter provided."),
         }
         self
@@ -316,7 +277,7 @@ impl IntoCsv<BusinessMatchRecords> for BusinessMatchRecords {
 /// The `BusinessLicense` struct is designed to deserialize CSV data produced by querying the
 /// EnerGov SQL database for active business licenses.  If the structure of the SQL query changes,
 /// this function will need to change to match the resulting fields in the CSV.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema, Elicit)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema, Elicit, derive_getters::Getters)]
 #[serde(rename_all = "PascalCase")]
 pub struct BusinessLicense {
     company_name: Option<String>,
@@ -397,14 +358,14 @@ impl BusinessLicense {
             business_match = Some(BusinessMatchRecord {
                 match_status,
                 business_address_label: self.label(),
-                company_name: self.company_name(),
-                contact_name: self.contact_name(),
-                business_type: self.business_type(),
-                dba: self.dba(),
-                license: self.license(),
-                expires: self.expires(),
-                industry_code: self.industry_code(),
-                community: self.community(),
+                company_name: self.company_name().clone(),
+                contact_name: self.contact_name().clone(),
+                business_type: self.business_type().clone(),
+                dba: self.dba().clone(),
+                license: self.license().clone(),
+                expires: self.expires().clone(),
+                industry_code: *self.industry_code(),
+                community: self.postal_community().clone(),
                 other_address_label: Some(address.label()),
                 address_latitude: Some(address.latitude()),
                 address_longitude: Some(address.longitude()),
@@ -413,77 +374,10 @@ impl BusinessLicense {
         business_match
     }
 
-    /// The `community` method returns the postal community name from the `postal_community` field.
-    pub fn community(&self) -> String {
-        self.postal_community.to_owned()
-    }
-
-    /// The `company_name` field represents the registered name of the business.  This method
-    /// returns the cloned value of the field.
-    pub fn company_name(&self) -> Option<String> {
-        match self.company_name.clone() {
-            Some(name) => Some(name.trim().to_string()),
-            None => None.to_owned(),
-        }
-    }
-
-    /// The `contact_name` field represents the business owner name.  This method clones the
-    /// value of the field.
-    pub fn contact_name(&self) -> Option<String> {
-        self.contact_name.to_owned()
-    }
-
-    /// The `business_type` field represents the tax classification associated with a business
-    /// license.  This method clones the value of the field.
-    pub fn business_type(&self) -> String {
-        self.business_type.to_owned()
-    }
-
-    /// The `dba` field represents the alias name associated with a business license.  This method
-    /// clones the value of the field.
-    pub fn dba(&self) -> Option<String> {
-        self.dba.to_owned()
-    }
-
-    /// The `license` field represents the license ID associated with the business.  This method
-    /// clones the value of the field.
-    pub fn license(&self) -> String {
-        self.license.to_owned()
-    }
-
-    /// The `expires` field represents the time of expiration for the active business license.
-    /// This method clones the value of the field.
-    pub fn expires(&self) -> String {
-        self.expires.to_owned()
-    }
-
-    /// The `industry_code` method returns the value of the `industry_code` field.
-    pub fn industry_code(&self) -> i64 {
-        self.industry_code
-    }
-
-    /// The `pre_directional` field represents the street pre-directional designation associated
-    /// with a business license.  This method clones the value of the field.
-    pub fn pre_directional(&self) -> Option<StreetNamePreDirectional> {
-        self.street_name_pre_directional
-    }
-
-    /// The `post_type` field represents the street post type designation of the business address.
-    /// This method returns the cloned value of the field.
-    pub fn post_type(&self) -> Option<StreetNamePostType> {
-        self.street_name_post_type
-    }
-
-    /// The `subaddress_identifier` field represents the subaddress unit identifier associated with
-    /// a business address.  This method clones the value of the field.
-    pub fn subaddress_identifier(&self) -> Option<String> {
-        self.subaddress_identifier.to_owned()
-    }
-
     /// The `label` method creates a string representation of the complete street address
     /// associated with a business license.
     fn label(&self) -> String {
-        let street_name = match self.post_type() {
+        let street_name = match self.street_name_post_type() {
             Some(post_type) => format!("{} {}", self.street_name, post_type),
             None => self.street_name.to_string(),
         };
@@ -498,6 +392,15 @@ impl BusinessLicense {
             ),
             None => format!("{} {}", self.address_number, complete_street_name),
         }
+    }
+
+    /// Returns the full address for the business license.
+    pub fn full_address(&self) -> String {
+        let label = self.label();
+        format!(
+            "{label}, {} {} {}",
+            self.postal_community, self.state_name, self.zip_code
+        )
     }
 
     /// EnerGov has a single field for entering a subaddress id, and staff sometimes include the
@@ -546,8 +449,8 @@ impl BusinessLicenses {
     /// company name.
     pub fn filter(mut self, filter: &str, field: &str) -> Self {
         match filter {
-            "name" => self.retain(|r| r.company_name() == Some(field.to_string())),
-            "license" => self.retain(|r| r.license() == *field),
+            "name" => self.retain(|r| *r.company_name() == Some(field.to_string())),
+            "license" => self.retain(|r| r.license() == field),
             _ => info!("Invalid filter provided."),
         }
         self
@@ -601,6 +504,7 @@ impl IntoCsv<BusinessLicenses> for BusinessLicenses {
     Elicit,
     derive_getters::Getters,
     derive_setters::Setters,
+    derive_builder::Builder,
 )]
 #[setters(prefix = "with_")]
 pub struct BusinessFeature {
@@ -611,7 +515,9 @@ pub struct BusinessFeature {
     // The business alias of the company.
     dba: Option<String>,
     // The situs address of the business.
-    address: String,
+    situs: String,
+    // The mailing address of the business.
+    mailing: String,
     // The license identifier.
     license: String,
     // The NAICS industry code of the business.
@@ -744,16 +650,18 @@ impl BusinessFeature {
     }
 }
 
-impl TryFrom<&BusinessMatchRecord> for BusinessFeature {
+impl TryFrom<(&BusinessMatchRecord, &BusinessLicense)> for BusinessFeature {
     type Error = AddressError;
 
-    fn try_from(value: &BusinessMatchRecord) -> Result<Self, Self::Error> {
-        let company_name = value.company_name().unwrap_or_default();
-        let contact_name = value.contact_name();
-        let dba = value.dba();
-        let address = value.business_address_label();
-        let license = value.license();
-        let industry_code = value.industry_code();
+    fn try_from(value: (&BusinessMatchRecord, &BusinessLicense)) -> Result<Self, Self::Error> {
+        let (value, mailing) = value;
+        let company_name = value.company_name().clone().unwrap_or_default();
+        let contact_name = value.contact_name().clone();
+        let dba = value.dba().clone();
+        let situs = value.business_address_label().clone();
+        let mailing = mailing.full_address();
+        let license = value.license().clone();
+        let industry_code = *value.industry_code();
         let codestring = industry_code.to_string();
         let naics = bears_species::Naics::from_code(&codestring).ok_or(NaicsMissing::new(
             codestring.clone(),
@@ -790,13 +698,14 @@ impl TryFrom<&BusinessMatchRecord> for BusinessFeature {
         let tourism = Self::into_tourism(&naics);
         let district = Default::default();
         let industry_code = industry_code as i32;
-        let latitude = value.latitude();
-        let longitude = value.longitude();
+        let latitude = *value.address_latitude();
+        let longitude = *value.address_longitude();
         Ok(Self {
             company_name,
             contact_name,
             dba,
-            address,
+            situs,
+            mailing,
             license,
             industry_code,
             industry_name,
@@ -809,6 +718,26 @@ impl TryFrom<&BusinessMatchRecord> for BusinessFeature {
             latitude,
             longitude,
         })
+    }
+}
+
+impl TryFrom<(&BusinessMatchRecord, &BusinessLicenses)> for BusinessFeature {
+    type Error = AddressError;
+
+    fn try_from(value: (&BusinessMatchRecord, &BusinessLicenses)) -> Result<Self, Self::Error> {
+        let (situs, mailing) = value;
+        let mailing = mailing
+            .iter()
+            .filter(|v| v.license() == situs.license())
+            .take(1)
+            .collect::<Vec<&BusinessLicense>>();
+        if mailing.is_empty() {
+            let error =
+                LicenseMissing::new(situs.license().to_owned(), line!(), file!().to_owned());
+            Err(error.into())
+        } else {
+            BusinessFeature::try_from((situs, mailing[0]))
+        }
     }
 }
 
@@ -828,17 +757,30 @@ impl TryFrom<&BusinessMatchRecord> for BusinessFeature {
 )]
 pub struct BusinessFeatures(Vec<BusinessFeature>);
 
-impl TryFrom<&BusinessMatchRecords> for BusinessFeatures {
+impl TryFrom<(&BusinessMatchRecords, &BusinessLicenses)> for BusinessFeatures {
     type Error = AddressError;
 
-    fn try_from(value: &BusinessMatchRecords) -> Result<Self, Self::Error> {
-        let businesses = value
+    fn try_from(value: (&BusinessMatchRecords, &BusinessLicenses)) -> Result<Self, Self::Error> {
+        let (situs, mailing) = value;
+        let businesses = situs
             .iter()
-            .map(BusinessFeature::try_from)
+            .map(|v| BusinessFeature::try_from((v, mailing)))
             .collect::<Result<Vec<BusinessFeature>, AddressError>>()?;
         Ok(BusinessFeatures::from(businesses))
     }
 }
+//
+// impl TryFrom<&BusinessMatchRecords> for BusinessFeatures {
+//     type Error = AddressError;
+//
+//     fn try_from(value: &BusinessMatchRecords) -> Result<Self, Self::Error> {
+//         let businesses = value
+//             .iter()
+//             .map(BusinessFeature::try_from)
+//             .collect::<Result<Vec<BusinessFeature>, AddressError>>()?;
+//         Ok(BusinessFeatures::from(businesses))
+//     }
+// }
 
 impl IntoCsv<BusinessFeatures> for BusinessFeatures {
     fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
