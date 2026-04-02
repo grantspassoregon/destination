@@ -118,6 +118,7 @@ fn match_city_address() -> anyhow::Result<()> {
 
 #[test]
 fn match_business_addresses() -> anyhow::Result<()> {
+    trace!("Matching business licenses to city addresses.");
     // let business_path = "data/business_licenses_20250317.csv";
     let business_path = "data/business_licenses_20260316.csv";
     // let city_path = "data/city_addresses_20241007.csv";
