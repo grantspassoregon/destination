@@ -417,11 +417,14 @@ fn main() -> anyhow::Result<()> {
             info!("Converting match records to business features.");
             info!("Reading source records to business match records.");
             let match_records = BusinessMatchRecords::from_csv(cli.source.clone())?;
-            info!("Source records read: {} entries.", match_records.len());
-            let mut businesses = BusinessFeatures::try_from(&match_records)?;
-            info!("{:?} match records converted.", businesses.len());
-            info!("Output file: {:?}", cli.output);
-            businesses.to_csv(cli.output)?;
+            if let Some(path) = &cli.target {
+                let mailing = BusinessLicenses::from_csv(path)?;
+                info!("Source records read: {} entries.", match_records.len());
+                let mut businesses = BusinessFeatures::try_from((&match_records, &mailing))?;
+                info!("{:?} match records converted.", businesses.len());
+                info!("Output file: {:?}", cli.output);
+                businesses.to_csv(cli.output)?;
+            }
         }
         _ => {}
     }
