@@ -236,7 +236,12 @@ impl State {
     #[tracing::instrument(skip_all)]
     pub fn deserialize_mixed<'de, D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
         let intermediate = serde::Deserialize::deserialize(de)?;
-        let result = Self::match_mixed(intermediate).unwrap();
-        Ok(result)
+        match Self::match_mixed(intermediate) {
+            Some(state) => Ok(state),
+            None => {
+                tracing::error!("failed to parse {} to State", intermediate);
+                panic!();
+            }
+        }
     }
 }
