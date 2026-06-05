@@ -3,7 +3,8 @@ use destination::{
     FireInspectionMatchRecords, FireInspections, GeoAddresses, GrantsPassAddresses,
     GrantsPassSpatialAddresses, IntoBin, IntoCsv, JosephineCountyAddresses2024, MatchRecords, Nom,
     Parse, PartialAddress, PostalCommunity, SpatialAddresses, SpatialAddressesRaw,
-    StreetNamePostType, StreetNamePreDirectional, SubaddressType, from_csv,
+    StreetNamePostType, StreetNamePreDirectional, SubaddressType, WuiMatchRecords, WuiMatches,
+    Wuis, from_csv,
 };
 use test_log::test;
 use tracing::{info, trace};
@@ -418,6 +419,28 @@ fn address_parser() -> anyhow::Result<()> {
     assert_eq!(a5_parsed, a5_comp);
     assert_eq!(a6_parsed, a6_comp);
     assert_eq!(a7_parsed, a7_comp);
+    Ok(())
+}
+
+#[test]
+#[cfg_attr(feature = "ci", ignore)]
+fn load_wui() -> anyhow::Result<()> {
+    let file_path = "c:/users/erose/documents/wui.csv";
+    let wuis = Wuis::from_csv(file_path)?;
+    info!("First wui: {:?}", wuis[0]);
+    Ok(())
+}
+
+#[test]
+#[cfg_attr(feature = "ci", ignore)]
+fn compare_wui() -> anyhow::Result<()> {
+    let file_path = "c:/users/erose/documents/wui.csv";
+    let wuis = Wuis::from_csv(file_path)?;
+    let file_path = "data/grants_pass_addresses_20260316.csv";
+    let addresses = GrantsPassSpatialAddresses::from_csv(file_path)?;
+    let mut compared = WuiMatchRecords::from(&WuiMatches::compare(&wuis, &addresses));
+    compared.to_csv("p:/wui_matched.csv")?;
+    info!("Total records: {}.", compared.len());
     Ok(())
 }
 
