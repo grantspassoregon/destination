@@ -568,6 +568,7 @@ impl StreetNamePostType {
                 "LCK" => Some(Self::LOCK),
                 "LCKS" => Some(Self::LOCKS),
                 "LDG" => Some(Self::LODGE),
+                "LP" => Some(Self::LOOP),
                 "MNR" => Some(Self::MANOR),
                 "MNRS" => Some(Self::MANORS),
                 "MDW" => Some(Self::MEADOW),
