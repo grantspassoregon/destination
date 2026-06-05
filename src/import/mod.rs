@@ -4,6 +4,7 @@ mod fire_inspection;
 mod grants_pass;
 mod grants_pass_business;
 mod josephine_county;
+mod wui;
 
 pub use common::SpatialAddressesRaw;
 pub use fire_inspection::{FireInspection, FireInspectionRaw, FireInspections};
@@ -16,3 +17,4 @@ pub use josephine_county::{
     JosephineCountyAddresses2024, JosephineCountySpatialAddress, JosephineCountySpatialAddress2024,
     JosephineCountySpatialAddresses, JosephineCountySpatialAddresses2024,
 };
+pub use wui::{Wui, WuiRaw, Wuis, WuisRaw};
