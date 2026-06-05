@@ -32,7 +32,7 @@ pub use cli::Cli;
 pub use compare::{
     AddressMatch, FireInspectionMatch, FireInspectionMatchRecord, FireInspectionMatchRecords,
     FireInspectionMatches, MatchPartialRecord, MatchPartialRecords, MatchRecord, MatchRecords,
-    MatchStatus, Mismatch,
+    MatchStatus, Mismatch, WuiMatch, WuiMatchRecord, WuiMatchRecords, WuiMatches,
 };
 pub use error::{
     AddressError, AddressErrorKind, Builder, Csv, Decode, Encode, Io, LicenseMissing, NaicsMissing,
@@ -47,7 +47,8 @@ pub use import::{
     GrantsPassAddresses, GrantsPassSpatialAddress, GrantsPassSpatialAddresses,
     JosephineCountyAddress, JosephineCountyAddress2024, JosephineCountyAddresses,
     JosephineCountyAddresses2024, JosephineCountySpatialAddress, JosephineCountySpatialAddress2024,
-    JosephineCountySpatialAddresses, JosephineCountySpatialAddresses2024, SpatialAddressesRaw,
+    JosephineCountySpatialAddresses, JosephineCountySpatialAddresses2024, SpatialAddressesRaw, Wui,
+    WuiRaw, Wuis, WuisRaw,
 };
 pub use lexisnexis::{
     LexisNexis, LexisNexisItem, LexisNexisItemBuilder, LexisNexisRange, LexisNexisRangeItem,
