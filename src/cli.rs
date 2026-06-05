@@ -3,7 +3,7 @@ use elicitation::Elicit;
 use schemars::JsonSchema;
 
 /// The `Cli` struct provides the command-line interface for the `address` library.
-#[derive(Parser, JsonSchema, Elicit)]
+#[derive(Parser, serde::Deserialize, serde::Serialize, JsonSchema, Elicit)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
     /// The `command` field specifies the command for the program to run. Currently accepts

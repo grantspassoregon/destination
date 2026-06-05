@@ -11,7 +11,7 @@ use schemars::JsonSchema;
 use serde::de::{Deserialize, Deserializer};
 
 /// The `Parser` struct holds methods for parsing addresses.
-#[derive(Debug, Copy, Clone, JsonSchema, Elicit)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize, JsonSchema, Elicit)]
 pub struct Parse;
 
 impl Parse {
