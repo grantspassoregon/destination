@@ -613,7 +613,7 @@ fn business_mailing() -> anyhow::Result<()> {
 
     let mut mail = Vec::new();
     for site in situs.iter() {
-        let matching = mailing.clone().filter("license", &site.license());
+        let matching = mailing.clone().filter("license", site.license());
         if !matching.is_empty() {
             mail.push(matching[0].clone());
         }
