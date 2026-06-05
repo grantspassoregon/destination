@@ -2,17 +2,16 @@
 //! matching, divergent and missing addresses.
 use crate::{
     Address, AddressError, AddressErrorKind, Geographic, IntoCsv, Io, LicenseMissing, MatchStatus,
-    NaicsMissing, Nom, Parse, State, StreetNamePostType, StreetNamePreDirectional, business,
+    NaicsMissing, Nom, Parse, StreetNamePostType, StreetNamePreDirectional,
     deserialize_phone_number, error::ParseInt, from_csv, to_csv,
 };
 use derive_more::{Deref, DerefMut};
 use elicitation::Elicit;
-// use galileo::galileo_types::geo::GeoPoint;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, ops::Add};
+use std::collections::HashSet;
 use tracing::info;
 
 /// The `BusinessMatchRecord` struct holds match data for a licensed business.
@@ -509,34 +508,50 @@ impl IntoCsv<BusinessLicenses> for BusinessLicenses {
 #[setters(prefix = "with_")]
 pub struct BusinessFeature {
     // The official name of the company.
+    #[setters(doc = "Sets the official name of the company.")]
     company_name: String,
     // The contact for the company.
+    #[setters(doc = "Sets the contact for the company.")]
     contact_name: Option<String>,
     // The business alias of the company.
+    #[setters(doc = "Sets the business alias of the company.")]
     dba: Option<String>,
     // The situs address of the business.
+    #[setters(doc = "Sets the situs address of the business.")]
     situs: String,
     // The mailing address of the business.
+    #[setters(doc = "Sets the mailing address of the business.")]
     mailing: String,
     // The license identifier.
+    #[setters(doc = "Sets the license identifier of the business.")]
     license: String,
     // The NAICS industry code of the business.
+    #[setters(doc = "Sets the NAICS industry code of the business.")]
     industry_code: i32,
     // The NAICS industry code description.
+    #[setters(doc = "Sets the NAICS industry code description.")]
     industry_name: String,
     // The NAICS sector code of the business.
+    #[setters(doc = "Sets the NAICS sector code of the business.")]
     sector_code: i32,
     // The NAICS sector code description.
+    #[setters(doc = "Sets the NAICS sector code description.")]
     sector_name: String,
     // The NAICS subsector code.
+    #[setters(doc = "Sets the NAICS subsector code of the business.")]
     subsector_code: i32,
     // The NAICS subsector code description.
+    #[setters(doc = "Sets the NAICS subsector code description.")]
     subsector_name: Option<String>,
     // Broad business categories used to drive symbolization in a GIS map.
+    #[setters(doc = "Sets the tourism category used to drive map symbolization.")]
     tourism: Option<String>,
     // The business district name of the GC zone, if in a GC zone.
+    #[setters(doc = "Sets the business district name.")]
     district: Option<String>,
+    #[setters(doc = "Sets the business location latitude.")]
     latitude: Option<f64>,
+    #[setters(doc = "Sets the business location longitude.")]
     longitude: Option<f64>,
 }
 
