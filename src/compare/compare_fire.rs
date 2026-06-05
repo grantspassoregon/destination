@@ -9,7 +9,7 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-/// The `FireInspectionmatch` struct holds a [`FireInspection`] in the `inspection` field, and a
+/// The `FireInspectionMatch` struct holds a [`FireInspection`] in the `inspection` field, and a
 /// [`MatchPartialRecord`] in the `record` field.  The `record` matches the partial business
 /// address against a set of fully-specified addresses.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
