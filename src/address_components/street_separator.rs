@@ -2,7 +2,6 @@
 //! of the street name separator currently in use by ECSO.  We do
 //! not issue addresses with street separators.
 use convert_case::Casing;
-use elicitation::{Prompt, Select};
 use serde::de::Deserializer;
 
 /// The `StreetNamePreType` is the pre-type element of a complete street name.

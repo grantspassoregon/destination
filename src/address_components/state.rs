@@ -1,4 +1,3 @@
-use elicitation::{Prompt, Select};
 use serde::de::Deserializer;
 use std::str::FromStr;
 

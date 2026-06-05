@@ -35,14 +35,12 @@ derive-getters = "0.5"
 derive-new = "0.7"
 derive_more = { version = "2", features = ["full"] }
 derive_setters = "0.1"
-elicitation = { path = "../elicitation/crates/elicitation/", features = [
-  "uuid",
-] }
-elicit_uuid = { path = "../elicitation/crates/elicit_uuid/" }
+elicitation = { version = "0.11.1", features = ["uuid"] }
+elicit_uuid = "0.11.1"
 indicatif = { version = "0.18", features = ["rayon"] }
 nom = "8"
-rayon = "1.11"
-rmcp = "1.2"
+rayon = "1.12"
+rmcp = "1.7"
 schemars = "1.2"
 serde = { version = "1", features = ["derive"] }
 strum = { version = "0.28", features = ["derive"] }

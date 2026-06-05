@@ -1,5 +1,4 @@
 use convert_case::Casing;
-use elicitation::{Prompt, Select};
 
 /// The `PostalCommunity` enum holds valid variants for the postal community field of an address.
 /// The list of valid postal communities is limited to the set of communities encountered locally,

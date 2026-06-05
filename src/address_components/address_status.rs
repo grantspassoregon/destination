@@ -1,5 +1,3 @@
-use elicitation::{Prompt, Select};
-
 /// The `AddressStatus` enum represents the address status, used by City of Grants Pass staff.
 #[derive(
     Copy,

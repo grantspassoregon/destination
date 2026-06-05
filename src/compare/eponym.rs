@@ -5,7 +5,7 @@ use crate::{
     PartialAddresses, SubaddressType, from_csv, to_csv,
 };
 use derive_more::{Deref, DerefMut};
-use elicitation::{Elicit, Prompt, Select};
+use elicitation::Elicit;
 use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 use schemars::JsonSchema;

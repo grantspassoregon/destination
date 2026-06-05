@@ -1,5 +1,4 @@
 use convert_case::Casing;
-use elicitation::{Prompt, Select};
 use serde::de::Deserializer;
 
 /// The `StreetNamePreModifier` is the pre-modifier element of a complete street name.

@@ -1,4 +1,3 @@
-use elicitation::{Prompt, Select};
 use serde::de::Deserializer;
 
 /// The `StreetNamePreDirectional` enum represents the street name predirectional component of the
