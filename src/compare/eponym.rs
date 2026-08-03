@@ -384,20 +384,20 @@ impl MatchPartialRecord {
 
         if let Some(value) = partial.street_name_post_type()
             && let &Some(street_type) = address.street_type()
-            && value != street_type
+            && *value != street_type
             && match_status == MatchStatus::Matching
         {
             match_status = MatchStatus::Missing;
         }
 
-        if &partial.subaddress_identifier() != address.subaddress_id()
+        if partial.subaddress_identifier() != address.subaddress_id()
             && match_status == MatchStatus::Matching
         {
             match_status = MatchStatus::Divergent;
         }
 
         if address.subaddress_id().is_none()
-            && &partial.building() != address.building()
+            && partial.building() != address.building()
             && match_status == MatchStatus::Matching
         {
             match_status = MatchStatus::Divergent;
@@ -405,7 +405,7 @@ impl MatchPartialRecord {
 
         if address.subaddress_id().is_none()
             && address.building().is_none()
-            && &partial.floor() != address.floor()
+            && partial.floor() != address.floor()
             && match_status == MatchStatus::Matching
         {
             match_status = MatchStatus::Divergent;
