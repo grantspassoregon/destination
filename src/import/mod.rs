@@ -11,7 +11,7 @@ pub use fire_inspection::{FireInspection, FireInspectionRaw, FireInspections};
 pub use grants_pass::{
     GrantsPassAddress, GrantsPassAddresses, GrantsPassSpatialAddress, GrantsPassSpatialAddresses,
 };
-pub use grants_pass_business::{Business, Businesses};
+pub use grants_pass_business::{Business, BusinessRaw, Businesses, BusinessesRaw};
 pub use josephine_county::{
     JosephineCountyAddress, JosephineCountyAddress2024, JosephineCountyAddresses,
     JosephineCountyAddresses2024, JosephineCountySpatialAddress, JosephineCountySpatialAddress2024,
