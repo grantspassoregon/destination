@@ -871,9 +871,12 @@ impl IntoCsv<CommonAddresses> for CommonAddresses {
     Hash,
     serde::Serialize,
     serde::Deserialize,
+    derive_getters::Getters,
+    derive_setters::Setters,
     JsonSchema,
     Elicit,
 )]
+#[setters(prefix = "with_", strip_option, borrow_self)]
 pub struct PartialAddress {
     /// The `address_number` field represents the address number component of the complete address
     /// number.
@@ -926,77 +929,6 @@ impl PartialAddress {
         PartialAddress::default()
     }
 
-    /// The `address_number` field represents the address number component of the complete address
-    /// number.  This function returns the value of the field.
-    pub fn address_number(&self) -> Option<i64> {
-        self.address_number
-    }
-
-    /// The `address_number_suffix` field represents the address number suffix component of the
-    /// complete address number.  This function returns the cloned value of the field.
-    pub fn address_number_suffix(&self) -> Option<String> {
-        self.address_number_suffix.clone()
-    }
-
-    /// The `street_name_pre_directional` field represents the street name predirectional component of the
-    /// complete street name.  This function returns the cloned value of the field.
-    pub fn street_name_pre_directional(&self) -> Option<StreetNamePreDirectional> {
-        self.street_name_pre_directional
-    }
-
-    /// The `pre_modifier` field represents the street name premodifier component of the
-    /// complete street name.  This function returns the cloned value of the field.
-    pub fn pre_modifier(&self) -> Option<StreetNamePreModifier> {
-        self.pre_modifier
-    }
-
-    /// The `pre_type` field represents the street name pretype component of the
-    /// complete street name.  This function returns the cloned value of the field.
-    pub fn pre_type(&self) -> Option<StreetNamePreType> {
-        self.pre_type
-    }
-
-    /// The `separator` field represents the street name separator component of the
-    /// complete street name.  This function returns the cloned value of the field.
-    pub fn separator(&self) -> Option<StreetSeparator> {
-        self.separator
-    }
-
-    /// The `street_name` field represents the street name component of the complete street name.
-    /// This function returns the cloned value of the field.
-    pub fn street_name(&self) -> Option<String> {
-        self.street_name.clone()
-    }
-
-    /// The `street_name_post_type` field represents the street name posttype component of the complete street
-    /// name.  This function returns the cloned value of the field.
-    pub fn street_name_post_type(&self) -> Option<StreetNamePostType> {
-        self.street_name_post_type
-    }
-
-    /// The `subaddress_type` field represents the subaddress type component of the complete
-    /// subaddress.  This function returns the cloned value of the field.
-    pub fn subaddress_type(&self) -> Option<SubaddressType> {
-        self.subaddress_type
-    }
-
-    /// The `subaddress_identifier` field represents the subaddress identifier component of the complete
-    /// subaddress.  This function returns the cloned value of the field.
-    pub fn subaddress_identifier(&self) -> Option<String> {
-        self.subaddress_identifier.clone()
-    }
-
-    /// The `building` field represents the unique identifier for a building.  This function
-    /// returns the cloned value of the field.
-    pub fn building(&self) -> Option<String> {
-        self.building.clone()
-    }
-
-    /// The `floor` field represents the floor of the building on which the address point is located.  This function returns the value of the field.
-    pub fn floor(&self) -> Option<i64> {
-        self.floor
-    }
-
     /// Sets the value of the `address_number` field to Some(`value`).
     pub fn set_address_number(&mut self, value: i64) {
         self.address_number = Some(value);
@@ -1045,7 +977,7 @@ impl PartialAddress {
         }
         if let Some(address_number_suffix) = self.address_number_suffix() {
             address.push(' ');
-            address.push_str(&address_number_suffix);
+            address.push_str(address_number_suffix);
         }
         if let Some(pre_directional) = self.street_name_pre_directional() {
             address.push(' ');
@@ -1065,7 +997,7 @@ impl PartialAddress {
         }
         if let Some(street_name) = self.street_name() {
             address.push(' ');
-            address.push_str(&street_name);
+            address.push_str(street_name);
         }
         if let Some(post_type) = self.street_name_post_type() {
             address.push(' ');
@@ -1084,7 +1016,7 @@ impl PartialAddress {
             if !subtype_flag {
                 address.push('#');
             }
-            address.push_str(&subaddress_identifier);
+            address.push_str(subaddress_identifier);
         }
         address
     }
@@ -1118,7 +1050,7 @@ impl PartialAddress {
         }
         if let Some(address_number_suffix) = self.address_number_suffix() {
             address.push(' ');
-            address.push_str(&address_number_suffix);
+            address.push_str(address_number_suffix);
         }
         if let Some(pre_directional) = self.street_name_pre_directional() {
             address.push(' ');
@@ -1138,7 +1070,7 @@ impl PartialAddress {
         }
         if let Some(street_name) = self.street_name() {
             address.push(' ');
-            address.push_str(&street_name);
+            address.push_str(street_name);
         }
         if let Some(post_type) = self.street_name_post_type() {
             address.push(' ');
@@ -1150,7 +1082,7 @@ impl PartialAddress {
         }
         if let Some(subaddress_identifier) = self.subaddress_identifier() {
             address.push(' ');
-            address.push_str(&subaddress_identifier);
+            address.push_str(subaddress_identifier);
         }
         address
     }
@@ -1219,14 +1151,14 @@ impl PartialAddress {
             //     self.set_post_type(&StreetNamePostType::CROSSING);
             // }
             if comp == "SIDE"
-                && self.street_name_pre_directional() == Some(StreetNamePreDirectional::WEST)
+                && *self.street_name_pre_directional() == Some(StreetNamePreDirectional::WEST)
             {
                 trace!("Fixing West Side Road");
                 self.street_name_pre_directional = None;
                 self.set_street_name("WEST SIDE");
             }
             if comp == "SHORE"
-                && self.street_name_pre_directional() == Some(StreetNamePreDirectional::SOUTH)
+                && *self.street_name_pre_directional() == Some(StreetNamePreDirectional::SOUTH)
             {
                 trace!("Fixing South Shore Drive");
                 self.street_name_pre_directional = None;
