@@ -124,7 +124,7 @@ fn match_business_addresses() -> anyhow::Result<()> {
     let business_path = "data/business_licenses_20260316.csv";
     // let city_path = "data/city_addresses_20241007.csv";
     let city_path = "data/grants_pass_addresses_20260316.csv";
-    let business_addresses = BusinessLicenses::from_csv(business_path)?;
+    let business_addresses = Businesses::from_raw_csv(business_path)?;
     let city_addresses = GrantsPassSpatialAddresses::from_csv(city_path)?;
     let match_records = BusinessMatchRecords::compare(&business_addresses, &city_addresses);
     // assert_eq!(match_records.len(), 4796);
@@ -497,17 +497,17 @@ fn load_businesses() -> anyhow::Result<()> {
     let data = Businesses::from_raw_csv(file_path)?;
     assert_eq!(
         Some("C".to_owned()),
-        data[18].address().subaddress_identifier()
+        *data[18].situs_address().subaddress_identifier()
     );
     info!("Parses subaddress identifier with #.");
     assert_eq!(
         Some("1/2".to_owned()),
-        data[167].address().address_number_suffix()
+        *data[167].situs_address().address_number_suffix()
     );
     info!("Parses address number suffix 1/2.");
     assert_eq!(
         Some(SubaddressType::Suite),
-        data[216].address().subaddress_type()
+        *data[216].situs_address().subaddress_type()
     );
     info!("Parses subaddress type STE.");
     Ok(())
