@@ -35,9 +35,10 @@ derive-getters = "0.5"
 derive-new = "0.7"
 derive_more = { version = "2", features = ["full"] }
 derive_setters = "0.1"
-elicitation = { version = "0.11.1", features = ["uuid"] }
+elicitation = { version = "0.11.1", features = ["uuid", "jiff"] }
 elicit_uuid = "0.11.1"
 indicatif = { version = "0.18", features = ["rayon"] }
+jiff = { version = "0.2", features = ["serde"] }
 nom = "8"
 rayon = "1.12"
 rmcp = "1.7"
