@@ -43,12 +43,12 @@ pub use geo::{
     SpatialAddresses,
 };
 pub use import::{
-    Business, Businesses, FireInspection, FireInspectionRaw, FireInspections, GrantsPassAddress,
-    GrantsPassAddresses, GrantsPassSpatialAddress, GrantsPassSpatialAddresses,
-    JosephineCountyAddress, JosephineCountyAddress2024, JosephineCountyAddresses,
-    JosephineCountyAddresses2024, JosephineCountySpatialAddress, JosephineCountySpatialAddress2024,
-    JosephineCountySpatialAddresses, JosephineCountySpatialAddresses2024, SpatialAddressesRaw, Wui,
-    WuiRaw, Wuis, WuisRaw,
+    Business, BusinessRaw, Businesses, BusinessesRaw, FireInspection, FireInspectionRaw,
+    FireInspections, GrantsPassAddress, GrantsPassAddresses, GrantsPassSpatialAddress,
+    GrantsPassSpatialAddresses, JosephineCountyAddress, JosephineCountyAddress2024,
+    JosephineCountyAddresses, JosephineCountyAddresses2024, JosephineCountySpatialAddress,
+    JosephineCountySpatialAddress2024, JosephineCountySpatialAddresses,
+    JosephineCountySpatialAddresses2024, SpatialAddressesRaw, Wui, WuiRaw, Wuis, WuisRaw,
 };
 pub use lexisnexis::{
     LexisNexis, LexisNexisItem, LexisNexisItemBuilder, LexisNexisRange, LexisNexisRangeItem,
