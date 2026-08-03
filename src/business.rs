@@ -1,9 +1,9 @@
 //! The `business` module matches addresses associated with business licenses against a set of known [`Addresses`], producing a record of
 //! matching, divergent and missing addresses.
 use crate::{
-    Address, AddressError, AddressErrorKind, Geographic, IntoCsv, Io, LicenseMissing, MatchStatus,
-    NaicsMissing, Nom, Parse, StreetNamePostType, StreetNamePreDirectional,
-    deserialize_phone_number, error::ParseInt, from_csv, to_csv,
+    Address, AddressError, AddressErrorKind, Business, Businesses, Geographic, IntoCsv, Io,
+    MatchStatus, NaicsMissing, Nom, Parse, PostalCommunity, StreetNamePostType,
+    StreetNamePreDirectional, deserialize_phone_number, error::ParseInt, from_csv, to_csv,
 };
 use derive_more::{Deref, DerefMut};
 use elicitation::Elicit;
@@ -25,27 +25,36 @@ use tracing::info;
     JsonSchema,
     Elicit,
     derive_getters::Getters,
+    derive_builder::Builder,
 )]
 pub struct BusinessMatchRecord {
     match_status: MatchStatus,
-    business_address_label: String,
+    situs: String,
+    mailing: String,
     company_name: Option<String>,
     contact_name: Option<String>,
     business_type: String,
     dba: Option<String>,
     license: String,
-    expires: String,
+    issued: jiff::civil::DateTime,
+    expires: jiff::civil::DateTime,
+    employees: i64,
     industry_code: i64,
-    community: String,
+    community: Option<PostalCommunity>,
     other_address_label: Option<String>,
     address_latitude: Option<f64>,
     address_longitude: Option<f64>,
 }
 
 impl BusinessMatchRecord {
+    /// Create a builder for a BusinessMatchRecord.
+    pub fn builder() -> BusinessMatchRecordBuilder {
+        BusinessMatchRecordBuilder::default()
+    }
+
     /// Full address
     pub fn full_address(&self) -> String {
-        format!("{}, {}", self.business_address_label, self.community)
+        format!("{}, {:?}", self.situs, self.community)
     }
 }
 
@@ -58,7 +67,7 @@ pub struct BusinessMatchRecords(Vec<BusinessMatchRecord>);
 impl BusinessMatchRecords {
     /// Matches the provided address associated with a business license against the addresses in
     /// `addresses`, creating a new `BusinessMatchRecords` struct containing the results.
-    pub fn new<T: Address + Geographic>(business: &BusinessLicense, addresses: &[T]) -> Self {
+    pub fn new<T: Address + Geographic>(business: &Business, addresses: &[T]) -> Self {
         let mut records = Vec::new();
         for address in addresses {
             let business_match = business.coincident(address);
@@ -69,15 +78,18 @@ impl BusinessMatchRecords {
         if records.is_empty() {
             records.push(BusinessMatchRecord {
                 match_status: MatchStatus::Missing,
-                business_address_label: business.label(),
+                situs: business.situs_address().label(),
+                mailing: business.mailing_address().label(),
                 company_name: business.company_name().clone(),
                 contact_name: business.contact_name().clone(),
                 business_type: business.business_type().clone(),
                 dba: business.dba().clone(),
                 license: business.license().clone(),
-                expires: business.expires().clone(),
-                industry_code: *business.industry_code(),
-                community: business.postal_community().clone(),
+                issued: *business.issued(),
+                expires: *business.expires(),
+                employees: *business.employees(),
+                industry_code: *business.industry_code() as i64,
+                community: *business.situs_address().postal_community(),
                 other_address_label: None,
                 address_latitude: None,
                 address_longitude: None,
@@ -101,10 +113,7 @@ impl BusinessMatchRecords {
     /// list of partial (divergent) matches if found, otherwise a missing record.  Since divergent
     /// addresses are unnecessary to inspect if an exact match is found, this is a more efficient
     /// matching method compared to [`BusinessMatchRecords::compare()`].
-    pub fn chain<T: Address + Geographic>(
-        business: &BusinessLicense,
-        address_list: &[&[T]],
-    ) -> Self {
+    pub fn chain<T: Address + Geographic>(business: &Business, address_list: &[&[T]]) -> Self {
         let mut matching = Vec::new();
         let mut divergent = Vec::new();
         let mut missing = Vec::new();
@@ -130,11 +139,11 @@ impl BusinessMatchRecords {
         }
     }
 
-    /// For each [`BusinessLicense`] object in `businesses`, this method creates a
+    /// For each [`Business`] object in `businesses`, this method creates a
     /// `BusinessMatchRecords` using the [`BusinessMatchRecords::new()`] method.  Match records
     /// will include matching, divergent and missing records.
     pub fn compare<T: Address + Geographic + Send + Sync>(
-        businesses: &BusinessLicenses,
+        businesses: &Businesses,
         addresses: &[T],
     ) -> Self {
         let style = indicatif::ProgressStyle::with_template(
@@ -157,7 +166,7 @@ impl BusinessMatchRecords {
     /// [`BusinessMatchRecords::chain()`] method, which returns only an exact match if available,
     /// otherwise returning a list of partial matches or a missing record.
     pub fn compare_chain<T: Address + Geographic + Send + Sync>(
-        businesses: &BusinessLicenses,
+        businesses: &Businesses,
         addresses: &[&[T]],
     ) -> Self {
         let style = indicatif::ProgressStyle::with_template(
@@ -226,7 +235,10 @@ impl BusinessMatchRecords {
                 }
                 self.0 = records;
             }
-            "local" => self.retain(|r| r.community == "GRANTS PASS" || r.community == "MERLIN"),
+            "local" => self.retain(|r| {
+                r.community == Some(PostalCommunity::GrantsPass)
+                    || r.community == Some(PostalCommunity::Merlin)
+            }),
             _ => info!("Invalid filter provided."),
         }
         self
@@ -320,59 +332,6 @@ pub struct BusinessLicense {
 }
 
 impl BusinessLicense {
-    /// Compares the address of `BusinessLicense` to `address`, producing either a matching
-    /// [`BusinessMatchRecord`], any divergent [`BusinessMatchRecord`], or `None` if missing.
-    pub fn coincident<T: Address + Geographic>(&self, address: &T) -> Option<BusinessMatchRecord> {
-        let mut match_status = MatchStatus::Missing;
-        let mut business_match = None;
-        let mut subaddress_id = None;
-        if let Some(val) = self.subaddress_identifier.clone()
-            && !val.is_empty()
-        {
-            // info!("Subaddress not empty: {}", &val);
-            let trim_val = val.trim();
-            if !trim_val.is_empty() {
-                // info!("Writing subaddress: {}", trim_val);
-                subaddress_id = Some(trim_val.to_string());
-            }
-        }
-        let street_name = self.street_name.trim().to_string();
-        if self.address_number == address.complete_address_number()
-            && self.street_name_pre_directional == *address.directional()
-            && street_name == *address.street_name()
-            && self.street_name_post_type == *address.street_type()
-        // && self.postal_community == address.postal_community()
-        // && self.state_name == address.state_name()
-        {
-            if subaddress_id != *address.subaddress_id() {
-                match_status = MatchStatus::Divergent;
-            }
-            // robust against +4 codes?
-            // if self.zip_code != address.zip() {
-            //     match_status = MatchStatus::Divergent;
-            // }
-            if match_status != MatchStatus::Divergent {
-                match_status = MatchStatus::Matching;
-            }
-            business_match = Some(BusinessMatchRecord {
-                match_status,
-                business_address_label: self.label(),
-                company_name: self.company_name().clone(),
-                contact_name: self.contact_name().clone(),
-                business_type: self.business_type().clone(),
-                dba: self.dba().clone(),
-                license: self.license().clone(),
-                expires: self.expires().clone(),
-                industry_code: *self.industry_code(),
-                community: self.postal_community().clone(),
-                other_address_label: Some(address.label()),
-                address_latitude: Some(address.latitude()),
-                address_longitude: Some(address.longitude()),
-            });
-        }
-        business_match
-    }
-
     /// The `label` method creates a string representation of the complete street address
     /// associated with a business license.
     fn label(&self) -> String {
@@ -509,7 +468,7 @@ impl IntoCsv<BusinessLicenses> for BusinessLicenses {
 pub struct BusinessFeature {
     // The official name of the company.
     #[setters(doc = "Sets the official name of the company.")]
-    company_name: String,
+    company_name: Option<String>,
     // The contact for the company.
     #[setters(doc = "Sets the contact for the company.")]
     contact_name: Option<String>,
@@ -525,6 +484,12 @@ pub struct BusinessFeature {
     // The license identifier.
     #[setters(doc = "Sets the license identifier of the business.")]
     license: String,
+    #[setters(doc = "Sets the license issue date of the business.")]
+    issued: jiff::civil::DateTime,
+    #[setters(doc = "Sets the license expiration date of the business.")]
+    expires: jiff::civil::DateTime,
+    #[setters(doc = "Sets the number of employees for the business.")]
+    employees: i64,
     // The NAICS industry code of the business.
     #[setters(doc = "Sets the NAICS industry code of the business.")]
     industry_code: i32,
@@ -665,17 +630,19 @@ impl BusinessFeature {
     }
 }
 
-impl TryFrom<(&BusinessMatchRecord, &BusinessLicense)> for BusinessFeature {
+impl TryFrom<&BusinessMatchRecord> for BusinessFeature {
     type Error = AddressError;
 
-    fn try_from(value: (&BusinessMatchRecord, &BusinessLicense)) -> Result<Self, Self::Error> {
-        let (value, mailing) = value;
-        let company_name = value.company_name().clone().unwrap_or_default();
+    fn try_from(value: &BusinessMatchRecord) -> Result<Self, Self::Error> {
+        let company_name = value.company_name().clone();
         let contact_name = value.contact_name().clone();
         let dba = value.dba().clone();
-        let situs = value.business_address_label().clone();
-        let mailing = mailing.full_address();
+        let situs = value.situs().clone();
+        let mailing = value.mailing().clone();
         let license = value.license().clone();
+        let issued = *value.issued();
+        let expires = *value.expires();
+        let employees = *value.employees();
         let industry_code = *value.industry_code();
         let codestring = industry_code.to_string();
         let naics = bears_species::Naics::from_code(&codestring).ok_or(NaicsMissing::new(
@@ -722,6 +689,9 @@ impl TryFrom<(&BusinessMatchRecord, &BusinessLicense)> for BusinessFeature {
             situs,
             mailing,
             license,
+            issued,
+            expires,
+            employees,
             industry_code,
             industry_name,
             sector_code,
@@ -733,26 +703,6 @@ impl TryFrom<(&BusinessMatchRecord, &BusinessLicense)> for BusinessFeature {
             latitude,
             longitude,
         })
-    }
-}
-
-impl TryFrom<(&BusinessMatchRecord, &BusinessLicenses)> for BusinessFeature {
-    type Error = AddressError;
-
-    fn try_from(value: (&BusinessMatchRecord, &BusinessLicenses)) -> Result<Self, Self::Error> {
-        let (situs, mailing) = value;
-        let mailing = mailing
-            .iter()
-            .filter(|v| v.license() == situs.license())
-            .take(1)
-            .collect::<Vec<&BusinessLicense>>();
-        if mailing.is_empty() {
-            let error =
-                LicenseMissing::new(situs.license().to_owned(), line!(), file!().to_owned());
-            Err(error.into())
-        } else {
-            BusinessFeature::try_from((situs, mailing[0]))
-        }
     }
 }
 
@@ -772,30 +722,17 @@ impl TryFrom<(&BusinessMatchRecord, &BusinessLicenses)> for BusinessFeature {
 )]
 pub struct BusinessFeatures(Vec<BusinessFeature>);
 
-impl TryFrom<(&BusinessMatchRecords, &BusinessLicenses)> for BusinessFeatures {
+impl TryFrom<&BusinessMatchRecords> for BusinessFeatures {
     type Error = AddressError;
 
-    fn try_from(value: (&BusinessMatchRecords, &BusinessLicenses)) -> Result<Self, Self::Error> {
-        let (situs, mailing) = value;
-        let businesses = situs
+    fn try_from(value: &BusinessMatchRecords) -> Result<Self, Self::Error> {
+        let businesses = value
             .iter()
-            .map(|v| BusinessFeature::try_from((v, mailing)))
+            .map(BusinessFeature::try_from)
             .collect::<Result<Vec<BusinessFeature>, AddressError>>()?;
         Ok(BusinessFeatures::from(businesses))
     }
 }
-//
-// impl TryFrom<&BusinessMatchRecords> for BusinessFeatures {
-//     type Error = AddressError;
-//
-//     fn try_from(value: &BusinessMatchRecords) -> Result<Self, Self::Error> {
-//         let businesses = value
-//             .iter()
-//             .map(BusinessFeature::try_from)
-//             .collect::<Result<Vec<BusinessFeature>, AddressError>>()?;
-//         Ok(BusinessFeatures::from(businesses))
-//     }
-// }
 
 impl IntoCsv<BusinessFeatures> for BusinessFeatures {
     fn from_csv<P: AsRef<std::path::Path>>(path: P) -> Result<Self, Io> {
