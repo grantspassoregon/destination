@@ -49,6 +49,9 @@ pub enum AddressErrorKind {
     /// The `Io` variant contains an [`Io`] error.
     #[from(Io)]
     Io(Io),
+    /// The `Jiff` variant contains a [`Jiff`] error.
+    #[from(Jiff)]
+    Jiff(Jiff),
     /// The `Nom` variant contains an [`Nom`] error.
     #[from(Nom)]
     Nom(Nom),
@@ -183,5 +186,28 @@ pub struct LicenseMissing {
 impl std::error::Error for LicenseMissing {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         None
+    }
+}
+
+/// The `Jiff` struct contains error information from parsing time into jiff types.
+#[derive(Debug, derive_more::Display, derive_more::Error)]
+#[display("Jiff error: {description} in line {line} of {file}")]
+pub struct Jiff {
+    description: String,
+    source: jiff::Error,
+    line: u32,
+    file: String,
+}
+
+impl Jiff {
+    #[track_caller]
+    pub fn new(description: String, source: jiff::Error) -> Self {
+        let loc = std::panic::Location::caller();
+        Self {
+            description,
+            source,
+            line: loc.line(),
+            file: loc.file().to_string(),
+        }
     }
 }
