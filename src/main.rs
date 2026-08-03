@@ -1,6 +1,6 @@
 use clap::Parser;
 use destination::{
-    Addresses, BusinessFeatures, BusinessLicenses, BusinessMatchRecords, Cartesian, Cli,
+    Addresses, BusinessFeatures, BusinessMatchRecords, Businesses, BusinessesRaw, Cartesian, Cli,
     CommonAddresses, GeoAddresses, GrantsPassAddresses, GrantsPassSpatialAddresses, IntoBin,
     IntoCsv, JosephineCountyAddresses, JosephineCountyAddresses2024,
     JosephineCountySpatialAddresses2024, LexisNexis, MatchPartialRecords, MatchRecords,
@@ -281,14 +281,9 @@ fn main() -> anyhow::Result<()> {
         "business" => {
             info!("Matching business addresses.");
             info!("Reading source records.");
-            let source_addresses = BusinessLicenses::from_csv(cli.source.clone())?;
+            let source_addresses = BusinessesRaw::from_csv(cli.source.clone())?;
+            let source_addresses = Businesses::try_from(&source_addresses)?;
             info!("Source records read: {} entries.", source_addresses.len());
-            let mut source_addresses = source_addresses.deduplicate();
-            source_addresses.detype_subaddresses()?;
-            info!(
-                "Records deduplicated: {} remaining.",
-                source_addresses.len()
-            );
             info!("Reading comparison records.");
             let mut target_addresses = GeoAddresses::default();
             if let Some(target) = &cli.target {
@@ -417,14 +412,8 @@ fn main() -> anyhow::Result<()> {
             info!("Converting match records to business features.");
             info!("Reading source records to business match records.");
             let match_records = BusinessMatchRecords::from_csv(cli.source.clone())?;
-            if let Some(path) = &cli.target {
-                let mailing = BusinessLicenses::from_csv(path)?;
-                info!("Source records read: {} entries.", match_records.len());
-                let mut businesses = BusinessFeatures::try_from((&match_records, &mailing))?;
-                info!("{:?} match records converted.", businesses.len());
-                info!("Output file: {:?}", cli.output);
-                businesses.to_csv(cli.output)?;
-            }
+            let mut businesses = BusinessFeatures::try_from(&match_records)?;
+            businesses.to_csv(cli.output)?;
         }
         _ => {}
     }
