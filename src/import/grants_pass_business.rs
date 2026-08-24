@@ -295,8 +295,7 @@ impl Business {
                 subaddress_id = Some(trim_val.to_string());
             }
         }
-        #[allow(renamed_and_removed_lints)]
-        #[allow(question_mark)]
+        #[allow(clippy::question_mark)]
         let street_name = match self.situs_address().street_name() {
             Some(street) => street.trim().to_string(),
             None => return None,
