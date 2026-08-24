@@ -24,7 +24,7 @@ name = "destination"
 ci = []
 
 [dependencies]
-anyhow = "1"
+anyhow = "1.0.104"
 bears_species = { path = "../bears/bears_species" }
 bincode = { version = "2.0.1", features = ["serde"] }
 clap = { version = "4.6", features = ["derive"] }
@@ -37,7 +37,7 @@ derive_more = { version = "2", features = ["full"] }
 derive_setters = "0.1"
 elicitation = { version = "0.11.1", features = ["uuid", "jiff"] }
 elicit_uuid = "0.11.1"
-indicatif = { version = "0.18", features = ["rayon"] }
+indicatif = { version = "0.18.6", features = ["rayon"] }
 jiff = { version = "0.2", features = ["serde"] }
 nom = "8"
 rayon = "1.12"
@@ -50,7 +50,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1", features = ["serde", "v4"] }
 
 [dev-dependencies]
-criterion = "0.8"
+criterion = "0.8.2"
 plotters = "0.3"
 test-log = { version = "0.2", features = ["trace"] }
 
